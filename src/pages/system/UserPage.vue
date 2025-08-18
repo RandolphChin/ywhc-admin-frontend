@@ -233,7 +233,7 @@
 
 <script>
 import { defineComponent, ref, onMounted } from 'vue'
-import { api } from 'src/boot/axios'
+import { userApi, roleApi } from 'src/api'
 import { useQuasar } from 'quasar'
 
 export default defineComponent({
@@ -368,7 +368,7 @@ export default defineComponent({
           ...queryForm.value
         }
 
-        const response = await api.get('/system/user/list', { params })
+        const response = await userApi.getList(params)
         const { records, total } = response.data.data
 
         users.value = records
@@ -386,7 +386,7 @@ export default defineComponent({
 
     const loadRoles = async () => {
       try {
-        const response = await api.get('/system/role/all')
+        const response = await roleApi.getAll()
         roles.value = response.data.data
         roleOptions.value = roles.value.map(role => ({
           label: role.name,
@@ -436,13 +436,13 @@ export default defineComponent({
     const submitUser = async () => {
       try {
         if (isEdit.value) {
-          await api.put(`/system/user/${userForm.value.id}`, userForm.value)
+          await userApi.update(userForm.value.id, userForm.value)
           $q.notify({
             type: 'positive',
             message: '用户更新成功'
           })
         } else {
-          await api.post('/system/user', userForm.value)
+          await userApi.create(userForm.value)
           $q.notify({
             type: 'positive',
             message: '用户创建成功'
@@ -467,7 +467,7 @@ export default defineComponent({
         persistent: true
       }).onOk(async () => {
         try {
-          await api.delete(`/system/user/${user.id}`)
+          await userApi.delete(user.id)
           $q.notify({
             type: 'positive',
             message: '用户删除成功'
@@ -490,7 +490,7 @@ export default defineComponent({
         persistent: true
       }).onOk(async () => {
         try {
-          await api.put(`/system/user/${user.id}/reset-password`)
+          await userApi.resetPassword(user.id)
           $q.notify({
             type: 'positive',
             message: '密码重置成功，新密码为：123456'
