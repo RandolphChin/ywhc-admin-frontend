@@ -248,7 +248,7 @@
 
 <script>
 import { defineComponent, ref, onMounted } from 'vue'
-import { api } from 'src/boot/axios'
+import { menuApi } from 'src/api'
 import { useQuasar } from 'quasar'
 
 export default defineComponent({
@@ -366,7 +366,7 @@ export default defineComponent({
       loading.value = true
       
       try {
-        const response = await api.get('/system/menu/tree')
+        const response = await menuApi.getTree()
         menus.value = response.data.data
         
         // 构建父级菜单选项
@@ -394,10 +394,15 @@ export default defineComponent({
         }
       })
       
-      parentMenuOptions.value = [
-        { label: '顶级菜单', value: null },
-        ...options
-      ]
+      if (level === 0) {
+        // 只在顶层调用时设置 parentMenuOptions
+        parentMenuOptions.value = [
+          { label: '顶级菜单', value: null },
+          ...options
+        ]
+      }
+      
+      return options
     }
 
     const showMenuDialog = (menu = null, parent = null) => {
@@ -438,13 +443,13 @@ export default defineComponent({
     const submitMenu = async () => {
       try {
         if (isEdit.value) {
-          await api.put(`/system/menu/${menuForm.value.id}`, menuForm.value)
+          await menuApi.update(menuForm.value.id, menuForm.value)
           $q.notify({
             type: 'positive',
             message: '菜单更新成功'
           })
         } else {
-          await api.post('/system/menu', menuForm.value)
+          await menuApi.create(menuForm.value)
           $q.notify({
             type: 'positive',
             message: '菜单创建成功'
@@ -469,7 +474,7 @@ export default defineComponent({
         persistent: true
       }).onOk(async () => {
         try {
-          await api.delete(`/system/menu/${menu.id}`)
+          await menuApi.delete(menu.id)
           $q.notify({
             type: 'positive',
             message: '菜单删除成功'

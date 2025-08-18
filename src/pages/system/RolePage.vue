@@ -181,7 +181,7 @@
           <q-tree
             :nodes="menuTree"
             node-key="id"
-            :ticked.sync="checkedMenus"
+            v-model:ticked="checkedMenus"
             tick-strategy="leaf-filtered"
             default-expand-all
           />
@@ -200,7 +200,7 @@
 
 <script>
 import { defineComponent, ref, onMounted } from 'vue'
-import { api } from 'src/boot/axios'
+import { roleApi, menuApi } from 'src/api'
 import { useQuasar } from 'quasar'
 
 export default defineComponent({
@@ -308,7 +308,7 @@ export default defineComponent({
           ...queryForm.value
         }
 
-        const response = await api.get('/system/role/list', { params })
+        const response = await roleApi.getList(params)
         const { records, total } = response.data.data
 
         roles.value = records
@@ -326,7 +326,7 @@ export default defineComponent({
 
     const loadMenuTree = async () => {
       try {
-        const response = await api.get('/system/menu/tree')
+        const response = await menuApi.getTree()
         menuTree.value = response.data.data
       } catch (error) {
         console.error('加载菜单树失败:', error)
@@ -365,13 +365,13 @@ export default defineComponent({
     const submitRole = async () => {
       try {
         if (isEdit.value) {
-          await api.put(`/system/role/${roleForm.value.id}`, roleForm.value)
+          await roleApi.update(roleForm.value.id, roleForm.value)
           $q.notify({
             type: 'positive',
             message: '角色更新成功'
           })
         } else {
-          await api.post('/system/role', roleForm.value)
+          await roleApi.create(roleForm.value)
           $q.notify({
             type: 'positive',
             message: '角色创建成功'
@@ -396,7 +396,7 @@ export default defineComponent({
         persistent: true
       }).onOk(async () => {
         try {
-          await api.delete(`/system/role/${role.id}`)
+          await roleApi.delete(role.id)
           $q.notify({
             type: 'positive',
             message: '角色删除成功'
@@ -414,7 +414,7 @@ export default defineComponent({
     const showPermissionDialog = async (role) => {
       currentRole.value = role
       try {
-        const response = await api.get(`/system/role/${role.id}/menus`)
+        const response = await roleApi.getMenus(role.id)
         checkedMenus.value = response.data.data
         permissionDialog.value = true
       } catch (error) {
@@ -424,9 +424,7 @@ export default defineComponent({
 
     const submitPermission = async () => {
       try {
-        await api.put(`/system/role/${currentRole.value.id}/menus`, {
-          menuIds: checkedMenus.value
-        })
+        await roleApi.assignMenus(currentRole.value.id, checkedMenus.value)
         $q.notify({
           type: 'positive',
           message: '权限分配成功'

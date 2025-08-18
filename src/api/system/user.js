@@ -3,7 +3,7 @@ import { api } from 'src/boot/axios'
 // 用户管理API
 export const userApi = {
   // 获取用户列表
-  getList: (params) => api.get('/system/user/list', { params }),
+  getList: (params) => api.get('/system/user/page', { params }),
   
   // 获取用户详情
   getDetail: (id) => api.get(`/system/user/${id}`),

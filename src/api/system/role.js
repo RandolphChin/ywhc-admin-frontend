@@ -3,7 +3,7 @@ import { api } from 'src/boot/axios'
 // 角色管理API
 export const roleApi = {
   // 获取角色列表
-  getList: (params) => api.get('/system/role/list', { params }),
+  getList: (params) => api.get('/system/role/page', { params }),
   
   // 获取所有角色
   getAll: () => api.get('/system/role/all'),
