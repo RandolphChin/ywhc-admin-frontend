@@ -2,6 +2,7 @@ import { route } from 'quasar/wrappers'
 import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
 import { useAuthStore } from 'src/stores/auth'
+import { pinia } from 'src/boot/pinia'
 
 /*
  * If not building with SSR mode, you can
@@ -12,7 +13,7 @@ import { useAuthStore } from 'src/stores/auth'
  * with the Router instance.
  */
 
-export default route(function (/* { store, ssrContext } */) {
+export default route(function ({ store /*, ssrContext */ }) {
   const createHistory = process.env.SERVER
     ? createWebHistory
     : (process.env.VUE_ROUTER_MODE === 'history' ? createWebHistory : createWebHashHistory)
@@ -29,8 +30,6 @@ export default route(function (/* { store, ssrContext } */) {
 
   // 路由守卫
   Router.beforeEach(async (to, from, next) => {
-    const authStore = useAuthStore()
-    
     // 白名单路由，不需要登录验证
     const whiteList = ['/login', '/register', '/404']
     
@@ -38,6 +37,9 @@ export default route(function (/* { store, ssrContext } */) {
       next()
       return
     }
+
+    // 延迟获取store，确保Pinia已经初始化
+    const authStore = useAuthStore(pinia)
 
     // 检查是否已登录
     if (!authStore.token) {

@@ -1,0 +1,14 @@
+// app global css in SCSS form
+@import './quasar.variables.scss';
+
+// Global styles for the application
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+// Custom application styles
+.q-page {
+  padding: 16px;
+}
+
+// Add your custom styles here
