@@ -75,7 +75,7 @@ export default defineComponent({
     const loading = ref(false)
     const loginForm = ref({
       username: 'admin',
-      password: '123456',
+      password: 'admin123',
       rememberMe: false
     })
 
