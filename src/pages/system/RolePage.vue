@@ -96,7 +96,7 @@
                 color="info"
                 icon="security"
                 @click="showPermissionDialog(props.row)"
-                v-permission="'system:role:permission'"
+                v-permission="'system:role:auth'"
               >
                 <q-tooltip>分配权限</q-tooltip>
               </q-btn>
@@ -181,6 +181,7 @@
           <q-tree
             :nodes="menuTree"
             node-key="id"
+            label-key="menuName"
             v-model:ticked="checkedMenus"
             tick-strategy="leaf-filtered"
             default-expand-all
@@ -414,8 +415,14 @@ export default defineComponent({
     const showPermissionDialog = async (role) => {
       currentRole.value = role
       try {
-        const response = await roleApi.getMenus(role.id)
-        checkedMenus.value = response.data.data
+        // 并行加载菜单树和角色已分配的菜单ID
+        const [menuTreeResponse, roleMenusResponse] = await Promise.all([
+          menuApi.getTree(),
+          roleApi.getMenus(role.id)
+        ])
+        
+        menuTree.value = menuTreeResponse.data.data
+        checkedMenus.value = roleMenusResponse.data.data
         permissionDialog.value = true
       } catch (error) {
         console.error('加载角色权限失败:', error)

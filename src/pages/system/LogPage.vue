@@ -245,7 +245,7 @@
 
 <script>
 import { defineComponent, ref, onMounted } from 'vue'
-import { api } from 'src/boot/axios'
+import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
 
 export default defineComponent({
@@ -365,6 +365,16 @@ export default defineComponent({
       return 'negative'
     }
 
+    const getOperationTypeFromMethod = (method) => {
+      const typeMap = {
+        'GET': 1,
+        'POST': 2,
+        'PUT': 3,
+        'DELETE': 4
+      }
+      return typeMap[method]
+    }
+
     const formatJson = (jsonStr) => {
       try {
         const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
@@ -381,14 +391,21 @@ export default defineComponent({
         const { page, rowsPerPage, sortBy, descending } = props?.pagination || pagination.value
         
         const params = {
-          page: page,
+          current: page,
           size: rowsPerPage,
-          sortBy: sortBy,
-          sortOrder: descending ? 'desc' : 'asc',
-          ...queryForm.value
+          module: queryForm.value.operation || undefined,
+          operationType: queryForm.value.method ? getOperationTypeFromMethod(queryForm.value.method) : undefined,
+          status: undefined
         }
+        
+        // Remove undefined values to avoid sending empty parameters
+        Object.keys(params).forEach(key => {
+          if (params[key] === undefined || params[key] === '') {
+            delete params[key]
+          }
+        })
 
-        const response = await api.get('/system/log/list', { params })
+        const response = await logApi.getList(params)
         const { records, total } = response.data.data
 
         logs.value = records
@@ -432,7 +449,7 @@ export default defineComponent({
         persistent: true
       }).onOk(async () => {
         try {
-          await api.delete('/system/log/clear')
+          await logApi.clear()
           $q.notify({
             type: 'positive',
             message: '日志清空成功'
