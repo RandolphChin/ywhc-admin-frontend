@@ -17,8 +17,8 @@
           </div>
           <div class="col-12 col-sm-6 col-md-3">
             <q-input
-              v-model="queryForm.operation"
-              label="操作类型"
+              v-model="queryForm.operationDesc"
+              label="操作描述"
               outlined
               dense
               clearable
@@ -261,7 +261,7 @@ export default defineComponent({
 
     const queryForm = ref({
       username: '',
-      operation: '',
+      operationDesc: '',
       method: '',
       startTime: '',
       endTime: ''
@@ -291,27 +291,35 @@ export default defineComponent({
         sortable: true
       },
       {
-        name: 'operation',
-        label: '操作类型',
-        field: 'operation',
-        align: 'left'
+        name: 'operationDesc',
+        label: '操作描述',
+        field: 'operationDesc',
+        align: 'left',
+        sortable: true
       },
       {
-        name: 'method',
+        name: 'operationType',
+        label: '操作类型',
+        field: 'operationType',
+        align: 'left',
+        format: (val) => getOperationTypeDescription(val)
+      },
+      {
+        name: 'requestMethod',
         label: '请求方法',
-        field: 'method',
+        field: 'requestMethod',
         align: 'center'
       },
       {
-        name: 'uri',
+        name: 'requestUrl',
         label: '请求URI',
-        field: 'uri',
+        field: 'requestUrl',
         align: 'left'
       },
       {
-        name: 'ip',
+        name: 'ipAddress',
         label: 'IP地址',
-        field: 'ip',
+        field: 'ipAddress',
         align: 'left'
       },
       {
@@ -375,6 +383,18 @@ export default defineComponent({
       return typeMap[method]
     }
 
+    const getOperationTypeDescription = (code) => {
+      const typeMap = {
+        1: '新增',
+        2: '修改',
+        3: '删除',
+        4: '查询',
+        5: '登录',
+        6: '登出'
+      }
+      return typeMap[code] || '未知'
+    }
+
     const formatJson = (jsonStr) => {
       try {
         const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
@@ -393,8 +413,8 @@ export default defineComponent({
         const params = {
           current: page,
           size: rowsPerPage,
-          module: queryForm.value.operation || undefined,
-          operationType: queryForm.value.method ? getOperationTypeFromMethod(queryForm.value.method) : undefined,
+          operationDesc: queryForm.value.operationDesc || undefined,
+          operationType: queryForm.value.operation ? getOperationTypeDescription(queryForm.value.operation) : undefined,
           status: undefined
         }
         
@@ -479,6 +499,7 @@ export default defineComponent({
       methodOptions,
       getMethodColor,
       getTimeColor,
+      getOperationTypeDescription,
       formatJson,
       loadLogs,
       onRequest,
