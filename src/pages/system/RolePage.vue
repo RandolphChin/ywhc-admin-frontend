@@ -46,75 +46,115 @@
       </q-card-section>
     </q-card>
 
-    <!-- 角色表格 -->
-    <q-card>
-      <q-card-section>
-        <div class="row justify-between items-center q-mb-md">
-          <div class="text-h6">角色列表</div>
-          <q-btn
-            color="primary"
-            icon="add"
-            label="添加角色"
-            @click="showRoleDialog()"
-            v-permission="'system:role:add'"
-          />
-        </div>
-
-        <q-table
-          :rows="roles"
-          :columns="columns"
-          row-key="id"
-          :loading="loading"
-          :pagination="pagination"
-          @request="onRequest"
-          binary-state-sort
-        >
-          <template v-slot:body-cell-status="props">
-            <q-td :props="props">
-              <q-badge
-                :color="props.row.status === 1 ? 'positive' : 'negative'"
-                :label="props.row.status === 1 ? '正常' : '禁用'"
-              />
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-actions="props">
-            <q-td :props="props">
+    <!-- 左右布局 -->
+    <div class="row q-gutter-md" style="height: calc(100vh - 200px)">
+      <!-- 左侧：角色表格 -->
+      <div class="col-5">
+        <q-card class="full-height">
+          <q-card-section>
+            <div class="row justify-between items-center q-mb-md">
+              <div class="text-h6">角色列表</div>
               <q-btn
-                flat
-                dense
                 color="primary"
-                icon="edit"
-                @click="showRoleDialog(props.row)"
-                v-permission="'system:role:edit'"
-              >
-                <q-tooltip>编辑</q-tooltip>
-              </q-btn>
+                icon="add"
+                label="添加角色"
+                @click="showRoleDialog()"
+                v-permission="'system:role:add'"
+              />
+            </div>
+
+            <q-table
+              :rows="roles"
+              :columns="columns"
+              row-key="id"
+              :loading="loading"
+              :pagination="pagination"
+              @request="onRequest"
+              binary-state-sort
+              :selected="selectedRole ? [selectedRole] : []"
+              selection="single"
+              @selection="onRoleSelection"
+              @row-click="onRowClick"
+              class="role-table"
+            >
+              <template v-slot:body-cell-status="props">
+                <q-td :props="props">
+                  <q-badge
+                    :color="props.row.status === 1 ? 'positive' : 'negative'"
+                    :label="props.row.status === 1 ? '正常' : '禁用'"
+                  />
+                </q-td>
+              </template>
+
+              <template v-slot:body-cell-actions="props">
+                <q-td :props="props">
+                  <q-btn
+                    flat
+                    dense
+                    color="primary"
+                    icon="edit"
+                    @click="showRoleDialog(props.row)"
+                    v-permission="'system:role:edit'"
+                  >
+                    <q-tooltip>编辑</q-tooltip>
+                  </q-btn>
+                  <q-btn
+                    flat
+                    dense
+                    color="negative"
+                    icon="delete"
+                    @click="deleteRole(props.row)"
+                    v-permission="'system:role:delete'"
+                  >
+                    <q-tooltip>删除</q-tooltip>
+                  </q-btn>
+                </q-td>
+              </template>
+            </q-table>
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <!-- 右侧：权限树 -->
+      <div class="col">
+        <q-card class="full-height">
+          <q-card-section>
+            <div class="row justify-between items-center q-mb-md">
+              <div class="text-h6">
+                权限配置
+                <span v-if="selectedRole" class="text-caption text-grey-6">
+                  - {{ selectedRole.name }}
+                </span>
+              </div>
               <q-btn
-                flat
-                dense
-                color="info"
-                icon="security"
-                @click="showPermissionDialog(props.row)"
+                color="primary"
+                icon="save"
+                label="保存权限"
+                @click="submitPermission"
+                :disable="!selectedRole"
                 v-permission="'system:role:auth'"
-              >
-                <q-tooltip>分配权限</q-tooltip>
-              </q-btn>
-              <q-btn
-                flat
-                dense
-                color="negative"
-                icon="delete"
-                @click="deleteRole(props.row)"
-                v-permission="'system:role:delete'"
-              >
-                <q-tooltip>删除</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
-      </q-card-section>
-    </q-card>
+              />
+            </div>
+
+            <div v-if="selectedRole" class="permission-tree-container">
+              <q-tree
+                :nodes="menuTree"
+                node-key="id"
+                label-key="menuName"
+                v-model:ticked="checkedMenus"
+                tick-strategy="leaf-filtered"
+                :expanded="expandedNodes"
+                class="permission-tree"
+              />
+            </div>
+            <div v-else class="text-center text-grey-6 q-pa-xl">
+              <q-icon name="security" size="48px" class="q-mb-md" />
+              <div>请选择一个角色查看其权限配置</div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div>
 
     <!-- 角色编辑对话框 -->
     <q-dialog v-model="roleDialog" persistent>
@@ -170,32 +210,6 @@
       </q-card>
     </q-dialog>
 
-    <!-- 权限分配对话框 -->
-    <q-dialog v-model="permissionDialog" persistent>
-      <q-card style="min-width: 500px; max-width: 800px">
-        <q-card-section>
-          <div class="text-h6">分配权限 - {{ currentRole?.name }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none" style="max-height: 400px">
-          <q-tree
-            :nodes="menuTree"
-            node-key="id"
-            label-key="menuName"
-            v-model:ticked="checkedMenus"
-            tick-strategy="leaf-filtered"
-            default-expand-all
-          />
-        </q-card-section>
-
-        <q-card-section>
-          <div class="row justify-end q-gutter-sm">
-            <q-btn flat label="取消" @click="permissionDialog = false" />
-            <q-btn color="primary" label="确定" @click="submitPermission" />
-          </div>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -212,12 +226,12 @@ export default defineComponent({
 
     const loading = ref(false)
     const roleDialog = ref(false)
-    const permissionDialog = ref(false)
     const isEdit = ref(false)
     const roles = ref([])
     const menuTree = ref([])
     const checkedMenus = ref([])
-    const currentRole = ref(null)
+    const selectedRole = ref(null)
+    const expandedNodes = ref([])
 
     const queryForm = ref({
       name: '',
@@ -318,6 +332,11 @@ export default defineComponent({
         pagination.value.rowsPerPage = rowsPerPage
         pagination.value.sortBy = sortBy
         pagination.value.descending = descending
+        
+        // 默认选择第一个角色
+        if (records.length > 0 && !selectedRole.value) {
+          await selectRole(records[0])
+        }
       } catch (error) {
         console.error('加载角色列表失败:', error)
       } finally {
@@ -329,9 +348,25 @@ export default defineComponent({
       try {
         const response = await menuApi.getTree()
         menuTree.value = response.data.data
+        // 默认展开所有节点
+        expandAllNodes(menuTree.value)
       } catch (error) {
         console.error('加载菜单树失败:', error)
       }
+    }
+
+    const expandAllNodes = (nodes) => {
+      const expanded = []
+      const traverse = (nodeList) => {
+        nodeList.forEach(node => {
+          expanded.push(node.id)
+          if (node.children && node.children.length > 0) {
+            traverse(node.children)
+          }
+        })
+      }
+      traverse(nodes)
+      expandedNodes.value = expanded
     }
 
     const onRequest = (props) => {
@@ -412,31 +447,45 @@ export default defineComponent({
       })
     }
 
-    const showPermissionDialog = async (role) => {
-      currentRole.value = role
+    const onRoleSelection = ({ added, removed }) => {
+      if (added.length > 0) {
+        selectRole(added[0])
+      } else if (removed.length > 0 && added.length === 0) {
+        selectedRole.value = null
+        checkedMenus.value = []
+      }
+    }
+
+    const onRowClick = (evt, row) => {
+      selectRole(row)
+    }
+
+    const selectRole = async (role) => {
+      selectedRole.value = role
       try {
-        // 并行加载菜单树和角色已分配的菜单ID
-        const [menuTreeResponse, roleMenusResponse] = await Promise.all([
-          menuApi.getTree(),
-          roleApi.getMenus(role.id)
-        ])
-        
-        menuTree.value = menuTreeResponse.data.data
+        const roleMenusResponse = await roleApi.getMenus(role.id)
         checkedMenus.value = roleMenusResponse.data.data
-        permissionDialog.value = true
       } catch (error) {
         console.error('加载角色权限失败:', error)
+        checkedMenus.value = []
       }
     }
 
     const submitPermission = async () => {
+      if (!selectedRole.value) {
+        $q.notify({
+          type: 'warning',
+          message: '请先选择一个角色'
+        })
+        return
+      }
+      
       try {
-        await roleApi.assignMenus(currentRole.value.id, checkedMenus.value)
+        await roleApi.assignMenus(selectedRole.value.id, checkedMenus.value)
         $q.notify({
           type: 'positive',
           message: '权限分配成功'
         })
-        permissionDialog.value = false
       } catch (error) {
         $q.notify({
           type: 'negative',
@@ -453,12 +502,12 @@ export default defineComponent({
     return {
       loading,
       roleDialog,
-      permissionDialog,
       isEdit,
       roles,
       menuTree,
       checkedMenus,
-      currentRole,
+      selectedRole,
+      expandedNodes,
       queryForm,
       roleForm,
       pagination,
@@ -470,9 +519,34 @@ export default defineComponent({
       showRoleDialog,
       submitRole,
       deleteRole,
-      showPermissionDialog,
+      onRoleSelection,
+      onRowClick,
+      selectRole,
       submitPermission
     }
   }
 })
 </script>
+
+<style lang="scss" scoped>
+.role-table {
+  .q-table__top {
+    padding: 0;
+  }
+}
+
+.permission-tree-container {
+  max-height: calc(100vh - 350px);
+  overflow-y: auto;
+}
+
+.permission-tree {
+  .q-tree__node-header {
+    padding: 4px 8px;
+  }
+}
+
+.full-height {
+  height: 100%;
+}
+</style>

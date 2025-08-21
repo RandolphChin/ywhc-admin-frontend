@@ -89,6 +89,11 @@
           :pagination="pagination"
           @request="onRequest"
           binary-state-sort
+          :rows-per-page-options="rowsPerPageOptions"
+          :no-data-label="'暂无数据'"
+          :no-results-label="'未找到匹配的记录'"
+          :loading-label="'加载中...'"
+          :rows-per-page-label="'每页显示:'"
         >
           <template v-slot:body-cell-method="props">
             <q-td :props="props">
@@ -129,6 +134,23 @@
                 <q-tooltip>查看详情</q-tooltip>
               </q-btn>
             </q-td>
+          </template>
+
+          <template v-slot:bottom>
+            <div class="row items-center justify-end full-width" v-if="pagination.rowsNumber > 0">
+              <div class="q-mr-md">
+                共 {{ pagination.rowsNumber }} 条记录
+              </div>
+              <q-pagination
+                v-model="pagination.page"
+                :max="Math.ceil(pagination.rowsNumber / pagination.rowsPerPage)"
+                @update:model-value="onRequest({ pagination })"
+                direction-links
+                boundary-links
+                icon-first="first_page"
+                icon-last="last_page"
+              />
+            </div>
           </template>
         </q-table>
       </q-card-section>
@@ -357,6 +379,8 @@ export default defineComponent({
       { label: 'DELETE', value: 'DELETE' }
     ]
 
+    const rowsPerPageOptions = [5, 10, 20, 50, 100]
+
     const getMethodColor = (method) => {
       const colors = {
         'GET': 'blue',
@@ -413,8 +437,8 @@ export default defineComponent({
         const params = {
           current: page,
           size: rowsPerPage,
+          module: queryForm.value.username || undefined,
           operationDesc: queryForm.value.operationDesc || undefined,
-          operationType: queryForm.value.operation ? getOperationTypeDescription(queryForm.value.operation) : undefined,
           status: undefined
         }
         
@@ -426,7 +450,11 @@ export default defineComponent({
         })
 
         const response = await logApi.getList(params)
-        const { records, total } = response.data.data
+        
+        // MyBatis-Plus IPage structure: { records: [], total: number, size: number, current: number, pages: number }
+        const pageData = response.data.data
+        const records = pageData.records || []
+        const total = pageData.total || 0
 
         logs.value = records
         pagination.value.rowsNumber = total
@@ -448,7 +476,7 @@ export default defineComponent({
     const resetQuery = () => {
       queryForm.value = {
         username: '',
-        operation: '',
+        operationDesc: '',
         method: '',
         startTime: '',
         endTime: ''
@@ -497,6 +525,7 @@ export default defineComponent({
       pagination,
       columns,
       methodOptions,
+      rowsPerPageOptions,
       getMethodColor,
       getTimeColor,
       getOperationTypeDescription,
