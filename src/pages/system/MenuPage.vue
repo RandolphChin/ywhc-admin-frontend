@@ -30,7 +30,7 @@
     <q-card>
       <q-card-section>
         <q-table
-          :rows="menus"
+          :rows="flatMenus"
           :columns="columns"
           row-key="id"
           :loading="loading"
@@ -40,7 +40,17 @@
         >
           <template v-slot:body-cell-title="props">
             <q-td :props="props">
-              <div class="row items-center no-wrap">
+              <div class="row items-center no-wrap" :style="{ paddingLeft: (props.row.level * 20) + 'px' }">
+                <q-btn
+                  v-if="props.row.hasChildren"
+                  flat
+                  dense
+                  size="sm"
+                  :icon="expandedRows.has(props.row.id) ? 'expand_less' : 'expand_more'"
+                  @click="toggleExpand(props.row.id)"
+                  class="q-mr-xs"
+                />
+                <div v-else style="width: 32px;" class="q-mr-xs"></div>
                 <q-icon
                   v-if="props.row.icon"
                   :name="props.row.icon"
@@ -261,6 +271,8 @@ export default defineComponent({
     const menuDialog = ref(false)
     const isEdit = ref(false)
     const menus = ref([])
+    const flatMenus = ref([])
+    const expandedRows = ref(new Set())
     const parentMenuOptions = ref([])
 
     const menuForm = ref({
@@ -358,7 +370,7 @@ export default defineComponent({
     }
 
     const getTypeLabel = (type) => {
-      const labels = { 1: '目录', 2: '菜单', 3: '按钮' }
+      const labels = { 0: '目录', 1: '菜单', 2: '按钮' }
       return labels[type] || '未知'
     }
 
@@ -369,13 +381,63 @@ export default defineComponent({
         const response = await menuApi.getTree()
         menus.value = response.data.data
         
+        // 转换数据格式并构建平铺结构
+        const transformedMenus = transformMenuData(response.data.data)
+        flatMenus.value = buildFlatMenus(transformedMenus)
+        
         // 构建父级菜单选项
-        buildParentMenuOptions(response.data.data)
+        buildParentMenuOptions(transformedMenus)
       } catch (error) {
         console.error('加载菜单列表失败:', error)
       } finally {
         loading.value = false
       }
+    }
+
+    const transformMenuData = (menuList) => {
+      return menuList.map(menu => ({
+        id: menu.id,
+        parentId: menu.parentId,
+        title: menu.menuName,
+        type: menu.menuType,
+        path: menu.path,
+        component: menu.component,
+        permission: menu.permission,
+        icon: menu.icon,
+        sort: menu.sortOrder,
+        status: menu.status,
+        visible: menu.isVisible,
+        remark: menu.remark,
+        children: menu.children ? transformMenuData(menu.children) : [],
+        hasChildren: menu.hasChildren || (menu.children && menu.children.length > 0)
+      }))
+    }
+
+    const buildFlatMenus = (menuList, level = 0) => {
+      const result = []
+      
+      menuList.forEach(menu => {
+        const menuItem = { ...menu, level }
+        result.push(menuItem)
+        
+        if (menu.hasChildren && expandedRows.value.has(menu.id) && menu.children) {
+          result.push(...buildFlatMenus(menu.children, level + 1))
+        }
+      })
+      
+      return result
+    }
+
+    const toggleExpand = (menuId) => {
+      if (expandedRows.value.has(menuId)) {
+        expandedRows.value.delete(menuId)
+      } else {
+        expandedRows.value.add(menuId)
+      }
+      
+      // 重新构建平铺菜单列表
+      const transformedMenus = transformMenuData(menus.value)
+      flatMenus.value = buildFlatMenus(transformedMenus)
     }
 
     const buildParentMenuOptions = (menuList, level = 0) => {
@@ -498,6 +560,8 @@ export default defineComponent({
       menuDialog,
       isEdit,
       menus,
+      flatMenus,
+      expandedRows,
       parentMenuOptions,
       menuForm,
       columns,
@@ -507,6 +571,7 @@ export default defineComponent({
       getTypeColor,
       getTypeLabel,
       loadMenus,
+      toggleExpand,
       showMenuDialog,
       onTypeChange,
       submitMenu,

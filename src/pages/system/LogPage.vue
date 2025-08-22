@@ -107,17 +107,17 @@
           <template v-slot:body-cell-status="props">
             <q-td :props="props">
               <q-badge
-                :color="props.row.status >= 200 && props.row.status < 300 ? 'positive' : 'negative'"
-                :label="props.row.status"
+                :color="props.row.status == 1 ? 'positive' : 'negative'"
+                :label="getStatusLabel(props.row.status)"
               />
             </q-td>
           </template>
 
-          <template v-slot:body-cell-time="props">
+          <template v-slot:body-cell-executionTime="props">
             <q-td :props="props">
               <q-badge
-                :color="getTimeColor(props.row.time)"
-                :label="props.row.time + 'ms'"
+                :color="getTimeColor(props.row.executionTime)"
+                :label="props.row.executionTime + 'ms'"
               />
             </q-td>
           </template>
@@ -299,13 +299,6 @@ export default defineComponent({
 
     const columns = [
       {
-        name: 'id',
-        label: 'ID',
-        field: 'id',
-        align: 'left',
-        sortable: true
-      },
-      {
         name: 'username',
         label: '操作用户',
         field: 'username',
@@ -351,9 +344,9 @@ export default defineComponent({
         align: 'center'
       },
       {
-        name: 'time',
+        name: 'executionTime',
         label: '执行时间',
-        field: 'time',
+        field: 'executionTime',
         align: 'center'
       },
       {
@@ -392,8 +385,8 @@ export default defineComponent({
     }
 
     const getTimeColor = (time) => {
-      if (time < 100) return 'positive'
-      if (time < 500) return 'warning'
+      if (time < 500) return 'positive'
+      if (time < 1000) return 'warning'
       return 'negative'
     }
 
@@ -512,6 +505,12 @@ export default defineComponent({
       })
     }
 
+    const getStatusLabel = (status) => {
+      // 操作状态：0-失败，1-成功
+      const labels = { 0: '失败', 1: '成功' }
+      return labels[status] || '未知'
+    }
+
     onMounted(() => {
       loadLogs()
     })
@@ -534,7 +533,8 @@ export default defineComponent({
       onRequest,
       resetQuery,
       showLogDetail,
-      clearLogs
+      clearLogs,
+      getStatusLabel
     }
   }
 })
