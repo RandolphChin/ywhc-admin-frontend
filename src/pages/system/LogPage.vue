@@ -141,19 +141,18 @@
               <div class="q-mr-md">
                 共 {{ pagination.rowsNumber }} 条记录
               </div>
-              <div class="row items-center q-gutter-md">
+              <div class="row items-center">
                 <div class="row items-center q-gutter-sm" >
-                  <span class="text-body2">每页显示</span>
+                  <span>每页显示</span>
                   <q-select
                     v-model="pagination.rowsPerPage"
                     :options="rowsPerPageOptions"
                     dense
                     outlined
-                    class="compact-select"
-                    style="min-width: 60px"
+                    class="ultra-compact-select"
                     @update:model-value="onRowsPerPageChange"
                   />
-                  <span class="text-body2">条</span>
+                  <span>条</span>
                 </div>
                 <q-pagination
                   v-model="pagination.page"
@@ -545,26 +544,6 @@ pre {
   overflow-y: auto;
 }
 
-.compact-select {
-  :deep(.q-field__control) {
-    min-height: 28px !important;
-    height: 28px !important;
-    padding: 0 8px !important;
-  }
-  
-  :deep(.q-field__native) {
-    min-height: 28px !important;
-    height: 28px !important;
-    padding: 0 !important;
-    line-height: 28px !important;
-  }
-  
-  :deep(.q-field__append) {
-    height: 28px !important;
-    display: flex;
-    align-items: center;
-  }
-}
 
 
 </style>

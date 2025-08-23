@@ -11,4 +11,230 @@ body {
   padding: 16px;
 }
 
+// **********针对 Firefox 浏览器正确显示图标垂直居中 BEGIN*****************
+// ==============================================
+// Material Icons 垂直对齐修复（跨浏览器兼容版本）
+// ==============================================
+
+// 1. 全局 Material Icons 基础修复
+.material-icons {
+  vertical-align: middle !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  // Firefox 特殊处理
+  @supports (-moz-appearance: none) {
+    vertical-align: baseline !important;
+    transform: translateY(0.125em) !important;
+    line-height: 0.9 !important;
+    margin-top: -0.05em !important;
+  }
+}
+
+// 2. Quasar Icon 组件修复
+.q-icon {
+  vertical-align: middle !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  
+  &.material-icons {
+    font-feature-settings: 'liga' 1;
+  }
+  
+  // Firefox 特殊处理
+  @supports (-moz-appearance: none) {
+    vertical-align: baseline !important;
+    transform: translateY(0.125em) !important;
+    line-height: 0.9 !important;
+    margin-top: -0.05em !important;
+  }
+}
+
+// 3. 按钮中的图标修复
+.q-btn {
+  .q-icon,
+  .material-icons {
+    vertical-align: middle !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    // Firefox 特殊处理
+    @supports (-moz-appearance: none) {
+      vertical-align: baseline !important;
+      transform: translateY(0.125em) !important;
+      line-height: 0.9 !important;
+      margin-top: -0.05em !important;
+    }
+  }
+  
+  .q-btn__content {
+    align-items: center !important;
+    
+    // Firefox 按钮内容对齐
+    @supports (-moz-appearance: none) {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+  }
+}
+
+// 4. 分页组件图标修复
+.q-pagination {
+  .q-btn {
+    .q-icon,
+    .material-icons {
+      vertical-align: middle !important;
+      line-height: 1 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      // Firefox 分页图标特殊处理
+      @supports (-moz-appearance: none) {
+        vertical-align: baseline !important;
+        transform: translateY(0.1em) !important;
+        line-height: 0.85 !important;
+        margin-top: -0.03em !important;
+      }
+    }
+  }
+  
+  // direction-links 和 boundary-links 特殊处理
+  .q-btn--direction-link,
+  .q-btn--boundary-link {
+    .q-icon,
+    .material-icons {
+      @supports (-moz-appearance: none) {
+        transform: translateY(0.12em) !important;
+      }
+    }
+  }
+}
+
+// 5. 列表项图标修复
+.q-item {
+  .q-item__section--avatar {
+    .q-icon,
+    .material-icons {
+      vertical-align: middle !important;
+      line-height: 1 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      @supports (-moz-appearance: none) {
+        vertical-align: baseline !important;
+        transform: translateY(0.125em) !important;
+        line-height: 0.9 !important;
+      }
+    }
+  }
+}
+
+// 6. 展开项图标修复
+.q-expansion-item {
+  .q-expansion-item__toggle-icon {
+    .q-icon,
+    .material-icons {
+      vertical-align: middle !important;
+      line-height: 1 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      
+      @supports (-moz-appearance: none) {
+        vertical-align: baseline !important;
+        transform: translateY(0.125em) !important;
+        line-height: 0.9 !important;
+      }
+    }
+  }
+}
+
+// 7. 通用修复 - 所有 Quasar 组件中的图标
+[class*="q-"] {
+  .q-icon,
+  .material-icons {
+    vertical-align: middle !important;
+    line-height: 1 !important;
+    
+    @supports (-moz-appearance: none) {
+      vertical-align: baseline !important;
+      transform: translateY(0.125em) !important;
+      line-height: 0.9 !important;
+      margin-top: -0.05em !important;
+    }
+  }
+}
+
+// 8. 确保所有图标字体都应用相同的修复
+[class*="material-icons"] {
+  vertical-align: middle !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-feature-settings: 'liga' 1;
+  
+  @supports (-moz-appearance: none) {
+    vertical-align: baseline !important;
+    transform: translateY(0.125em) !important;
+    line-height: 0.9 !important;
+    margin-top: -0.05em !important;
+  }
+}
+// **********针对 Firefox 浏览器正确显示图标垂直居中 END*****************
+
+// **********Ultra Compact Select Component BEGIN*****************
+.ultra-compact-select {
+  min-width: 40px !important;
+  max-height: 24px !important;
+  
+  .q-field__control {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 0 6px !important;
+    border-radius: 4px !important;
+  }
+  
+  .q-field__native {
+    min-height: 22px !important;
+    height: 22px !important;
+    padding: 0 !important;
+    line-height: 22px !important;
+    font-size: 12px !important;
+  }
+  
+  .q-field__append {
+    height: 22px !important;
+    display: flex;
+    align-items: center;
+    padding-right: 2px !important;
+    
+    .q-icon {
+      font-size: 16px !important;
+    }
+  }
+  
+  .q-field__outlined {
+    .q-field__control {
+      &:before {
+        border-radius: 4px !important;
+      }
+      
+      &:after {
+        border-radius: 4px !important;
+      }
+    }
+  }
+}
+// **********Ultra Compact Select Component END*****************
+
 // Add your custom styles here
