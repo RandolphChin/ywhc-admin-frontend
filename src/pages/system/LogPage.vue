@@ -45,23 +45,32 @@
         </div>
         
         <div class="row q-gutter-md items-end q-mt-md">
-          <div class="col-12 col-sm-6 col-md-3">
+          <div class="col-12 col-sm-6 col-md-4">
             <q-input
-              v-model="queryForm.startTime"
-              label="开始时间"
-              type="datetime-local"
+              v-model="dateRangeDisplay"
+              label="时间范围"
               outlined
               dense
-            />
-          </div>
-          <div class="col-12 col-sm-6 col-md-3">
-            <q-input
-              v-model="queryForm.endTime"
-              label="结束时间"
-              type="datetime-local"
-              outlined
-              dense
-            />
+              readonly
+              placeholder="请选择时间范围"
+            >
+              <template v-slot:append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                    <q-date
+                      v-model="queryForm.dateRange"
+                      mask="YYYY-MM-DD"
+                      locale="zh-CN"
+                      range
+                    >
+                      <div class="row items-center justify-end">
+                        <q-btn v-close-popup label="关闭" color="primary" flat />
+                      </div>
+                    </q-date>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
           </div>
           <div class="col-12 col-sm-6 col-md-3">
             <q-btn
@@ -280,7 +289,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
 
@@ -299,8 +308,7 @@ const queryForm = ref({
   username: '',
   operationDesc: '',
   method: '',
-  startTime: '',
-  endTime: ''
+  dateRange: null
 })
 
 const pagination = ref({
@@ -388,6 +396,17 @@ const methodOptions = [
 
 const rowsPerPageOptions = [5, 10, 20, 50, 100]
 
+const dateRangeDisplay = computed(() => {
+  if (!queryForm.value.dateRange) return ''
+  if (queryForm.value.dateRange.from && queryForm.value.dateRange.to) {
+    return `${queryForm.value.dateRange.from} ~ ${queryForm.value.dateRange.to}`
+  }
+  if (queryForm.value.dateRange.from) {
+    return queryForm.value.dateRange.from
+  }
+  return ''
+})
+
 const getMethodColor = (method) => {
   const colors = {
     'GET': 'blue',
@@ -446,7 +465,9 @@ const loadLogs = async (props) => {
       size: rowsPerPage,
       module: queryForm.value.username || undefined,
       operationDesc: queryForm.value.operationDesc || undefined,
-      status: undefined
+      status: undefined,
+      startTime: queryForm.value.dateRange?.from || undefined,
+      endTime: queryForm.value.dateRange?.to || undefined
     }
     
     // Remove undefined values to avoid sending empty parameters
@@ -491,8 +512,7 @@ const resetQuery = () => {
     username: '',
     operationDesc: '',
     method: '',
-    startTime: '',
-    endTime: ''
+    dateRange: null
   }
   loadLogs()
 }
