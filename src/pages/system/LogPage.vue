@@ -141,15 +141,30 @@
               <div class="q-mr-md">
                 共 {{ pagination.rowsNumber }} 条记录
               </div>
-              <q-pagination
-                v-model="pagination.page"
-                :max="Math.ceil(pagination.rowsNumber / pagination.rowsPerPage)"
-                @update:model-value="onRequest({ pagination })"
-                direction-links
-                boundary-links
-                icon-first="first_page"
-                icon-last="last_page"
-              />
+              <div class="row items-center q-gutter-md">
+                <div class="row items-center q-gutter-sm" >
+                  <span class="text-body2">每页显示</span>
+                  <q-select
+                    v-model="pagination.rowsPerPage"
+                    :options="rowsPerPageOptions"
+                    dense
+                    outlined
+                    class="compact-select"
+                    style="min-width: 60px"
+                    @update:model-value="onRowsPerPageChange"
+                  />
+                  <span class="text-body2">条</span>
+                </div>
+                <q-pagination
+                  v-model="pagination.page"
+                  :max="Math.ceil(pagination.rowsNumber / pagination.rowsPerPage)"
+                  @update:model-value="onRequest({ pagination })"
+                  direction-links
+                  boundary-links
+                  :max-pages="5"
+          
+                />
+              </div>
             </div>
           </template>
         </q-table>
@@ -466,6 +481,12 @@ const onRequest = (props) => {
   loadLogs(props)
 }
 
+const onRowsPerPageChange = (newRowsPerPage) => {
+  pagination.value.rowsPerPage = newRowsPerPage
+  pagination.value.page = 1 // Reset to first page when changing rows per page
+  loadLogs()
+}
+
 const resetQuery = () => {
   queryForm.value = {
     username: '',
@@ -516,10 +537,34 @@ onMounted(() => {
 })
 </script>
 
-<style lang="sass" scoped>
-pre
-  white-space: pre-wrap
-  word-break: break-all
-  max-height: 200px
-  overflow-y: auto
+<style lang="scss" scoped>
+pre {
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.compact-select {
+  :deep(.q-field__control) {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 8px !important;
+  }
+  
+  :deep(.q-field__native) {
+    min-height: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    line-height: 28px !important;
+  }
+  
+  :deep(.q-field__append) {
+    height: 28px !important;
+    display: flex;
+    align-items: center;
+  }
+}
+
+
 </style>
