@@ -256,28 +256,225 @@
   </q-page>
 </template>
 
-<script>
-import { defineComponent, ref, onMounted } from 'vue'
+<script setup>
+import { ref, onMounted } from 'vue'
 import { menuApi } from 'src/api'
 import { useQuasar } from 'quasar'
 
-export default defineComponent({
-  name: 'MenuPage',
+defineOptions({
+  name: 'MenuPage'
+})
 
-  setup() {
-    const $q = useQuasar()
+const $q = useQuasar()
 
-    const loading = ref(false)
-    const menuDialog = ref(false)
-    const isEdit = ref(false)
-    const menus = ref([])
-    const flatMenus = ref([])
-    const expandedRows = ref(new Set())
-    const parentMenuOptions = ref([])
+const loading = ref(false)
+const menuDialog = ref(false)
+const isEdit = ref(false)
+const menus = ref([])
+const flatMenus = ref([])
+const expandedRows = ref(new Set())
+const parentMenuOptions = ref([])
 
-    const menuForm = ref({
+const menuForm = ref({
+  id: null,
+  parentId: null,
+  type: 1,
+  title: '',
+  name: '',
+  path: '',
+  component: '',
+  permission: '',
+  icon: '',
+  sort: 0,
+  status: 1,
+  visible: 1,
+  remark: ''
+})
+
+const columns = [
+  {
+    name: 'title',
+    label: '菜单名称',
+    field: 'title',
+    align: 'left'
+  },
+  {
+    name: 'type',
+    label: '类型',
+    field: 'type',
+    align: 'center'
+  },
+  {
+    name: 'path',
+    label: '路由路径',
+    field: 'path',
+    align: 'left'
+  },
+  {
+    name: 'component',
+    label: '组件路径',
+    field: 'component',
+    align: 'left'
+  },
+  {
+    name: 'permission',
+    label: '权限标识',
+    field: 'permission',
+    align: 'left'
+  },
+  {
+    name: 'sort',
+    label: '排序',
+    field: 'sort',
+    align: 'center'
+  },
+  {
+    name: 'status',
+    label: '状态',
+    field: 'status',
+    align: 'center'
+  },
+  {
+    name: 'visible',
+    label: '显示',
+    field: 'visible',
+    align: 'center'
+  },
+  {
+    name: 'actions',
+    label: '操作',
+    field: 'actions',
+    align: 'center'
+  }
+]
+
+const typeOptions = [
+  { label: '目录', value: 1 },
+  { label: '菜单', value: 2 },
+  { label: '按钮', value: 3 }
+]
+
+const statusOptions = [
+  { label: '正常', value: 1 },
+  { label: '禁用', value: 0 }
+]
+
+const visibleOptions = [
+  { label: '显示', value: 1 },
+  { label: '隐藏', value: 0 }
+]
+
+const getTypeColor = (type) => {
+  const colors = { 1: 'primary', 2: 'secondary', 3: 'accent' }
+  return colors[type] || 'grey'
+}
+
+const getTypeLabel = (type) => {
+  const labels = { 0: '目录', 1: '菜单', 2: '按钮' }
+  return labels[type] || '未知'
+}
+
+const loadMenus = async () => {
+  loading.value = true
+  
+  try {
+    const response = await menuApi.getTree()
+    menus.value = response.data.data
+    
+    // 转换数据格式并构建平铺结构
+    const transformedMenus = transformMenuData(response.data.data)
+    flatMenus.value = buildFlatMenus(transformedMenus)
+    
+    // 构建父级菜单选项
+    buildParentMenuOptions(transformedMenus)
+  } catch (error) {
+    console.error('加载菜单列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const transformMenuData = (menuList) => {
+  return menuList.map(menu => ({
+    id: menu.id,
+    parentId: menu.parentId,
+    title: menu.menuName,
+    type: menu.menuType,
+    path: menu.path,
+    component: menu.component,
+    permission: menu.permission,
+    icon: menu.icon,
+    sort: menu.sortOrder,
+    status: menu.status,
+    visible: menu.isVisible,
+    remark: menu.remark,
+    children: menu.children ? transformMenuData(menu.children) : [],
+    hasChildren: menu.hasChildren || (menu.children && menu.children.length > 0)
+  }))
+}
+
+const buildFlatMenus = (menuList, level = 0) => {
+  const result = []
+  
+  menuList.forEach(menu => {
+    const menuItem = { ...menu, level }
+    result.push(menuItem)
+    
+    if (menu.hasChildren && expandedRows.value.has(menu.id) && menu.children) {
+      result.push(...buildFlatMenus(menu.children, level + 1))
+    }
+  })
+  
+  return result
+}
+
+const toggleExpand = (menuId) => {
+  if (expandedRows.value.has(menuId)) {
+    expandedRows.value.delete(menuId)
+  } else {
+    expandedRows.value.add(menuId)
+  }
+  
+  // 重新构建平铺菜单列表
+  const transformedMenus = transformMenuData(menus.value)
+  flatMenus.value = buildFlatMenus(transformedMenus)
+}
+
+const buildParentMenuOptions = (menuList, level = 0) => {
+  const options = []
+  
+  menuList.forEach(menu => {
+    if (menu.type !== 3) { // 按钮不能作为父级菜单
+      options.push({
+        label: '　'.repeat(level) + menu.title,
+        value: menu.id
+      })
+      
+      if (menu.children && menu.children.length > 0) {
+        options.push(...buildParentMenuOptions(menu.children, level + 1))
+      }
+    }
+  })
+  
+  if (level === 0) {
+    // 只在顶层调用时设置 parentMenuOptions
+    parentMenuOptions.value = [
+      { label: '顶级菜单', value: null },
+      ...options
+    ]
+  }
+  
+  return options
+}
+
+const showMenuDialog = (menu = null, parent = null) => {
+  isEdit.value = !!menu
+  if (menu) {
+    menuForm.value = { ...menu }
+  } else {
+    menuForm.value = {
       id: null,
-      parentId: null,
+      parentId: parent?.id || null,
       type: 1,
       title: '',
       name: '',
@@ -289,294 +486,72 @@ export default defineComponent({
       status: 1,
       visible: 1,
       remark: ''
-    })
-
-    const columns = [
-      {
-        name: 'title',
-        label: '菜单名称',
-        field: 'title',
-        align: 'left'
-      },
-      {
-        name: 'type',
-        label: '类型',
-        field: 'type',
-        align: 'center'
-      },
-      {
-        name: 'path',
-        label: '路由路径',
-        field: 'path',
-        align: 'left'
-      },
-      {
-        name: 'component',
-        label: '组件路径',
-        field: 'component',
-        align: 'left'
-      },
-      {
-        name: 'permission',
-        label: '权限标识',
-        field: 'permission',
-        align: 'left'
-      },
-      {
-        name: 'sort',
-        label: '排序',
-        field: 'sort',
-        align: 'center'
-      },
-      {
-        name: 'status',
-        label: '状态',
-        field: 'status',
-        align: 'center'
-      },
-      {
-        name: 'visible',
-        label: '显示',
-        field: 'visible',
-        align: 'center'
-      },
-      {
-        name: 'actions',
-        label: '操作',
-        field: 'actions',
-        align: 'center'
-      }
-    ]
-
-    const typeOptions = [
-      { label: '目录', value: 1 },
-      { label: '菜单', value: 2 },
-      { label: '按钮', value: 3 }
-    ]
-
-    const statusOptions = [
-      { label: '正常', value: 1 },
-      { label: '禁用', value: 0 }
-    ]
-
-    const visibleOptions = [
-      { label: '显示', value: 1 },
-      { label: '隐藏', value: 0 }
-    ]
-
-    const getTypeColor = (type) => {
-      const colors = { 1: 'primary', 2: 'secondary', 3: 'accent' }
-      return colors[type] || 'grey'
-    }
-
-    const getTypeLabel = (type) => {
-      const labels = { 0: '目录', 1: '菜单', 2: '按钮' }
-      return labels[type] || '未知'
-    }
-
-    const loadMenus = async () => {
-      loading.value = true
-      
-      try {
-        const response = await menuApi.getTree()
-        menus.value = response.data.data
-        
-        // 转换数据格式并构建平铺结构
-        const transformedMenus = transformMenuData(response.data.data)
-        flatMenus.value = buildFlatMenus(transformedMenus)
-        
-        // 构建父级菜单选项
-        buildParentMenuOptions(transformedMenus)
-      } catch (error) {
-        console.error('加载菜单列表失败:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-
-    const transformMenuData = (menuList) => {
-      return menuList.map(menu => ({
-        id: menu.id,
-        parentId: menu.parentId,
-        title: menu.menuName,
-        type: menu.menuType,
-        path: menu.path,
-        component: menu.component,
-        permission: menu.permission,
-        icon: menu.icon,
-        sort: menu.sortOrder,
-        status: menu.status,
-        visible: menu.isVisible,
-        remark: menu.remark,
-        children: menu.children ? transformMenuData(menu.children) : [],
-        hasChildren: menu.hasChildren || (menu.children && menu.children.length > 0)
-      }))
-    }
-
-    const buildFlatMenus = (menuList, level = 0) => {
-      const result = []
-      
-      menuList.forEach(menu => {
-        const menuItem = { ...menu, level }
-        result.push(menuItem)
-        
-        if (menu.hasChildren && expandedRows.value.has(menu.id) && menu.children) {
-          result.push(...buildFlatMenus(menu.children, level + 1))
-        }
-      })
-      
-      return result
-    }
-
-    const toggleExpand = (menuId) => {
-      if (expandedRows.value.has(menuId)) {
-        expandedRows.value.delete(menuId)
-      } else {
-        expandedRows.value.add(menuId)
-      }
-      
-      // 重新构建平铺菜单列表
-      const transformedMenus = transformMenuData(menus.value)
-      flatMenus.value = buildFlatMenus(transformedMenus)
-    }
-
-    const buildParentMenuOptions = (menuList, level = 0) => {
-      const options = []
-      
-      menuList.forEach(menu => {
-        if (menu.type !== 3) { // 按钮不能作为父级菜单
-          options.push({
-            label: '　'.repeat(level) + menu.title,
-            value: menu.id
-          })
-          
-          if (menu.children && menu.children.length > 0) {
-            options.push(...buildParentMenuOptions(menu.children, level + 1))
-          }
-        }
-      })
-      
-      if (level === 0) {
-        // 只在顶层调用时设置 parentMenuOptions
-        parentMenuOptions.value = [
-          { label: '顶级菜单', value: null },
-          ...options
-        ]
-      }
-      
-      return options
-    }
-
-    const showMenuDialog = (menu = null, parent = null) => {
-      isEdit.value = !!menu
-      if (menu) {
-        menuForm.value = { ...menu }
-      } else {
-        menuForm.value = {
-          id: null,
-          parentId: parent?.id || null,
-          type: 1,
-          title: '',
-          name: '',
-          path: '',
-          component: '',
-          permission: '',
-          icon: '',
-          sort: 0,
-          status: 1,
-          visible: 1,
-          remark: ''
-        }
-      }
-      menuDialog.value = true
-    }
-
-    const onTypeChange = (type) => {
-      // 根据类型清空相关字段
-      if (type === 3) { // 按钮
-        menuForm.value.path = ''
-        menuForm.value.component = ''
-        menuForm.value.visible = 1
-      } else {
-        menuForm.value.permission = ''
-      }
-    }
-
-    const submitMenu = async () => {
-      try {
-        if (isEdit.value) {
-          await menuApi.update(menuForm.value.id, menuForm.value)
-          $q.notify({
-            type: 'positive',
-            message: '菜单更新成功'
-          })
-        } else {
-          await menuApi.create(menuForm.value)
-          $q.notify({
-            type: 'positive',
-            message: '菜单创建成功'
-          })
-        }
-        
-        menuDialog.value = false
-        loadMenus()
-      } catch (error) {
-        $q.notify({
-          type: 'negative',
-          message: error.response?.data?.message || '操作失败'
-        })
-      }
-    }
-
-    const deleteMenu = (menu) => {
-      $q.dialog({
-        title: '确认删除',
-        message: `确定要删除菜单 "${menu.title}" 吗？`,
-        cancel: true,
-        persistent: true
-      }).onOk(async () => {
-        try {
-          await menuApi.delete(menu.id)
-          $q.notify({
-            type: 'positive',
-            message: '菜单删除成功'
-          })
-          loadMenus()
-        } catch (error) {
-          $q.notify({
-            type: 'negative',
-            message: error.response?.data?.message || '删除失败'
-          })
-        }
-      })
-    }
-
-    onMounted(() => {
-      loadMenus()
-    })
-
-    return {
-      loading,
-      menuDialog,
-      isEdit,
-      menus,
-      flatMenus,
-      expandedRows,
-      parentMenuOptions,
-      menuForm,
-      columns,
-      typeOptions,
-      statusOptions,
-      visibleOptions,
-      getTypeColor,
-      getTypeLabel,
-      loadMenus,
-      toggleExpand,
-      showMenuDialog,
-      onTypeChange,
-      submitMenu,
-      deleteMenu
     }
   }
+  menuDialog.value = true
+}
+
+const onTypeChange = (type) => {
+  // 根据类型清空相关字段
+  if (type === 3) { // 按钮
+    menuForm.value.path = ''
+    menuForm.value.component = ''
+    menuForm.value.visible = 1
+  } else {
+    menuForm.value.permission = ''
+  }
+}
+
+const submitMenu = async () => {
+  try {
+    if (isEdit.value) {
+      await menuApi.update(menuForm.value.id, menuForm.value)
+      $q.notify({
+        type: 'positive',
+        message: '菜单更新成功'
+      })
+    } else {
+      await menuApi.create(menuForm.value)
+      $q.notify({
+        type: 'positive',
+        message: '菜单创建成功'
+      })
+    }
+    
+    menuDialog.value = false
+    loadMenus()
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.message || '操作失败'
+    })
+  }
+}
+
+const deleteMenu = (menu) => {
+  $q.dialog({
+    title: '确认删除',
+    message: `确定要删除菜单 "${menu.title}" 吗？`,
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await menuApi.delete(menu.id)
+      $q.notify({
+        type: 'positive',
+        message: '菜单删除成功'
+      })
+      loadMenus()
+    } catch (error) {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || '删除失败'
+      })
+    }
+  })
+}
+
+onMounted(() => {
+  loadMenus()
 })
 </script>

@@ -265,278 +265,254 @@
   </q-page>
 </template>
 
-<script>
-import { defineComponent, ref, onMounted } from 'vue'
+<script setup>
+import { ref, onMounted } from 'vue'
 import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
 
-export default defineComponent({
-  name: 'LogPage',
+defineOptions({
+  name: 'LogPage'
+})
 
-  setup() {
-    const $q = useQuasar()
+const $q = useQuasar()
 
-    const loading = ref(false)
-    const logDetailDialog = ref(false)
-    const logs = ref([])
-    const currentLog = ref(null)
+const loading = ref(false)
+const logDetailDialog = ref(false)
+const logs = ref([])
+const currentLog = ref(null)
 
-    const queryForm = ref({
-      username: '',
-      operationDesc: '',
-      method: '',
-      startTime: '',
-      endTime: ''
+const queryForm = ref({
+  username: '',
+  operationDesc: '',
+  method: '',
+  startTime: '',
+  endTime: ''
+})
+
+const pagination = ref({
+  sortBy: 'createTime',
+  descending: true,
+  page: 1,
+  rowsPerPage: 10,
+  rowsNumber: 0
+})
+
+const columns = [
+  {
+    name: 'username',
+    label: '操作用户',
+    field: 'username',
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'operationDesc',
+    label: '操作描述',
+    field: 'operationDesc',
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'operationType',
+    label: '操作类型',
+    field: 'operationType',
+    align: 'left',
+    format: (val) => getOperationTypeDescription(val)
+  },
+  {
+    name: 'requestMethod',
+    label: '请求方法',
+    field: 'requestMethod',
+    align: 'center'
+  },
+  {
+    name: 'requestUrl',
+    label: '请求URI',
+    field: 'requestUrl',
+    align: 'left'
+  },
+  {
+    name: 'ipAddress',
+    label: 'IP地址',
+    field: 'ipAddress',
+    align: 'left'
+  },
+  {
+    name: 'status',
+    label: '状态码',
+    field: 'status',
+    align: 'center'
+  },
+  {
+    name: 'executionTime',
+    label: '执行时间',
+    field: 'executionTime',
+    align: 'center'
+  },
+  {
+    name: 'createTime',
+    label: '操作时间',
+    field: 'createTime',
+    align: 'center',
+    format: (val) => new Date(val).toLocaleString(),
+    sortable: true
+  },
+  {
+    name: 'actions',
+    label: '操作',
+    field: 'actions',
+    align: 'center'
+  }
+]
+
+const methodOptions = [
+  { label: 'GET', value: 'GET' },
+  { label: 'POST', value: 'POST' },
+  { label: 'PUT', value: 'PUT' },
+  { label: 'DELETE', value: 'DELETE' }
+]
+
+const rowsPerPageOptions = [5, 10, 20, 50, 100]
+
+const getMethodColor = (method) => {
+  const colors = {
+    'GET': 'blue',
+    'POST': 'green',
+    'PUT': 'orange',
+    'DELETE': 'red'
+  }
+  return colors[method] || 'grey'
+}
+
+const getTimeColor = (time) => {
+  if (time < 500) return 'positive'
+  if (time < 1000) return 'warning'
+  return 'negative'
+}
+
+const getOperationTypeFromMethod = (method) => {
+  const typeMap = {
+    'GET': 1,
+    'POST': 2,
+    'PUT': 3,
+    'DELETE': 4
+  }
+  return typeMap[method]
+}
+
+const getOperationTypeDescription = (code) => {
+  const typeMap = {
+    1: '新增',
+    2: '修改',
+    3: '删除',
+    4: '查询',
+    5: '登录',
+    6: '登出'
+  }
+  return typeMap[code] || '未知'
+}
+
+const formatJson = (jsonStr) => {
+  try {
+    const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
+    return JSON.stringify(obj, null, 2)
+  } catch (error) {
+    return jsonStr
+  }
+}
+
+const loadLogs = async (props) => {
+  loading.value = true
+  
+  try {
+    const { page, rowsPerPage, sortBy, descending } = props?.pagination || pagination.value
+    
+    const params = {
+      current: page,
+      size: rowsPerPage,
+      module: queryForm.value.username || undefined,
+      operationDesc: queryForm.value.operationDesc || undefined,
+      status: undefined
+    }
+    
+    // Remove undefined values to avoid sending empty parameters
+    Object.keys(params).forEach(key => {
+      if (params[key] === undefined || params[key] === '') {
+        delete params[key]
+      }
     })
 
-    const pagination = ref({
-      sortBy: 'createTime',
-      descending: true,
-      page: 1,
-      rowsPerPage: 10,
-      rowsNumber: 0
-    })
+    const response = await logApi.getList(params)
+    
+    // MyBatis-Plus IPage structure: { records: [], total: number, size: number, current: number, pages: number }
+    const pageData = response.data.data
+    const records = pageData.records || []
+    const total = pageData.total || 0
 
-    const columns = [
-      {
-        name: 'username',
-        label: '操作用户',
-        field: 'username',
-        align: 'left',
-        sortable: true
-      },
-      {
-        name: 'operationDesc',
-        label: '操作描述',
-        field: 'operationDesc',
-        align: 'left',
-        sortable: true
-      },
-      {
-        name: 'operationType',
-        label: '操作类型',
-        field: 'operationType',
-        align: 'left',
-        format: (val) => getOperationTypeDescription(val)
-      },
-      {
-        name: 'requestMethod',
-        label: '请求方法',
-        field: 'requestMethod',
-        align: 'center'
-      },
-      {
-        name: 'requestUrl',
-        label: '请求URI',
-        field: 'requestUrl',
-        align: 'left'
-      },
-      {
-        name: 'ipAddress',
-        label: 'IP地址',
-        field: 'ipAddress',
-        align: 'left'
-      },
-      {
-        name: 'status',
-        label: '状态码',
-        field: 'status',
-        align: 'center'
-      },
-      {
-        name: 'executionTime',
-        label: '执行时间',
-        field: 'executionTime',
-        align: 'center'
-      },
-      {
-        name: 'createTime',
-        label: '操作时间',
-        field: 'createTime',
-        align: 'center',
-        format: (val) => new Date(val).toLocaleString(),
-        sortable: true
-      },
-      {
-        name: 'actions',
-        label: '操作',
-        field: 'actions',
-        align: 'center'
-      }
-    ]
+    logs.value = records
+    pagination.value.rowsNumber = total
+    pagination.value.page = page
+    pagination.value.rowsPerPage = rowsPerPage
+    pagination.value.sortBy = sortBy
+    pagination.value.descending = descending
+  } catch (error) {
+    console.error('加载日志列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
 
-    const methodOptions = [
-      { label: 'GET', value: 'GET' },
-      { label: 'POST', value: 'POST' },
-      { label: 'PUT', value: 'PUT' },
-      { label: 'DELETE', value: 'DELETE' }
-    ]
+const onRequest = (props) => {
+  loadLogs(props)
+}
 
-    const rowsPerPageOptions = [5, 10, 20, 50, 100]
+const resetQuery = () => {
+  queryForm.value = {
+    username: '',
+    operationDesc: '',
+    method: '',
+    startTime: '',
+    endTime: ''
+  }
+  loadLogs()
+}
 
-    const getMethodColor = (method) => {
-      const colors = {
-        'GET': 'blue',
-        'POST': 'green',
-        'PUT': 'orange',
-        'DELETE': 'red'
-      }
-      return colors[method] || 'grey'
-    }
+const showLogDetail = (log) => {
+  currentLog.value = log
+  logDetailDialog.value = true
+}
 
-    const getTimeColor = (time) => {
-      if (time < 500) return 'positive'
-      if (time < 1000) return 'warning'
-      return 'negative'
-    }
-
-    const getOperationTypeFromMethod = (method) => {
-      const typeMap = {
-        'GET': 1,
-        'POST': 2,
-        'PUT': 3,
-        'DELETE': 4
-      }
-      return typeMap[method]
-    }
-
-    const getOperationTypeDescription = (code) => {
-      const typeMap = {
-        1: '新增',
-        2: '修改',
-        3: '删除',
-        4: '查询',
-        5: '登录',
-        6: '登出'
-      }
-      return typeMap[code] || '未知'
-    }
-
-    const formatJson = (jsonStr) => {
-      try {
-        const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
-        return JSON.stringify(obj, null, 2)
-      } catch (error) {
-        return jsonStr
-      }
-    }
-
-    const loadLogs = async (props) => {
-      loading.value = true
-      
-      try {
-        const { page, rowsPerPage, sortBy, descending } = props?.pagination || pagination.value
-        
-        const params = {
-          current: page,
-          size: rowsPerPage,
-          module: queryForm.value.username || undefined,
-          operationDesc: queryForm.value.operationDesc || undefined,
-          status: undefined
-        }
-        
-        // Remove undefined values to avoid sending empty parameters
-        Object.keys(params).forEach(key => {
-          if (params[key] === undefined || params[key] === '') {
-            delete params[key]
-          }
-        })
-
-        const response = await logApi.getList(params)
-        
-        // MyBatis-Plus IPage structure: { records: [], total: number, size: number, current: number, pages: number }
-        const pageData = response.data.data
-        const records = pageData.records || []
-        const total = pageData.total || 0
-
-        logs.value = records
-        pagination.value.rowsNumber = total
-        pagination.value.page = page
-        pagination.value.rowsPerPage = rowsPerPage
-        pagination.value.sortBy = sortBy
-        pagination.value.descending = descending
-      } catch (error) {
-        console.error('加载日志列表失败:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-
-    const onRequest = (props) => {
-      loadLogs(props)
-    }
-
-    const resetQuery = () => {
-      queryForm.value = {
-        username: '',
-        operationDesc: '',
-        method: '',
-        startTime: '',
-        endTime: ''
-      }
+const clearLogs = () => {
+  $q.dialog({
+    title: '确认清空',
+    message: '确定要清空所有操作日志吗？此操作不可恢复！',
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await logApi.clear()
+      $q.notify({
+        type: 'positive',
+        message: '日志清空成功'
+      })
       loadLogs()
-    }
-
-    const showLogDetail = (log) => {
-      currentLog.value = log
-      logDetailDialog.value = true
-    }
-
-    const clearLogs = () => {
-      $q.dialog({
-        title: '确认清空',
-        message: '确定要清空所有操作日志吗？此操作不可恢复！',
-        cancel: true,
-        persistent: true
-      }).onOk(async () => {
-        try {
-          await logApi.clear()
-          $q.notify({
-            type: 'positive',
-            message: '日志清空成功'
-          })
-          loadLogs()
-        } catch (error) {
-          $q.notify({
-            type: 'negative',
-            message: error.response?.data?.message || '清空失败'
-          })
-        }
+    } catch (error) {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || '清空失败'
       })
     }
+  })
+}
 
-    const getStatusLabel = (status) => {
-      // 操作状态：0-失败，1-成功
-      const labels = { 0: '失败', 1: '成功' }
-      return labels[status] || '未知'
-    }
+const getStatusLabel = (status) => {
+  // 操作状态：0-失败，1-成功
+  const labels = { 0: '失败', 1: '成功' }
+  return labels[status] || '未知'
+}
 
-    onMounted(() => {
-      loadLogs()
-    })
-
-    return {
-      loading,
-      logDetailDialog,
-      logs,
-      currentLog,
-      queryForm,
-      pagination,
-      columns,
-      methodOptions,
-      rowsPerPageOptions,
-      getMethodColor,
-      getTimeColor,
-      getOperationTypeDescription,
-      formatJson,
-      loadLogs,
-      onRequest,
-      resetQuery,
-      showLogDetail,
-      clearLogs,
-      getStatusLabel
-    }
-  }
+onMounted(() => {
+  loadLogs()
 })
 </script>
 

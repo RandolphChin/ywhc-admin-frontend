@@ -213,318 +213,290 @@
   </q-page>
 </template>
 
-<script>
-import { defineComponent, ref, onMounted } from 'vue'
+<script setup>
+import { ref, onMounted } from 'vue'
 import { roleApi, menuApi } from 'src/api'
 import { useQuasar } from 'quasar'
 
-export default defineComponent({
-  name: 'RolePage',
+defineOptions({
+  name: 'RolePage'
+})
 
-  setup() {
-    const $q = useQuasar()
+const $q = useQuasar()
 
-    const loading = ref(false)
-    const roleDialog = ref(false)
-    const isEdit = ref(false)
-    const roles = ref([])
-    const menuTree = ref([])
-    const checkedMenus = ref([])
-    const selectedRole = ref(null)
-    const expandedNodes = ref([])
+const loading = ref(false)
+const roleDialog = ref(false)
+const isEdit = ref(false)
+const roles = ref([])
+const menuTree = ref([])
+const checkedMenus = ref([])
+const selectedRole = ref(null)
+const expandedNodes = ref([])
 
-    const queryForm = ref({
-      name: '',
-      code: '',
-      status: null
+const queryForm = ref({
+  name: '',
+  code: '',
+  status: null
+})
+
+const roleForm = ref({
+  id: null,
+  name: '',
+  code: '',
+  status: 1,
+  remark: ''
+})
+
+const pagination = ref({
+  sortBy: 'id',
+  descending: false,
+  page: 1,
+  rowsPerPage: 10,
+  rowsNumber: 0
+})
+
+const columns = [
+  {
+    name: 'id',
+    label: 'ID',
+    field: 'id',
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'name',
+    label: '角色名称',
+    field: 'name',
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'code',
+    label: '角色编码',
+    field: 'code',
+    align: 'left',
+    sortable: true
+  },
+  {
+    name: 'status',
+    label: '状态',
+    field: 'status',
+    align: 'center'
+  },
+  {
+    name: 'remark',
+    label: '备注',
+    field: 'remark',
+    align: 'left'
+  },
+  {
+    name: 'createTime',
+    label: '创建时间',
+    field: 'createTime',
+    align: 'center',
+    format: (val) => new Date(val).toLocaleString()
+  },
+  {
+    name: 'actions',
+    label: '操作',
+    field: 'actions',
+    align: 'center'
+  }
+]
+
+const statusOptions = [
+  { label: '正常', value: 1 },
+  { label: '禁用', value: 0 }
+]
+
+const loadRoles = async (props) => {
+  loading.value = true
+  
+  try {
+    const { page, rowsPerPage, sortBy, descending } = props?.pagination || pagination.value
+    
+    const params = {
+      page: page,
+      size: rowsPerPage,
+      sortBy: sortBy,
+      sortOrder: descending ? 'desc' : 'asc',
+      ...queryForm.value
+    }
+
+    const response = await roleApi.getList(params)
+    const { records, total } = response.data.data
+
+    roles.value = records
+    pagination.value.rowsNumber = total
+    pagination.value.page = page
+    pagination.value.rowsPerPage = rowsPerPage
+    pagination.value.sortBy = sortBy
+    pagination.value.descending = descending
+    
+    // 默认选择第一个角色
+    if (records.length > 0 && !selectedRole.value) {
+      await selectRole(records[0])
+    }
+  } catch (error) {
+    console.error('加载角色列表失败:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+const loadMenuTree = async () => {
+  try {
+    const response = await menuApi.getTree()
+    menuTree.value = response.data.data
+    // 默认展开所有节点
+    expandAllNodes(menuTree.value)
+  } catch (error) {
+    console.error('加载菜单树失败:', error)
+  }
+}
+
+const expandAllNodes = (nodes) => {
+  const expanded = []
+  const traverse = (nodeList) => {
+    nodeList.forEach(node => {
+      expanded.push(node.id)
+      if (node.children && node.children.length > 0) {
+        traverse(node.children)
+      }
     })
+  }
+  traverse(nodes)
+  expandedNodes.value = expanded
+}
 
-    const roleForm = ref({
+const onRequest = (props) => {
+  loadRoles(props)
+}
+
+const resetQuery = () => {
+  queryForm.value = {
+    name: '',
+    code: '',
+    status: null
+  }
+  loadRoles()
+}
+
+const showRoleDialog = (role = null) => {
+  isEdit.value = !!role
+  if (role) {
+    roleForm.value = { ...role }
+  } else {
+    roleForm.value = {
       id: null,
       name: '',
       code: '',
       status: 1,
       remark: ''
-    })
-
-    const pagination = ref({
-      sortBy: 'id',
-      descending: false,
-      page: 1,
-      rowsPerPage: 10,
-      rowsNumber: 0
-    })
-
-    const columns = [
-      {
-        name: 'id',
-        label: 'ID',
-        field: 'id',
-        align: 'left',
-        sortable: true
-      },
-      {
-        name: 'name',
-        label: '角色名称',
-        field: 'name',
-        align: 'left',
-        sortable: true
-      },
-      {
-        name: 'code',
-        label: '角色编码',
-        field: 'code',
-        align: 'left',
-        sortable: true
-      },
-      {
-        name: 'status',
-        label: '状态',
-        field: 'status',
-        align: 'center'
-      },
-      {
-        name: 'remark',
-        label: '备注',
-        field: 'remark',
-        align: 'left'
-      },
-      {
-        name: 'createTime',
-        label: '创建时间',
-        field: 'createTime',
-        align: 'center',
-        format: (val) => new Date(val).toLocaleString()
-      },
-      {
-        name: 'actions',
-        label: '操作',
-        field: 'actions',
-        align: 'center'
-      }
-    ]
-
-    const statusOptions = [
-      { label: '正常', value: 1 },
-      { label: '禁用', value: 0 }
-    ]
-
-    const loadRoles = async (props) => {
-      loading.value = true
-      
-      try {
-        const { page, rowsPerPage, sortBy, descending } = props?.pagination || pagination.value
-        
-        const params = {
-          page: page,
-          size: rowsPerPage,
-          sortBy: sortBy,
-          sortOrder: descending ? 'desc' : 'asc',
-          ...queryForm.value
-        }
-
-        const response = await roleApi.getList(params)
-        const { records, total } = response.data.data
-
-        roles.value = records
-        pagination.value.rowsNumber = total
-        pagination.value.page = page
-        pagination.value.rowsPerPage = rowsPerPage
-        pagination.value.sortBy = sortBy
-        pagination.value.descending = descending
-        
-        // 默认选择第一个角色
-        if (records.length > 0 && !selectedRole.value) {
-          await selectRole(records[0])
-        }
-      } catch (error) {
-        console.error('加载角色列表失败:', error)
-      } finally {
-        loading.value = false
-      }
-    }
-
-    const loadMenuTree = async () => {
-      try {
-        const response = await menuApi.getTree()
-        menuTree.value = response.data.data
-        // 默认展开所有节点
-        expandAllNodes(menuTree.value)
-      } catch (error) {
-        console.error('加载菜单树失败:', error)
-      }
-    }
-
-    const expandAllNodes = (nodes) => {
-      const expanded = []
-      const traverse = (nodeList) => {
-        nodeList.forEach(node => {
-          expanded.push(node.id)
-          if (node.children && node.children.length > 0) {
-            traverse(node.children)
-          }
-        })
-      }
-      traverse(nodes)
-      expandedNodes.value = expanded
-    }
-
-    const onRequest = (props) => {
-      loadRoles(props)
-    }
-
-    const resetQuery = () => {
-      queryForm.value = {
-        name: '',
-        code: '',
-        status: null
-      }
-      loadRoles()
-    }
-
-    const showRoleDialog = (role = null) => {
-      isEdit.value = !!role
-      if (role) {
-        roleForm.value = { ...role }
-      } else {
-        roleForm.value = {
-          id: null,
-          name: '',
-          code: '',
-          status: 1,
-          remark: ''
-        }
-      }
-      roleDialog.value = true
-    }
-
-    const submitRole = async () => {
-      try {
-        if (isEdit.value) {
-          await roleApi.update(roleForm.value.id, roleForm.value)
-          $q.notify({
-            type: 'positive',
-            message: '角色更新成功'
-          })
-        } else {
-          await roleApi.create(roleForm.value)
-          $q.notify({
-            type: 'positive',
-            message: '角色创建成功'
-          })
-        }
-        
-        roleDialog.value = false
-        loadRoles()
-      } catch (error) {
-        $q.notify({
-          type: 'negative',
-          message: error.response?.data?.message || '操作失败'
-        })
-      }
-    }
-
-    const deleteRole = (role) => {
-      $q.dialog({
-        title: '确认删除',
-        message: `确定要删除角色 "${role.name}" 吗？`,
-        cancel: true,
-        persistent: true
-      }).onOk(async () => {
-        try {
-          await roleApi.delete(role.id)
-          $q.notify({
-            type: 'positive',
-            message: '角色删除成功'
-          })
-          loadRoles()
-        } catch (error) {
-          $q.notify({
-            type: 'negative',
-            message: error.response?.data?.message || '删除失败'
-          })
-        }
-      })
-    }
-
-    const onRoleSelection = ({ added, removed }) => {
-      if (added.length > 0) {
-        selectRole(added[0])
-      } else if (removed.length > 0 && added.length === 0) {
-        selectedRole.value = null
-        checkedMenus.value = []
-      }
-    }
-
-    const onRowClick = (evt, row) => {
-      selectRole(row)
-    }
-
-    const selectRole = async (role) => {
-      selectedRole.value = role
-      try {
-        const roleMenusResponse = await roleApi.getMenus(role.id)
-        checkedMenus.value = roleMenusResponse.data.data
-      } catch (error) {
-        console.error('加载角色权限失败:', error)
-        checkedMenus.value = []
-      }
-    }
-
-    const submitPermission = async () => {
-      if (!selectedRole.value) {
-        $q.notify({
-          type: 'warning',
-          message: '请先选择一个角色'
-        })
-        return
-      }
-      
-      try {
-        await roleApi.assignMenus(selectedRole.value.id, checkedMenus.value)
-        $q.notify({
-          type: 'positive',
-          message: '权限分配成功'
-        })
-      } catch (error) {
-        $q.notify({
-          type: 'negative',
-          message: error.response?.data?.message || '权限分配失败'
-        })
-      }
-    }
-
-    onMounted(() => {
-      loadRoles()
-      loadMenuTree()
-    })
-
-    return {
-      loading,
-      roleDialog,
-      isEdit,
-      roles,
-      menuTree,
-      checkedMenus,
-      selectedRole,
-      expandedNodes,
-      queryForm,
-      roleForm,
-      pagination,
-      columns,
-      statusOptions,
-      loadRoles,
-      onRequest,
-      resetQuery,
-      showRoleDialog,
-      submitRole,
-      deleteRole,
-      onRoleSelection,
-      onRowClick,
-      selectRole,
-      submitPermission
     }
   }
+  roleDialog.value = true
+}
+
+const submitRole = async () => {
+  try {
+    if (isEdit.value) {
+      await roleApi.update(roleForm.value.id, roleForm.value)
+      $q.notify({
+        type: 'positive',
+        message: '角色更新成功'
+      })
+    } else {
+      await roleApi.create(roleForm.value)
+      $q.notify({
+        type: 'positive',
+        message: '角色创建成功'
+      })
+    }
+    
+    roleDialog.value = false
+    loadRoles()
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.message || '操作失败'
+    })
+  }
+}
+
+const deleteRole = (role) => {
+  $q.dialog({
+    title: '确认删除',
+    message: `确定要删除角色 "${role.name}" 吗？`,
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    try {
+      await roleApi.delete(role.id)
+      $q.notify({
+        type: 'positive',
+        message: '角色删除成功'
+      })
+      loadRoles()
+    } catch (error) {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || '删除失败'
+      })
+    }
+  })
+}
+
+const onRoleSelection = ({ added, removed }) => {
+  if (added.length > 0) {
+    selectRole(added[0])
+  } else if (removed.length > 0 && added.length === 0) {
+    selectedRole.value = null
+    checkedMenus.value = []
+  }
+}
+
+const onRowClick = (evt, row) => {
+  selectRole(row)
+}
+
+const selectRole = async (role) => {
+  selectedRole.value = role
+  try {
+    const roleMenusResponse = await roleApi.getMenus(role.id)
+    checkedMenus.value = roleMenusResponse.data.data
+  } catch (error) {
+    console.error('加载角色权限失败:', error)
+    checkedMenus.value = []
+  }
+}
+
+const submitPermission = async () => {
+  if (!selectedRole.value) {
+    $q.notify({
+      type: 'warning',
+      message: '请先选择一个角色'
+    })
+    return
+  }
+  
+  try {
+    await roleApi.assignMenus(selectedRole.value.id, checkedMenus.value)
+    $q.notify({
+      type: 'positive',
+      message: '权限分配成功'
+    })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.message || '权限分配失败'
+    })
+  }
+}
+
+onMounted(() => {
+  loadRoles()
+  loadMenuTree()
 })
 </script>
 
