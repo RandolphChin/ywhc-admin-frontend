@@ -38,11 +38,11 @@
               label="时间范围"
               outlined
               dense
-              readonly
               clearable
-              style="width: 220px;"
+              style="width: 250px;"
               placeholder="请选择时间范围"
               class="cursor-pointer"
+              @clear="clearDateRange"
             >
               <template v-slot:append>
                 <q-icon name="event" class="cursor-pointer">
@@ -548,6 +548,10 @@ const getStatusLabel = (status) => {
   // 操作状态：0-失败，1-成功
   const labels = { 0: '失败', 1: '成功' }
   return labels[status] || '未知'
+}
+
+const clearDateRange = () => {
+  queryForm.value.dateRange = null
 }
 
 onMounted(() => {
