@@ -60,7 +60,6 @@
                     <q-date
                       v-model="queryForm.dateRange"
                       mask="YYYY-MM-DD"
-                      locale="zh-CN"
                       range
                     >
                       <div class="row items-center justify-end">
@@ -401,8 +400,8 @@ const dateRangeDisplay = computed(() => {
   if (queryForm.value.dateRange.from && queryForm.value.dateRange.to) {
     return `${queryForm.value.dateRange.from} ~ ${queryForm.value.dateRange.to}`
   }
-  if (queryForm.value.dateRange.from) {
-    return queryForm.value.dateRange.from
+  if (queryForm.value.dateRange &&!queryForm.value.dateRange.from) {
+    return `${queryForm.value.dateRange} ~ ${queryForm.value.dateRange}`
   }
   return ''
 })
