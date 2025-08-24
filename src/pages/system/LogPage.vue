@@ -5,26 +5,23 @@
     <!-- 搜索和操作栏 -->
     <q-card class="q-mb-md">
       <q-card-section>
-        <div class="row q-gutter-md items-end">
-          <div class="col-12 col-sm-6 col-md-3">
+        <div class="row q-gutter-sm items-center">
             <q-input
               v-model="queryForm.username"
               label="操作用户"
               outlined
               dense
               clearable
+              style="width: 140px;"
             />
-          </div>
-          <div class="col-12 col-sm-6 col-md-3">
             <q-input
               v-model="queryForm.operationDesc"
               label="操作描述"
               outlined
               dense
               clearable
+              style="width: 140px;"
             />
-          </div>
-          <div class="col-12 col-sm-6 col-md-2">
             <q-select
               v-model="queryForm.method"
               :options="methodOptions"
@@ -34,24 +31,16 @@
               clearable
               emit-value
               map-options
+              style="width: 140px;"
             />
-          </div>
-          <div class="col-12 col-sm-6 col-md-2">
-            <q-btn color="primary" icon="search" label="搜索" @click="loadLogs" />
-          </div>
-          <div class="col-12 col-sm-6 col-md-2">
-            <q-btn color="secondary" icon="refresh" label="重置" @click="resetQuery" />
-          </div>
-        </div>
-        
-        <div class="row q-gutter-md items-end q-mt-md">
-          <div class="col-12 col-sm-6 col-md-4">
             <q-input
               v-model="dateRangeDisplay"
               label="时间范围"
               outlined
               dense
               readonly
+              clearable
+              style="width: 220px;"
               placeholder="请选择时间范围"
             >
               <template v-slot:append>
@@ -70,6 +59,13 @@
                 </q-icon>
               </template>
             </q-input>
+                <q-btn color="primary" icon="search" label="搜索" @click="loadLogs" />
+                <q-btn color="secondary" icon="refresh" label="重置" @click="resetQuery" />
+            
+          </div>
+        <div class="row q-gutter-md items-end q-mt-md">
+          <div class="col-12 col-sm-6 col-md-4">
+            
           </div>
           <div class="col-12 col-sm-6 col-md-3">
             <q-btn
