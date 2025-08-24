@@ -237,4 +237,13 @@ body {
 }
 // **********Ultra Compact Select Component 让下拉框更紧凑 END*****************
 
-// Add your custom styles here
+// *******************输入框边框强制都是实线 BEGIN*******************
+// 时间范围的输入框边框是虚线，强制都是实线
+.q-field--outlined .q-field__control {
+  border: 1px solid rgba(0, 0, 0, 0.24) !important; // 强制实线边框
+}
+
+.q-field--outlined .q-field__control:before {
+  border: none !important; // 移除可能的伪元素边框
+}
+// *******************输入框边框强制都是实线 END*******************
