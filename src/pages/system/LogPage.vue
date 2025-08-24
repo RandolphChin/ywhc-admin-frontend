@@ -42,6 +42,7 @@
               clearable
               style="width: 220px;"
               placeholder="请选择时间范围"
+              class="cursor-pointer"
             >
               <template v-slot:append>
                 <q-icon name="event" class="cursor-pointer">
@@ -58,25 +59,28 @@
                   </q-popup-proxy>
                 </q-icon>
               </template>
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-date
+                  v-model="queryForm.dateRange"
+                  mask="YYYY-MM-DD"
+                  range
+                >
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="关闭" color="primary" flat />
+                  </div>
+                </q-date>
+              </q-popup-proxy>
             </q-input>
                 <q-btn color="primary" icon="search" label="搜索" @click="loadLogs" />
                 <q-btn color="secondary" icon="refresh" label="重置" @click="resetQuery" />
-            
+                <q-btn
+                  color="warning"
+                  icon="clear_all"
+                  label="清空日志"
+                  @click="clearLogs"
+                  v-permission="'system:log:clear'"
+                />
           </div>
-        <div class="row q-gutter-md items-end q-mt-md">
-          <div class="col-12 col-sm-6 col-md-4">
-            
-          </div>
-          <div class="col-12 col-sm-6 col-md-3">
-            <q-btn
-              color="warning"
-              icon="clear_all"
-              label="清空日志"
-              @click="clearLogs"
-              v-permission="'system:log:clear'"
-            />
-          </div>
-        </div>
       </q-card-section>
     </q-card>
 
