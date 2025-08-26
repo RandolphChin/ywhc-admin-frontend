@@ -503,23 +503,12 @@ const loadLogs = async (props) => {
     }
  
     
-    // 日期范围查询
-    /* 
-    if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
-      params.createTimeRange = {
-        startTime: queryForm.value.dateRange.from + ' 00:00:00',
-        endTime: queryForm.value.dateRange.to + ' 23:59:59'
-      }
+    // 日期范围查询 - 使用点符号传递嵌套参数避免URL编码问题
+   if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
+      params['createTimeRange.startTime'] = queryForm.value.dateRange.from + ' 00:00:01'
+      params['createTimeRange.endTime'] = queryForm.value.dateRange.to + ' 23:59:59'
     }
-     */
-     if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
-      params.createTimeRange = {
-        startTime: queryForm.value.dateRange.from,
-        endTime: queryForm.value.dateRange.to
-      }
-    }
-
-
+    
 
     const response = await logApi.getList(params)
     
