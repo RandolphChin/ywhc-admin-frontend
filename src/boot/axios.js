@@ -14,6 +14,37 @@ const api = axios.create({
   timeout: 30000
 })
 
+// 清理空参数的工具函数
+const cleanEmptyParams = (obj) => {
+  if (!obj || typeof obj !== 'object') return obj
+  
+  const cleaned = Array.isArray(obj) ? [] : {}
+  
+  for (const key in obj) {
+    const value = obj[key]
+    
+    // 跳过空值
+    if (value === undefined || value === '' || value === null ||
+        (Array.isArray(value) && value.length === 0) ||
+        (typeof value === 'object' && value !== null && Object.keys(value).length === 0)) {
+      continue
+    }
+    
+    // 递归清理嵌套对象
+    if (typeof value === 'object' && value !== null) {
+      const cleanedValue = cleanEmptyParams(value)
+      if ((Array.isArray(cleanedValue) && cleanedValue.length > 0) ||
+          (!Array.isArray(cleanedValue) && Object.keys(cleanedValue).length > 0)) {
+        cleaned[key] = cleanedValue
+      }
+    } else {
+      cleaned[key] = value
+    }
+  }
+  
+  return cleaned
+}
+
 export default boot(({ app, router }) => {
   // 请求拦截器
   api.interceptors.request.use(
@@ -27,6 +58,16 @@ export default boot(({ app, router }) => {
       const authStore = useAuthStore()
       if (authStore.token) {
         config.headers.Authorization = `Bearer ${authStore.token}`
+      }
+
+      // 清理空的查询参数
+      if (config.params) {
+        config.params = cleanEmptyParams(config.params)
+      }
+
+      // 清理空的请求体参数 (POST/PUT/PATCH)
+      if (config.data && ['post', 'put', 'patch'].includes(config.method?.toLowerCase())) {
+        config.data = cleanEmptyParams(config.data)
       }
 
       return config

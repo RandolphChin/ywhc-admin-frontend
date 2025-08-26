@@ -9,25 +9,14 @@
             <!-- 操作用户查询 -->
             <div class="column q-gutter-xs">
               <q-input
-                v-model="usernameQuery"
-                :label="`操作用户 (${queryForm.queryType.username === 'exact' ? '精确' : '模糊'})`"
+                v-model="queryForm.username"
+                label="操作用户"
                 outlined
                 dense
                 clearable
                 style="width: 160px;"
-              >
-                <template v-slot:append>
-                  <q-btn
-                    flat
-                    dense
-                    size="sm"
-                    :icon="queryForm.queryType.username === 'exact' ? 'search' : 'manage_search'"
-                    @click="toggleQueryType('username')"
-                  >
-                    <q-tooltip>切换查询模式</q-tooltip>
-                  </q-btn>
-                </template>
-              </q-input>
+              />
+  
             </div>
             
             <!-- 操作描述 - 固定模糊查询 -->
@@ -41,60 +30,18 @@
             />
             
             <!-- 请求方法查询 -->
-            <div class="column q-gutter-xs">
               <q-select
-                v-if="queryForm.queryType.requestMethod === 'exact'"
                 v-model="queryForm.requestMethod"
                 :options="methodOptions"
-                label="请求方法 (精确)"
+                label="请求方法"
                 outlined
                 dense
                 clearable
                 emit-value
                 map-options
                 style="width: 160px;"
-              >
-                <template v-slot:append>
-                  <q-btn
-                    flat
-                    dense
-                    size="sm"
-                    icon="list"
-                    @click="toggleQueryType('requestMethod')"
-                  >
-                    <q-tooltip>切换为多选模式</q-tooltip>
-                  </q-btn>
-                </template>
-              </q-select>
-              
-              <q-select
-                v-else
-                v-model="queryForm.requestMethods"
-                :options="methodOptions"
-                label="请求方法 (多选)"
-                outlined
-                dense
-                clearable
-                emit-value
-                map-options
-                multiple
-                use-chips
-                style="width: 160px;"
-              >
-                <template v-slot:append>
-                  <q-btn
-                    flat
-                    dense
-                    size="sm"
-                    icon="radio_button_checked"
-                    @click="toggleQueryType('requestMethod')"
-                  >
-                    <q-tooltip>切换为单选模式</q-tooltip>
-                  </q-btn>
-                </template>
-              </q-select>
-            </div>
-            
+              />
+                
             <!-- 状态查询 -->
             <q-select
               v-model="queryForm.status"
@@ -107,6 +54,7 @@
               map-options
               style="width: 140px;"
             />
+
             <q-input
               v-model="dateRangeDisplay"
               label="时间范围"
@@ -114,7 +62,6 @@
               dense
               clearable
               style="width: 250px;"
-              placeholder="请选择时间范围"
               class="cursor-pointer"
               @clear="clearDateRange"
             >
@@ -382,30 +329,8 @@ const queryForm = ref({
   username: '',
   requestMethod: '',
   status: null,
-  
-  // 模糊查询字段
-  usernameLike: '',
-  operationDesc: '',
-  moduleLike: '',
-  ipAddressLike: '',
-  
-  // 范围查询字段
-  executionTimeRange: [],
-  createTimeRange: null,
-  
-  // IN查询字段
-  requestMethods: [],
-  statusList: [],
-  
   // 时间范围
   dateRange: null,
-  
-  // 查询类型控制
-  queryType: {
-    username: 'exact', // exact | fuzzy
-    operationDesc: 'fuzzy',
-    requestMethod: 'exact' // exact | in
-  }
 })
 
 const pagination = ref({
@@ -498,41 +423,8 @@ const statusOptions = [
 
 const rowsPerPageOptions = [5, 10, 20, 50, 100]
 
-// 计算属性用于动态v-model绑定
-const usernameQuery = computed({
-  get: () => queryForm.value.queryType.username === 'exact' 
-    ? queryForm.value.username 
-    : queryForm.value.usernameLike,
-  set: (value) => {
-    if (queryForm.value.queryType.username === 'exact') {
-      queryForm.value.username = value
-      queryForm.value.usernameLike = '' // 清空另一个字段
-    } else {
-      queryForm.value.usernameLike = value
-      queryForm.value.username = '' // 清空另一个字段
-    }
-  }
-})
 
-// 切换查询类型的方法
-const toggleQueryType = (field) => {
-  switch (field) {
-    case 'username':
-      queryForm.value.queryType.username = 
-        queryForm.value.queryType.username === 'exact' ? 'fuzzy' : 'exact'
-      // 清空相关字段
-      queryForm.value.username = ''
-      queryForm.value.usernameLike = ''
-      break
-    case 'requestMethod':
-      queryForm.value.queryType.requestMethod = 
-        queryForm.value.queryType.requestMethod === 'exact' ? 'in' : 'exact'
-      // 清空相关字段
-      queryForm.value.requestMethod = ''
-      queryForm.value.requestMethods = []
-      break
-  }
-}
+
 
 const dateRangeDisplay = computed(() => {
   if (!queryForm.value.dateRange) return ''
@@ -603,53 +495,31 @@ const loadLogs = async (props) => {
       current: page,
       size: rowsPerPage,
       orderBy: sortBy || 'createTime',
-      orderDirection: descending ? 'desc' : 'asc'
+      orderDirection: descending ? 'desc' : 'asc',
+      usernameLike: queryForm.value.username, // 用户名查询（模糊查询）
+      operationDescLike: queryForm.value.operationDesc,
+      requestMethod: queryForm.value.requestMethod,
+      status: queryForm.value.status,
     }
-    
-    // 用户名查询
-    if (queryForm.value.queryType.username === 'exact' && queryForm.value.username) {
-      params.username = queryForm.value.username
-    } else if (queryForm.value.queryType.username === 'fuzzy' && queryForm.value.usernameLike) {
-      params.usernameLike = queryForm.value.usernameLike
-    }
-    
-    // 操作描述（模糊查询）
-    if (queryForm.value.operationDesc) {
-      params.operationDesc = queryForm.value.operationDesc
-    }
-    
-    // 请求方法查询
-    if (queryForm.value.queryType.requestMethod === 'exact' && queryForm.value.requestMethod) {
-      params.requestMethod = queryForm.value.requestMethod
-    } else if (queryForm.value.queryType.requestMethod === 'in' && queryForm.value.requestMethods?.length > 0) {
-      params.requestMethods = queryForm.value.requestMethods
-    }
-    
-    // 状态查询
-    if (queryForm.value.status !== null && queryForm.value.status !== undefined) {
-      params.status = queryForm.value.status
-    }
+ 
     
     // 日期范围查询
+    /* 
     if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
       params.createTimeRange = {
         startTime: queryForm.value.dateRange.from + ' 00:00:00',
         endTime: queryForm.value.dateRange.to + ' 23:59:59'
       }
     }
-    
-    // 执行时间范围查询
-    if (queryForm.value.executionTimeRange?.length === 2) {
-      params.executionTimeRange = queryForm.value.executionTimeRange
-    }
-    
-    // Remove undefined values to avoid sending empty parameters
-    Object.keys(params).forEach(key => {
-      if (params[key] === undefined || params[key] === '' || 
-          (Array.isArray(params[key]) && params[key].length === 0)) {
-        delete params[key]
+     */
+     if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
+      params.createTimeRange = {
+        startTime: queryForm.value.dateRange.from,
+        endTime: queryForm.value.dateRange.to
       }
-    })
+    }
+
+
 
     const response = await logApi.getList(params)
     
