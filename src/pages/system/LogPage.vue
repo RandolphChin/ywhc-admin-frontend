@@ -502,14 +502,20 @@ const loadLogs = async (props) => {
       status: queryForm.value.status,
     }
  
-    
+    debugger
     // 日期范围查询 - 使用点符号传递嵌套参数避免URL编码问题
    if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
       params['createTimeRange.startTime'] = queryForm.value.dateRange.from + ' 00:00:01'
       params['createTimeRange.endTime'] = queryForm.value.dateRange.to + ' 23:59:59'
     }
+    console.log(queryForm.value.dateRange)
+    if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
+      params.createTimeBetween = [
+        queryForm.value.dateRange.from + ' 00:00:01',
+        queryForm.value.dateRange.to + ' 23:59:59'
+      ]
+    }
     
-
     const response = await logApi.getList(params)
     
     // MyBatis-Plus IPage structure: { records: [], total: number, size: number, current: number, pages: number }
