@@ -2,6 +2,7 @@ import { boot } from 'quasar/wrappers'
 import axios from 'axios'
 import { Notify, Loading } from 'quasar'
 import { useAuthStore } from 'src/stores/auth'
+import { serializeParams } from 'src/utils'
 
 // Be careful when using SSR for cross-request state pollution
 // due to creating a Singleton instance here;
@@ -60,8 +61,17 @@ export default boot(({ app, router }) => {
         config.headers.Authorization = `Bearer ${authStore.token}`
       }
 
-      // 清理空的查询参数
-      if (config.params) {
+      // 处理GET请求的参数序列化
+      if (config.method?.toLowerCase() === 'get' && config.params) {
+        // 清理空的查询参数
+        config.params = cleanEmptyParams(config.params)
+        
+        // 自定义参数序列化 - 对特定模式的数组参数进行特殊处理
+        config.paramsSerializer = (params) => {
+          return serializeParams(params)
+        }
+      } else if (config.params) {
+        // 对非GET请求仅清理空参数
         config.params = cleanEmptyParams(config.params)
       }
 

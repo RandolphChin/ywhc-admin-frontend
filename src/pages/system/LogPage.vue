@@ -502,17 +502,24 @@ const loadLogs = async (props) => {
       status: queryForm.value.status,
     }
  
-    debugger
-    // 日期范围查询 - 使用点符号传递嵌套参数避免URL编码问题
-   if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
-      params['createTimeRange.startTime'] = queryForm.value.dateRange.from + ' 00:00:01'
-      params['createTimeRange.endTime'] = queryForm.value.dateRange.to + ' 23:59:59'
-    }
-    console.log(queryForm.value.dateRange)
-    if (queryForm.value.dateRange?.from && queryForm.value.dateRange?.to) {
+
+    // 日期范围查询方式1***********解构赋值********
+    // if (queryForm.value.dateRange) {
+    //   const { from, to } = { from: null, to: null, ...queryForm.value.dateRange }
+    //   const [start, end] = [from || queryForm.value.dateRange, to || queryForm.value.dateRange]
+      
+    //   params.createTimeBetween = [`${start} 00:00:01`, `${end} 23:59:59`]
+    // }
+
+    // 日期范围查询方式2************可选链操作符 和 空值合并操作符****
+    const dateRange = queryForm.value.dateRange
+    if (dateRange) {
+      const startDate = dateRange?.from ?? dateRange
+      const endDate = dateRange?.to ?? dateRange
+      
       params.createTimeBetween = [
-        queryForm.value.dateRange.from + ' 00:00:01',
-        queryForm.value.dateRange.to + ' 23:59:59'
+        `${startDate} 00:00:01`,
+        `${endDate} 23:59:59`
       ]
     }
     

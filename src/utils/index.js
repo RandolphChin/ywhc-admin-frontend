@@ -219,3 +219,58 @@ export const getBrowserInfo = () => {
     language: navigator.language
   }
 }
+
+// URL参数序列化相关工具函数
+
+/**
+ * 检查参数名是否需要特殊的数组序列化处理
+ * @param {string} paramName - 参数名
+ * @returns {boolean} - 是否需要特殊处理
+ */
+export const shouldSerializeArrayParam = (paramName) => {
+  const patterns = [
+    /TimeBetween$/i,     // createTimeBetween, updateTimeBetween
+    /Range$/i,           // dateRange, timeRange
+    /Between$/i,         // valueBetween, priceBetween
+    /TimeRange$/i        // createTimeRange, modifyTimeRange
+  ]
+  
+  return patterns.some(pattern => pattern.test(paramName))
+}
+
+/**
+ * 自定义数组参数序列化函数
+ * @param {Object} params - 参数对象
+ * @returns {string} - 序列化后的查询字符串
+ */
+export const serializeParams = (params) => {
+  const searchParams = new URLSearchParams()
+  
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined || value === null || value === '') {
+      continue // 跳过空值
+    }
+    
+    if (Array.isArray(value)) {
+      if (shouldSerializeArrayParam(key)) {
+        // 对匹配模式的参数使用重复参数名（无括号）
+        value.forEach(item => {
+          if (item !== undefined && item !== null && item !== '') {
+            searchParams.append(key, item)
+          }
+        })
+      } else {
+        // 对其他数组参数使用默认行为（带括号）
+        value.forEach(item => {
+          if (item !== undefined && item !== null && item !== '') {
+            searchParams.append(`${key}[]`, item)
+          }
+        })
+      }
+    } else {
+      searchParams.append(key, value)
+    }
+  }
+  
+  return searchParams.toString()
+}
