@@ -325,7 +325,6 @@ const logs = ref([])
 const currentLog = ref(null)
 
 const queryForm = ref({
-  // 精确查询字段
   username: '',
   requestMethod: '',
   status: null,
@@ -453,15 +452,6 @@ const getTimeColor = (time) => {
   return 'negative'
 }
 
-const getOperationTypeFromMethod = (method) => {
-  const typeMap = {
-    'GET': 1,
-    'POST': 2,
-    'PUT': 3,
-    'DELETE': 4
-  }
-  return typeMap[method]
-}
 
 const getOperationTypeDescription = (code) => {
   const typeMap = {
@@ -560,29 +550,9 @@ const resetQuery = () => {
     requestMethod: '',
     status: null,
     
-    // 模糊查询字段
-    usernameLike: '',
-    operationDesc: '',
-    moduleLike: '',
-    ipAddressLike: '',
-    
-    // 范围查询字段
-    executionTimeRange: [],
-    createTimeRange: null,
-    
-    // IN查询字段
-    requestMethods: [],
-    statusList: [],
-    
     // 时间范围
     dateRange: null,
     
-    // 查询类型控制
-    queryType: {
-      username: 'exact',
-      operationDesc: 'fuzzy',
-      requestMethod: 'exact'
-    }
   }
   loadLogs()
 }
@@ -631,6 +601,7 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+//用于显示预格式化文本（如代码、日志、JSON数据等）
 pre {
   white-space: pre-wrap;
   word-break: break-all;
