@@ -166,34 +166,12 @@
           </template>
 
           <template v-slot:bottom>
-            <div class="row items-center justify-start full-width" v-if="pagination.rowsNumber > 0">
-              <div class="q-mr-md">
-                共 {{ pagination.rowsNumber }} 条记录
-              </div>
-              <div class="row items-center">
-                <div class="row items-center q-gutter-sm" >
-                  <span>每页显示</span>
-                  <q-select
-                    v-model="pagination.rowsPerPage"
-                    :options="rowsPerPageOptions"
-                    dense
-                    outlined
-                    class="ultra-compact-select"
-                    @update:model-value="onRowsPerPageChange"
-                  />
-                  <span>条</span>
-                </div>
-                <q-pagination
-                  v-model="pagination.page"
-                  :max="Math.ceil(pagination.rowsNumber / pagination.rowsPerPage)"
-                  @update:model-value="onRequest({ pagination })"
-                  direction-links
-                  boundary-links
-                  :max-pages="5"
-          
-                />
-              </div>
-            </div>
+            <DataTablePagination
+              :pagination="pagination"
+              :rows-per-page-options="rowsPerPageOptions"
+              @rows-per-page-change="onRowsPerPageChange"
+              @page-change="onPageChange"
+            />
           </template>
         </q-table>
       </q-card-section>
@@ -312,6 +290,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
+import DataTablePagination from 'src/components/DataTablePagination.vue'
 
 defineOptions({
   name: 'LogPage'
@@ -541,6 +520,11 @@ const onRowsPerPageChange = (newRowsPerPage) => {
   pagination.value.rowsPerPage = newRowsPerPage
   pagination.value.page = 1 // Reset to first page when changing rows per page
   loadLogs()
+}
+
+const onPageChange = (newPage) => {
+  pagination.value.page = newPage
+  onRequest({ pagination: pagination.value })
 }
 
 const resetQuery = () => {
