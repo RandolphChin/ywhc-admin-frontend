@@ -157,58 +157,12 @@
     </div>
 
     <!-- 角色编辑对话框 -->
-    <q-dialog v-model="roleDialog" persistent>
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? '编辑角色' : '添加角色' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="submitRole" class="q-gutter-md">
-            <q-input
-              v-model="roleForm.name"
-              label="角色名称"
-              :rules="[val => !!val || '请输入角色名称']"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-model="roleForm.code"
-              label="角色编码"
-              :rules="[val => !!val || '请输入角色编码']"
-              outlined
-              dense
-              :readonly="isEdit"
-            />
-
-            <q-select
-              v-model="roleForm.status"
-              :options="statusOptions"
-              label="状态"
-              outlined
-              dense
-              emit-value
-              map-options
-            />
-
-            <q-input
-              v-model="roleForm.remark"
-              label="备注"
-              type="textarea"
-              outlined
-              dense
-              rows="3"
-            />
-
-            <div class="row justify-end q-gutter-sm">
-              <q-btn flat label="取消" @click="roleDialog = false" />
-              <q-btn type="submit" color="primary" label="确定" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <RoleEditDialog
+      v-model="roleDialog"
+      :role-data="roleForm"
+      :is-edit="isEdit"
+      @submit="submitRole"
+    />
 
   </q-page>
 </template>
@@ -217,6 +171,7 @@
 import { ref, onMounted } from 'vue'
 import { roleApi, menuApi } from 'src/api'
 import { useQuasar } from 'quasar'
+import RoleEditDialog from './RoleEditDialog.vue'
 
 defineOptions({
   name: 'RolePage'
@@ -398,16 +353,16 @@ const showRoleDialog = (role = null) => {
   roleDialog.value = true
 }
 
-const submitRole = async () => {
+const submitRole = async (formData) => {
   try {
     if (isEdit.value) {
-      await roleApi.update(roleForm.value.id, roleForm.value)
+      await roleApi.update(formData.id, formData)
       $q.notify({
         type: 'positive',
         message: '角色更新成功'
       })
     } else {
-      await roleApi.create(roleForm.value)
+      await roleApi.create(formData)
       $q.notify({
         type: 'positive',
         message: '角色创建成功'

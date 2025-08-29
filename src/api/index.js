@@ -3,7 +3,7 @@ export { authApi } from './auth'
 export { statsApi } from './stats'
 
 // 系统管理模块
-export { userApi } from './system/user'
-export { roleApi } from './system/role'
-export { menuApi } from './system/menu'
-export { logApi } from './system/log'
+export { userApi } from './system/user/user'
+export { roleApi } from './system/role/role'
+export { menuApi } from './system/menu/menu'
+export { logApi } from './system/log/log'

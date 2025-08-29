@@ -127,132 +127,13 @@
     </q-card>
 
     <!-- 菜单编辑对话框 -->
-    <q-dialog v-model="menuDialog" persistent>
-      <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? '编辑菜单' : '添加菜单' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="submitMenu" class="q-gutter-md">
-            <q-select
-              v-model="menuForm.parentId"
-              :options="parentMenuOptions"
-              label="父级菜单"
-              outlined
-              dense
-              emit-value
-              map-options
-              clearable
-            />
-
-            <q-select
-              v-model="menuForm.type"
-              :options="typeOptions"
-              label="菜单类型"
-              outlined
-              dense
-              emit-value
-              map-options
-              @update:model-value="onTypeChange"
-            />
-
-            <q-input
-              v-model="menuForm.title"
-              label="菜单标题"
-              :rules="[val => !!val || '请输入菜单标题']"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-model="menuForm.name"
-              label="菜单名称"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-if="menuForm.type !== 3"
-              v-model="menuForm.path"
-              label="路由路径"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-if="menuForm.type === 2"
-              v-model="menuForm.component"
-              label="组件路径"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-if="menuForm.type === 3"
-              v-model="menuForm.permission"
-              label="权限标识"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-model="menuForm.icon"
-              label="菜单图标"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-model.number="menuForm.sort"
-              label="排序"
-              type="number"
-              outlined
-              dense
-            />
-
-            <div class="row q-gutter-md">
-              <q-select
-                v-model="menuForm.status"
-                :options="statusOptions"
-                label="状态"
-                outlined
-                dense
-                emit-value
-                map-options
-                class="col"
-              />
-
-              <q-select
-                v-if="menuForm.type !== 3"
-                v-model="menuForm.visible"
-                :options="visibleOptions"
-                label="显示状态"
-                outlined
-                dense
-                emit-value
-                map-options
-                class="col"
-              />
-            </div>
-
-            <q-input
-              v-model="menuForm.remark"
-              label="备注"
-              type="textarea"
-              outlined
-              dense
-              rows="3"
-            />
-
-            <div class="row justify-end q-gutter-sm">
-              <q-btn flat label="取消" @click="menuDialog = false" />
-              <q-btn type="submit" color="primary" label="确定" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <MenuEditDialog
+      v-model="menuDialog"
+      :menu-data="menuForm"
+      :is-edit="isEdit"
+      :parent-menu-options="parentMenuOptions"
+      @submit="submitMenu"
+    />
   </q-page>
 </template>
 
@@ -260,6 +141,7 @@
 import { ref, onMounted } from 'vue'
 import { menuApi } from 'src/api'
 import { useQuasar } from 'quasar'
+import MenuEditDialog from './MenuEditDialog.vue'
 
 defineOptions({
   name: 'MenuPage'
@@ -348,29 +230,13 @@ const columns = [
   }
 ]
 
-const typeOptions = [
-  { label: '目录', value: 1 },
-  { label: '菜单', value: 2 },
-  { label: '按钮', value: 3 }
-]
-
-const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '禁用', value: 0 }
-]
-
-const visibleOptions = [
-  { label: '显示', value: 1 },
-  { label: '隐藏', value: 0 }
-]
-
 const getTypeColor = (type) => {
   const colors = { 1: 'primary', 2: 'secondary', 3: 'accent' }
   return colors[type] || 'grey'
 }
 
 const getTypeLabel = (type) => {
-  const labels = { 0: '目录', 1: '菜单', 2: '按钮' }
+  const labels = { 1: '目录', 2: '菜单', 3: '按钮' }
   return labels[type] || '未知'
 }
 
@@ -491,27 +357,16 @@ const showMenuDialog = (menu = null, parent = null) => {
   menuDialog.value = true
 }
 
-const onTypeChange = (type) => {
-  // 根据类型清空相关字段
-  if (type === 3) { // 按钮
-    menuForm.value.path = ''
-    menuForm.value.component = ''
-    menuForm.value.visible = 1
-  } else {
-    menuForm.value.permission = ''
-  }
-}
-
-const submitMenu = async () => {
+const submitMenu = async (formData) => {
   try {
     if (isEdit.value) {
-      await menuApi.update(menuForm.value.id, menuForm.value)
+      await menuApi.update(formData.id, formData)
       $q.notify({
         type: 'positive',
         message: '菜单更新成功'
       })
     } else {
-      await menuApi.create(menuForm.value)
+      await menuApi.create(formData)
       $q.notify({
         type: 'positive',
         message: '菜单创建成功'

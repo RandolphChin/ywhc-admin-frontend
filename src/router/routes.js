@@ -30,28 +30,28 @@ const routes = [
           {
             path: 'user',
             name: 'SystemUser',
-            component: () => import('pages/system/UserPage.vue'),
+            component: () => import('pages/system/user/UserPage.vue'),
             meta: { title: '用户管理', icon: 'people', permission: 'system:user:list' }
           },
           // 角色管理
           {
             path: 'role',
             name: 'SystemRole',
-            component: () => import('pages/system/RolePage.vue'),
+            component: () => import('pages/system/role/RolePage.vue'),
             meta: { title: '角色管理', icon: 'assignment_ind', permission: 'system:role:list' }
           },
           // 菜单管理
           {
             path: 'menu',
             name: 'SystemMenu',
-            component: () => import('pages/system/MenuPage.vue'),
+            component: () => import('pages/system/menu/MenuPage.vue'),
             meta: { title: '菜单管理', icon: 'menu', permission: 'system:menu:list' }
           },
           // 日志管理
           {
             path: 'log',
             name: 'SystemLog',
-            component: () => import('pages/system/LogPage.vue'),
+            component: () => import('pages/system/log/LogPage.vue'),
             meta: { title: '日志管理', icon: 'description', permission: 'system:log:list' }
           }
         ]

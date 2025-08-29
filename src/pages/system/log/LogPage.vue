@@ -178,111 +178,10 @@
     </q-card>
 
     <!-- 日志详情对话框 -->
-    <q-dialog v-model="logDetailDialog" persistent>
-      <q-card style="min-width: 600px; max-width: 800px">
-        <q-card-section>
-          <div class="text-h6">日志详情</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-list v-if="currentLog" dense>
-            <q-item>
-              <q-item-section>
-                <q-item-label>操作用户</q-item-label>
-                <q-item-label caption>{{ currentLog.username }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item>
-              <q-item-section>
-                <q-item-label>操作类型</q-item-label>
-                <q-item-label caption>{{ currentLog.operation }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item>
-              <q-item-section>
-                <q-item-label>请求方法</q-item-label>
-                <q-item-label caption>{{ currentLog.method }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item>
-              <q-item-section>
-                <q-item-label>请求URI</q-item-label>
-                <q-item-label caption>{{ currentLog.uri }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item>
-              <q-item-section>
-                <q-item-label>IP地址</q-item-label>
-                <q-item-label caption>{{ currentLog.ip }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item>
-              <q-item-section>
-                <q-item-label>用户代理</q-item-label>
-                <q-item-label caption>{{ currentLog.userAgent }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item>
-              <q-item-section>
-                <q-item-label>响应状态</q-item-label>
-                <q-item-label caption>{{ currentLog.status }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item>
-              <q-item-section>
-                <q-item-label>执行时间</q-item-label>
-                <q-item-label caption>{{ currentLog.time }}ms</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item>
-              <q-item-section>
-                <q-item-label>操作时间</q-item-label>
-                <q-item-label caption>{{ new Date(currentLog.createTime).toLocaleString() }}</q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item v-if="currentLog.params">
-              <q-item-section>
-                <q-item-label>请求参数</q-item-label>
-                <q-item-label caption>
-                  <pre class="text-caption">{{ formatJson(currentLog.params) }}</pre>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item v-if="currentLog.result">
-              <q-item-section>
-                <q-item-label>响应结果</q-item-label>
-                <q-item-label caption>
-                  <pre class="text-caption">{{ formatJson(currentLog.result) }}</pre>
-                </q-item-label>
-              </q-item-section>
-            </q-item>
-            
-            <q-item v-if="currentLog.errorMsg">
-              <q-item-section>
-                <q-item-label>错误信息</q-item-label>
-                <q-item-label caption class="text-negative">{{ currentLog.errorMsg }}</q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-
-        <q-card-section>
-          <div class="row justify-end">
-            <q-btn flat label="关闭" @click="logDetailDialog = false" />
-          </div>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <LogDetailDialog
+      v-model="logDetailDialog"
+      :log-data="currentLog"
+    />
   </q-page>
 </template>
 
@@ -291,6 +190,7 @@ import { ref, onMounted, computed } from 'vue'
 import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
 import DataTablePagination from 'src/components/DataTablePagination.vue'
+import LogDetailDialog from './LogDetailDialog.vue'
 
 defineOptions({
   name: 'LogPage'
@@ -401,9 +301,6 @@ const statusOptions = [
 
 const rowsPerPageOptions = [5, 10, 20, 50, 100]
 
-
-
-
 const dateRangeDisplay = computed(() => {
   if (!queryForm.value.dateRange) return ''
   if (queryForm.value.dateRange.from && queryForm.value.dateRange.to) {
@@ -431,7 +328,6 @@ const getTimeColor = (time) => {
   return 'negative'
 }
 
-
 const getOperationTypeDescription = (code) => {
   const typeMap = {
     1: '新增',
@@ -442,15 +338,6 @@ const getOperationTypeDescription = (code) => {
     6: '登出'
   }
   return typeMap[code] || '未知'
-}
-
-const formatJson = (jsonStr) => {
-  try {
-    const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
-    return JSON.stringify(obj, null, 2)
-  } catch (error) {
-    return jsonStr
-  }
 }
 
 const loadLogs = async (props) => {
@@ -470,15 +357,6 @@ const loadLogs = async (props) => {
       requestMethod: queryForm.value.requestMethod,
       status: queryForm.value.status,
     }
- 
-
-    // 日期范围查询方式1***********解构赋值********
-    // if (queryForm.value.dateRange) {
-    //   const { from, to } = { from: null, to: null, ...queryForm.value.dateRange }
-    //   const [start, end] = [from || queryForm.value.dateRange, to || queryForm.value.dateRange]
-      
-    //   params.createTimeBetween = [`${start} 00:00:01`, `${end} 23:59:59`]
-    // }
 
     // 日期范围查询方式2************可选链操作符 和 空值合并操作符****
     const dateRange = queryForm.value.dateRange
@@ -529,14 +407,11 @@ const onPageChange = (newPage) => {
 
 const resetQuery = () => {
   queryForm.value = {
-    // 精确查询字段
     username: '',
     requestMethod: '',
     status: null,
-    
     // 时间范围
     dateRange: null,
-    
   }
   loadLogs()
 }
@@ -585,14 +460,4 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-//用于显示预格式化文本（如代码、日志、JSON数据等）
-pre {
-  white-space: pre-wrap;
-  word-break: break-all;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-
-
 </style>

@@ -139,95 +139,13 @@
     </q-card>
 
     <!-- 用户编辑对话框 -->
-    <q-dialog v-model="userDialog" persistent>
-      <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6">{{ isEdit ? '编辑用户' : '添加用户' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="submitUser" class="q-gutter-md">
-            <q-input
-              v-model="userForm.username"
-              label="用户名"
-              :rules="[val => !!val || '请输入用户名']"
-              outlined
-              dense
-              :readonly="isEdit"
-            />
-
-            <q-input
-              v-model="userForm.nickname"
-              label="昵称"
-              :rules="[val => !!val || '请输入昵称']"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-model="userForm.email"
-              label="邮箱"
-              type="email"
-              outlined
-              dense
-            />
-
-            <q-input
-              v-model="userForm.phone"
-              label="手机号"
-              outlined
-              dense
-            />
-
-            <q-select
-              v-model="userForm.gender"
-              :options="genderOptions"
-              label="性别"
-              outlined
-              dense
-              emit-value
-              map-options
-            />
-
-            <q-select
-              v-model="userForm.status"
-              :options="statusOptions"
-              label="状态"
-              outlined
-              dense
-              emit-value
-              map-options
-            />
-
-            <q-select
-              v-model="userForm.roleIds"
-              :options="roleOptions"
-              label="角色"
-              outlined
-              dense
-              multiple
-              emit-value
-              map-options
-              use-chips
-            />
-
-            <q-input
-              v-model="userForm.remark"
-              label="备注"
-              type="textarea"
-              outlined
-              dense
-              rows="3"
-            />
-
-            <div class="row justify-end q-gutter-sm">
-              <q-btn flat label="取消" @click="userDialog = false" />
-              <q-btn type="submit" color="primary" label="确定" />
-            </div>
-          </q-form>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <UserEditDialog
+      v-model="userDialog"
+      :user-data="userForm"
+      :is-edit="isEdit"
+      :role-options="roleOptions"
+      @submit="submitUser"
+    />
   </q-page>
 </template>
 
@@ -235,9 +153,13 @@
 import { defineComponent, ref, onMounted } from 'vue'
 import { userApi, roleApi } from 'src/api'
 import { useQuasar } from 'quasar'
+import UserEditDialog from './UserEditDialog.vue'
 
 export default defineComponent({
   name: 'UserPage',
+  components: {
+    UserEditDialog
+  },
 
   setup() {
     const $q = useQuasar()
@@ -346,12 +268,6 @@ export default defineComponent({
       { label: '禁用', value: 0 }
     ]
 
-    const genderOptions = [
-      { label: '男', value: 1 },
-      { label: '女', value: 2 },
-      { label: '未知', value: 0 }
-    ]
-
     const roleOptions = ref([])
 
     const loadUsers = async (props) => {
@@ -433,16 +349,16 @@ export default defineComponent({
       userDialog.value = true
     }
 
-    const submitUser = async () => {
+    const submitUser = async (formData) => {
       try {
         if (isEdit.value) {
-          await userApi.update(userForm.value.id, userForm.value)
+          await userApi.update(formData.id, formData)
           $q.notify({
             type: 'positive',
             message: '用户更新成功'
           })
         } else {
-          await userApi.create(userForm.value)
+          await userApi.create(formData)
           $q.notify({
             type: 'positive',
             message: '用户创建成功'
@@ -519,7 +435,6 @@ export default defineComponent({
       pagination,
       columns,
       statusOptions,
-      genderOptions,
       roleOptions,
       loadUsers,
       onRequest,
