@@ -83,7 +83,8 @@
             v-if="menu.children && menu.children.length > 0"
             :icon="menu.icon"
             :label="menu.menuName"
-            :default-opened="isMenuActive(menu)"
+            :model-value="isMenuExpanded(menu)"
+            @update:model-value="(val) => onMenuToggle(menu, val)"
           >
             <q-item
               v-for="child in menu.children"
@@ -203,9 +204,67 @@ export default defineComponent({
       confirmPassword: "",
     });
 
+    // 菜单展开状态管理
+    const expandedMenus = ref(new Set());
+
     // 计算属性
     const userInfo = computed(() => authStore.userInfo);
     const menuList = computed(() => authStore.menus || []);
+
+    // 初始化菜单展开状态
+    const initExpandedMenus = (menus) => {
+      if (!menus || menus.length === 0) return;
+
+      const currentPath = route.path;
+      menus.forEach((menu) => {
+        if (menu.children && menu.children.length > 0) {
+          // 检查当前路由是否在这个菜单的子菜单中
+          const hasActiveChild = menu.children.some((child) =>
+            currentPath.startsWith(child.path)
+          );
+          if (hasActiveChild) {
+            expandedMenus.value.add(menu.id);
+          }
+        }
+      });
+    };
+
+    // 更新菜单展开状态
+    const updateExpandedMenus = (currentPath) => {
+      const menus = authStore.menus || [];
+      menus.forEach((menu) => {
+        if (menu.children && menu.children.length > 0) {
+          const hasActiveChild = menu.children.some((child) =>
+            currentPath.startsWith(child.path)
+          );
+          if (hasActiveChild) {
+            expandedMenus.value.add(menu.id);
+          }
+        }
+      });
+    };
+
+    // 检查菜单是否激活
+    const isMenuActive = (menu) => {
+      if (menu.children && menu.children.length > 0) {
+        return menu.children.some((child) => route.path.startsWith(child.path));
+      }
+      return route.path === menu.path;
+    };
+
+    // 检查菜单是否应该展开
+    const isMenuExpanded = (menu) => {
+      return expandedMenus.value.has(menu.id) || isMenuActive(menu);
+    };
+
+    // 处理菜单展开/折叠事件
+    const onMenuToggle = (menu, expanded) => {
+      if (expanded) {
+        expandedMenus.value.add(menu.id);
+      } else {
+        expandedMenus.value.delete(menu.id);
+      }
+    };
 
     // 监听菜单数据变化
     watch(
@@ -215,7 +274,19 @@ export default defineComponent({
         console.log("📋 MainLayout - 菜单数组长度:", newMenus?.length || 0);
         if (newMenus?.length > 0) {
           console.log("📋 MainLayout - 第一个菜单项:", newMenus[0]);
+          // 初始化展开状态，如果当前路由在某个菜单下，自动展开该菜单
+          initExpandedMenus(newMenus);
         }
+      },
+      { immediate: true }
+    );
+
+    // 监听路由变化，更新菜单展开状态
+    watch(
+      () => route.path,
+      (newPath) => {
+        console.log("🚦 路由变化:", newPath);
+        updateExpandedMenus(newPath);
       },
       { immediate: true }
     );
@@ -284,13 +355,6 @@ export default defineComponent({
       });
     };
 
-    const isMenuActive = (menu) => {
-      if (menu.children && menu.children.length > 0) {
-        return menu.children.some((child) => route.path.startsWith(child.path));
-      }
-      return route.path === menu.path;
-    };
-
     const loadUserMenus = async () => {
       try {
         console.log("🔄 MainLayout - 开始加载用户菜单");
@@ -324,6 +388,7 @@ export default defineComponent({
       passwordForm,
       userInfo,
       menuList,
+      expandedMenus,
       toggleLeftDrawer,
       navigateTo,
       goToProfile,
@@ -331,6 +396,8 @@ export default defineComponent({
       submitPasswordChange,
       logout,
       isMenuActive,
+      isMenuExpanded,
+      onMenuToggle,
     };
   },
 });
