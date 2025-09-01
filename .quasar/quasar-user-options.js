@@ -11,11 +11,13 @@
  * Boot files are your "main.js"
  **/
 
-
-
-import {Notify,Dialog,Loading,LoadingBar,LocalStorage,SessionStorage} from 'quasar'
+import lang from 'quasar/lang/zh-CN.js'
 
 
 
-export default { config: {"notify":{"position":"top-right","timeout":3000},"loading":{"delay":200}},plugins: {Notify,Dialog,Loading,LoadingBar,LocalStorage,SessionStorage} }
+import {Notify,Dialog,Loading,LoadingBar,LocalStorage,SessionStorage,AppFullscreen} from 'quasar'
+
+
+
+export default { config: {"notify":{"position":"top-right","timeout":3000},"loading":{"delay":200}},lang,plugins: {Notify,Dialog,Loading,LoadingBar,LocalStorage,SessionStorage,AppFullscreen} }
 

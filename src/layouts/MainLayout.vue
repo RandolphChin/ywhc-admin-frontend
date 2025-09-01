@@ -11,9 +11,7 @@
           @click="toggleLeftDrawer"
         />
 
-        <q-toolbar-title>
-          YWHC 后台管理系统
-        </q-toolbar-title>
+        <q-toolbar-title> YWHC 后台管理系统 </q-toolbar-title>
 
         <div class="q-gutter-sm row items-center no-wrap">
           <!-- 全屏切换 -->
@@ -40,16 +38,16 @@
                 </q-item-section>
                 <q-item-section>个人中心</q-item-section>
               </q-item>
-              
+
               <q-item clickable v-close-popup @click="changePassword">
                 <q-item-section avatar>
                   <q-icon name="lock" />
                 </q-item-section>
                 <q-item-section>修改密码</q-item-section>
               </q-item>
-              
+
               <q-separator />
-              
+
               <q-item clickable v-close-popup @click="logout">
                 <q-item-section avatar>
                   <q-icon name="logout" />
@@ -62,23 +60,29 @@
       </q-toolbar>
     </q-header>
 
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
-      class="bg-grey-1"
-    >
+    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-grey-1">
       <q-list>
-        <q-item-label header>
-          导航菜单
-        </q-item-label>
+        <q-item-label header> 导航菜单 </q-item-label>
+
+        <!-- 仪表盘 - 保留静态菜单 -->
+        <q-item
+          clickable
+          v-ripple
+          :active="$route.path === '/dashboard'"
+          @click="navigateTo('/dashboard')"
+        >
+          <q-item-section avatar>
+            <q-icon name="dashboard" />
+          </q-item-section>
+          <q-item-section> 仪表盘 </q-item-section>
+        </q-item>
 
         <!-- 动态菜单 -->
         <template v-for="menu in menuList" :key="menu.id">
           <q-expansion-item
             v-if="menu.children && menu.children.length > 0"
             :icon="menu.icon"
-            :label="menu.title"
+            :label="menu.menuName"
             :default-opened="isMenuActive(menu)"
           >
             <q-item
@@ -94,7 +98,7 @@
                 <q-icon :name="child.icon" />
               </q-item-section>
               <q-item-section>
-                {{ child.title }}
+                {{ child.menuName }}
               </q-item-section>
             </q-item>
           </q-expansion-item>
@@ -110,7 +114,7 @@
               <q-icon :name="menu.icon" />
             </q-item-section>
             <q-item-section>
-              {{ menu.title }}
+              {{ menu.menuName }}
             </q-item-section>
           </q-item>
         </template>
@@ -134,30 +138,31 @@
               v-model="passwordForm.oldPassword"
               type="password"
               label="原密码"
-              :rules="[val => !!val || '请输入原密码']"
+              :rules="[(val) => !!val || '请输入原密码']"
               outlined
               dense
             />
-            
+
             <q-input
               v-model="passwordForm.newPassword"
               type="password"
               label="新密码"
               :rules="[
-                val => !!val || '请输入新密码',
-                val => val.length >= 6 || '密码长度至少6位'
+                (val) => !!val || '请输入新密码',
+                (val) => val.length >= 6 || '密码长度至少6位',
               ]"
               outlined
               dense
             />
-            
+
             <q-input
               v-model="passwordForm.confirmPassword"
               type="password"
               label="确认密码"
               :rules="[
-                val => !!val || '请确认密码',
-                val => val === passwordForm.newPassword || '两次密码输入不一致'
+                (val) => !!val || '请确认密码',
+                (val) =>
+                  val === passwordForm.newPassword || '两次密码输入不一致',
               ]"
               outlined
               dense
@@ -175,142 +180,143 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from 'src/stores/auth'
-import { useQuasar } from 'quasar'
+import { defineComponent, ref, computed, onMounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from "src/stores/auth";
+import { useQuasar } from "quasar";
+import { resetDynamicRoutes } from "src/router/dynamicRoutes";
 
 export default defineComponent({
-  name: 'MainLayout',
+  name: "MainLayout",
 
   setup() {
-    const $q = useQuasar()
-    const router = useRouter()
-    const route = useRoute()
-    const authStore = useAuthStore()
+    const $q = useQuasar();
+    const router = useRouter();
+    const route = useRoute();
+    const authStore = useAuthStore();
 
-    const leftDrawerOpen = ref(false)
-    const passwordDialog = ref(false)
+    const leftDrawerOpen = ref(false);
+    const passwordDialog = ref(false);
     const passwordForm = ref({
-      oldPassword: '',
-      newPassword: '',
-      confirmPassword: ''
-    })
+      oldPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
 
     // 计算属性
-    const userInfo = computed(() => authStore.userInfo)
-    
-    // 菜单列表 - 这里可以从后端动态获取
-    const menuList = ref([
-      {
-        id: 1,
-        title: '仪表盘',
-        icon: 'dashboard',
-        path: '/dashboard'
+    const userInfo = computed(() => authStore.userInfo);
+    const menuList = computed(() => authStore.menus || []);
+
+    // 监听菜单数据变化
+    watch(
+      () => authStore.menus,
+      (newMenus) => {
+        console.log("📋 MainLayout - 菜单数据已更新:", newMenus);
+        console.log("📋 MainLayout - 菜单数组长度:", newMenus?.length || 0);
+        if (newMenus?.length > 0) {
+          console.log("📋 MainLayout - 第一个菜单项:", newMenus[0]);
+        }
       },
-      {
-        id: 2,
-        title: '系统管理',
-        icon: 'settings',
-        children: [
-          {
-            id: 21,
-            title: '用户管理',
-            icon: 'people',
-            path: '/system/user'
-          },
-          {
-            id: 22,
-            title: '角色管理',
-            icon: 'assignment_ind',
-            path: '/system/role'
-          },
-          {
-            id: 23,
-            title: '菜单管理',
-            icon: 'menu',
-            path: '/system/menu'
-          },
-          {
-            id: 24,
-            title: '日志管理',
-            icon: 'description',
-            path: '/system/log'
-          }
-        ]
-      }
-    ])
+      { immediate: true }
+    );
 
     // 方法
     const toggleLeftDrawer = () => {
-      leftDrawerOpen.value = !leftDrawerOpen.value
-    }
+      leftDrawerOpen.value = !leftDrawerOpen.value;
+    };
 
     const navigateTo = (path) => {
-      router.push(path)
-    }
+      router.push(path);
+    };
 
     const goToProfile = () => {
-      router.push('/profile')
-    }
+      router.push("/profile");
+    };
 
     const changePassword = () => {
-      passwordDialog.value = true
+      passwordDialog.value = true;
       passwordForm.value = {
-        oldPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      }
-    }
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      };
+    };
 
     const submitPasswordChange = async () => {
       try {
         await authStore.changePassword({
           oldPassword: passwordForm.value.oldPassword,
-          newPassword: passwordForm.value.newPassword
-        })
-        
+          newPassword: passwordForm.value.newPassword,
+        });
+
         $q.notify({
-          type: 'positive',
-          message: '密码修改成功'
-        })
-        
-        passwordDialog.value = false
+          type: "positive",
+          message: "密码修改成功",
+        });
+
+        passwordDialog.value = false;
       } catch (error) {
         $q.notify({
-          type: 'negative',
-          message: error.message || '密码修改失败'
-        })
+          type: "negative",
+          message: error.message || "密码修改失败",
+        });
       }
-    }
+    };
 
     const logout = async () => {
       $q.dialog({
-        title: '确认',
-        message: '确定要退出登录吗？',
+        title: "确认",
+        message: "确定要退出登录吗？",
         cancel: true,
-        persistent: true
+        persistent: true,
       }).onOk(async () => {
         try {
-          await authStore.logout()
-          router.push('/login')
+          await authStore.logout();
+          // 清除动态路由
+          resetDynamicRoutes(router);
+          router.push("/login");
         } catch (error) {
-          console.error('退出登录失败:', error)
-          router.push('/login')
+          console.error("退出登录失败:", error);
+          // 清除动态路由
+          resetDynamicRoutes(router);
+          router.push("/login");
         }
-      })
-    }
+      });
+    };
 
     const isMenuActive = (menu) => {
-      if (menu.children) {
-        return menu.children.some(child => route.path.startsWith(child.path))
+      if (menu.children && menu.children.length > 0) {
+        return menu.children.some((child) => route.path.startsWith(child.path));
       }
-      return route.path === menu.path
-    }
+      return route.path === menu.path;
+    };
+
+    const loadUserMenus = async () => {
+      try {
+        console.log("🔄 MainLayout - 开始加载用户菜单");
+        console.log("🔄 MainLayout - 当前token:", !!authStore.token);
+        console.log(
+          "🔄 MainLayout - 当前菜单数量:",
+          authStore.menus?.length || 0
+        );
+
+        if (authStore.token && !authStore.menus?.length) {
+          await authStore.getUserMenus();
+          console.log("✅ MainLayout - 菜单加载完成");
+        } else {
+          console.log("ℹ️ MainLayout - 跳过菜单加载，已存在或无token");
+        }
+      } catch (error) {
+        console.error("❌ MainLayout - 加载用户菜单失败:", error);
+      }
+    };
 
     onMounted(() => {
-      // 组件挂载后的逻辑
-    })
+      console.log("🚀 MainLayout - 组件已挂载");
+      console.log("🚀 MainLayout - 用户信息:", userInfo.value);
+      console.log("🚀 MainLayout - 菜单列表:", menuList.value);
+      loadUserMenus();
+    });
 
     return {
       leftDrawerOpen,
@@ -324,10 +330,10 @@ export default defineComponent({
       changePassword,
       submitPasswordChange,
       logout,
-      isMenuActive
-    }
-  }
-})
+      isMenuActive,
+    };
+  },
+});
 </script>
 
 <style lang="sass" scoped>
