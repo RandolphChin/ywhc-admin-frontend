@@ -70,7 +70,8 @@ module.exports = configure(function (ctx) {
       // publicPath: '/',
       // analyze: true,
       env: {
-        API_BASE_URL: ctx.dev ? 'http://localhost:8080/api' : 'https://api.ywhc.com/api'
+        //API_BASE_URL: process.env.API_BASE_URL || (ctx.dev ? 'http://localhost:8080/api' : 'https://api.ywhc.com/api')
+        API_BASE_URL: process.env.API_BASE_URL
       },
       // rawDefine: {}
       // ignorePublicFolder: true,
