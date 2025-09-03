@@ -9,7 +9,7 @@ export const useAuthStore = defineStore("auth", {
     userInfo: null,
     permissions: [],
     roles: [],
-    menus: [],
+    menus: LocalStorage.getItem("userMenus") || [], // 从本地存储恢复菜单数据
     routesLoaded: false, // 标记动态路由是否已加载
     isInitializing: false, // 标记是否正在初始化路由
   }),
@@ -73,6 +73,7 @@ export const useAuthStore = defineStore("auth", {
 
       LocalStorage.remove("token");
       LocalStorage.remove("refreshToken");
+      LocalStorage.remove("userMenus");
     },
 
     // 获取用户信息
@@ -133,17 +134,21 @@ export const useAuthStore = defineStore("auth", {
 
         if (response.data && response.data.code === 200) {
           this.menus = response.data.data || [];
+          // 持久化菜单数据到本地存储
+          LocalStorage.set("userMenus", this.menus);
           console.log("✅ 用户菜单数据已更新，菜单数量:", this.menus.length);
           console.log("📋 菜单详情:", this.menus);
           return this.menus;
         } else {
           console.warn("⚠️ 获取用户菜单失败，响应数据异常:", response.data);
           this.menus = [];
+          LocalStorage.remove("userMenus");
           return [];
         }
       } catch (error) {
         console.error("❌ 获取用户菜单失败:", error);
         this.menus = [];
+        LocalStorage.remove("userMenus");
         return [];
       }
     },

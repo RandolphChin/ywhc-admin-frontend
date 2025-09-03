@@ -1,4 +1,5 @@
 import { menuApi } from "src/api";
+import { LocalStorage } from "quasar";
 
 /**
  * 组件映射表 - 支持动态注册和静态预定义
@@ -231,9 +232,30 @@ const transformMenuToRoute = (menu) => {
 /**
  * 获取用户动态路由
  */
-export const getUserRoutes = async () => {
+export const getUserRoutes = async (usePersistedMenus = false) => {
   try {
-    console.log("🔄 获取用户菜单数据...");
+    let menuData = [];
+
+    if (usePersistedMenus) {
+      // 尝试使用持久化的菜单数据
+      const persistedMenus = LocalStorage.getItem("userMenus");
+      if (persistedMenus && persistedMenus.length > 0) {
+        console.log("📋 使用持久化菜单数据:", persistedMenus);
+        menuData = persistedMenus;
+      } else {
+        console.log("📋 没有持久化菜单数据，从API获取...");
+        const response = await menuApi.getUserMenus();
+        if (response.data && response.data.code === 200) {
+          menuData = response.data.data || [];
+        }
+      }
+    } else {
+      console.log("🔄 从API获取用户菜单数据...");
+      const response = await menuApi.getUserMenus();
+      if (response.data && response.data.code === 200) {
+        menuData = response.data.data || [];
+      }
+    }
 
     // 确保组件映射已加载
     if (!componentMappingLoaded) {
@@ -241,27 +263,19 @@ export const getUserRoutes = async () => {
       await loadComponentMappingFromAPI();
     }
 
-    const response = await menuApi.getUserMenus();
+    console.log("📋 菜单数据:", menuData);
 
-    if (response.data && response.data.code === 200) {
-      const menuData = response.data.data || [];
-      console.log("📋 菜单数据:", menuData);
+    const routes = [];
 
-      const routes = [];
+    menuData.forEach((menu) => {
+      const route = transformMenuToRoute(menu);
+      if (route) {
+        routes.push(route);
+      }
+    });
 
-      menuData.forEach((menu) => {
-        const route = transformMenuToRoute(menu);
-        if (route) {
-          routes.push(route);
-        }
-      });
-
-      console.log("✅ 动态路由生成完成:", routes);
-      return routes;
-    } else {
-      console.warn("⚠️ 菜单数据获取失败:", response.data);
-      return [];
-    }
+    console.log("✅ 动态路由生成完成:", routes);
+    return routes;
   } catch (error) {
     console.error("❌ 获取用户路由失败:", error);
     return [];
@@ -316,11 +330,11 @@ export const addDynamicRoutes = (router, routes) => {
 /**
  * 初始化动态路由
  */
-export const initDynamicRoutes = async (router) => {
+export const initDynamicRoutes = async (router, usePersistedMenus = true) => {
   try {
     console.log("🔧 初始化动态路由系统...");
 
-    const routes = await getUserRoutes();
+    const routes = await getUserRoutes(usePersistedMenus);
 
     if (routes.length === 0) {
       console.log("📋 没有动态路由数据");

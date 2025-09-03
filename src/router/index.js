@@ -8,6 +8,7 @@ import routes from "./routes";
 import { useAuthStore } from "src/stores/auth";
 import { pinia } from "src/boot/pinia";
 import { initDynamicRoutes, resetDynamicRoutes } from "./dynamicRoutes";
+import { LocalStorage } from "quasar";
 
 export default route(function ({ store /*, ssrContext */ }) {
   const createHistory = process.env.SERVER
@@ -45,6 +46,38 @@ export default route(function ({ store /*, ssrContext */ }) {
       return;
     }
 
+    // 如果有持久化的菜单数据但路由未加载，先尝试初始化路由
+    if (!authStore.routesLoaded && authStore.menus && authStore.menus.length > 0) {
+      try {
+        console.log("🔄 检测到持久化菜单数据，预初始化动态路由...");
+        authStore.isInitializing = true;
+        
+        const routeSuccess = await initDynamicRoutes(Router, true);
+        if (routeSuccess) {
+          authStore.routesLoaded = true;
+          console.log("✅ 基于持久化数据的动态路由初始化完成");
+          
+          // 如果目标路由现在存在，直接导航
+          try {
+            const targetRoute = Router.resolve(to.path);
+            if (targetRoute && targetRoute.matched && targetRoute.matched.length > 0) {
+              console.log(`✅ 目标路由已可用: ${to.path}`);
+              authStore.isInitializing = false;
+              next();
+              return;
+            }
+          } catch (routeError) {
+            console.log(`⚠️ 路由解析失败: ${to.path}`, routeError);
+          }
+        }
+        
+        authStore.isInitializing = false;
+      } catch (error) {
+        console.error("❌ 预初始化动态路由失败:", error);
+        authStore.isInitializing = false;
+      }
+    }
+
     // 如果正在初始化路由，避免重复处理
     if (authStore.isInitializing) {
       console.log("⏳ 路由初始化中，等待完成...");
@@ -67,7 +100,7 @@ export default route(function ({ store /*, ssrContext */ }) {
 
         // 初始化动态路由
         console.log("🛣️ 初始化动态路由...");
-        const routeSuccess = await initDynamicRoutes(Router);
+        const routeSuccess = await initDynamicRoutes(Router, false);
         if (routeSuccess) {
           authStore.routesLoaded = true;
           console.log("✅ 动态路由初始化完成");
@@ -111,7 +144,7 @@ export default route(function ({ store /*, ssrContext */ }) {
         }
 
         // 初始化动态路由
-        const routeSuccess = await initDynamicRoutes(Router);
+        const routeSuccess = await initDynamicRoutes(Router, false);
         if (routeSuccess) {
           authStore.routesLoaded = true;
           console.log("✅ 动态路由初始化完成");
@@ -143,6 +176,28 @@ export default route(function ({ store /*, ssrContext */ }) {
           next("/dashboard");
         }
         return;
+      }
+    }
+
+    // 最后检查：如果路由仍然不存在，尝试最后一次初始化
+    if (authStore.routesLoaded) {
+      try {
+        const targetRoute = Router.resolve(to.path);
+        if (!targetRoute.matched || targetRoute.matched.length === 0) {
+          console.log(`⚠️ 路由不存在，尝试重新初始化: ${to.path}`);
+          
+          // 强制重新获取菜单并初始化路由
+          await authStore.getUserMenus();
+          const routeSuccess = await initDynamicRoutes(Router, false);
+          
+          if (routeSuccess) {
+            console.log("✅ 重新初始化路由成功，继续导航");
+            next();
+            return;
+          }
+        }
+      } catch (error) {
+        console.error("❌ 最终路由检查失败:", error);
       }
     }
 

@@ -30,7 +30,8 @@ module.exports = configure(function (ctx) {
     boot: [
       'pinia',
       'axios',
-      'auth'
+      'auth',
+      'router'
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#Property%3A-css
