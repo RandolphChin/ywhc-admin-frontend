@@ -1,7 +1,7 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
+    <q-header elevated class="bg-white text-dark">
+      <q-toolbar class="bg-white text-dark">
         <q-btn
           flat
           dense
@@ -9,9 +9,24 @@
           icon="menu"
           aria-label="Menu"
           @click="toggleLeftDrawer"
+          color="dark"
         />
 
-        <q-toolbar-title> YWHC 后台管理系统 </q-toolbar-title>
+        <!-- 面包屑导航 -->
+        <q-breadcrumbs class="q-ml-md breadcrumb-static">
+          <q-breadcrumbs-el
+            label="Dashboard"
+          />
+          <q-breadcrumbs-el
+            v-for="(breadcrumb, index) in breadcrumbs"
+            :key="index"
+            :label="breadcrumb.label"
+          />
+        </q-breadcrumbs>
+
+        <q-space />
+
+        <q-toolbar-title class="text-right text-dark"> YWHC 后台管理系统 </q-toolbar-title>
 
         <div class="q-gutter-sm row items-center no-wrap">
           <!-- 全屏切换 -->
@@ -21,6 +36,7 @@
             round
             :icon="$q.fullscreen.isActive ? 'fullscreen_exit' : 'fullscreen'"
             @click="$q.fullscreen.toggle()"
+            color="dark"
           />
 
           <!-- 用户菜单 -->
@@ -30,6 +46,7 @@
             no-caps
             :label="userInfo?.nickname || '用户'"
             icon="account_circle"
+            color="dark"
           >
             <q-list>
               <q-item clickable v-close-popup @click="goToProfile">
@@ -58,11 +75,74 @@
           </q-btn-dropdown>
         </div>
       </q-toolbar>
+      
+      <!-- 标签页区域 -->
+      <div class="bg-white border-bottom">
+        <q-tabs
+          v-model="activeTab"
+          no-caps
+          dense
+          class="text-grey compact-tabs hide-arrows"
+          active-color="white"
+          indicator-color="transparent"
+          align="left"
+        >
+          <q-tab
+            v-for="tab in openTabs"
+            :key="tab.path"
+            :name="tab.path"
+            @click="switchTab(tab.path)"
+            @contextmenu.prevent="showContextMenu($event, tab)"
+            class="tab-item"
+          >
+            <div class="row items-center no-wrap">
+              <span>{{ tab.title }}</span>
+              <q-icon
+                v-if="tab.path !== '/dashboard'"
+                name="close"
+                size="xs"
+                style="font-size: 12px;margin-left: 8px;"
+                class="q-ml-xs tab-close-btn"
+                @click.stop="closeTab(tab.path)"
+              />
+            </div>
+          </q-tab>
+        </q-tabs>
+      </div>
     </q-header>
+
+    <!-- 右键菜单 -->
+    <q-menu
+      v-model="contextMenuVisible"
+      context-menu
+    >
+      <q-list dense style="min-width: 80px">
+        <q-item clickable v-close-popup @click="refreshTab">
+          <q-item-section>刷新</q-item-section>
+        </q-item>
+        
+        <q-item 
+          v-if="contextTab?.path !== '/dashboard'"
+          clickable 
+          v-close-popup 
+          @click="closeTab(contextTab?.path)"
+        >
+          <q-item-section>关闭</q-item-section>
+        </q-item>
+        
+        <q-item clickable v-close-popup @click="closeOtherTabs">
+          <q-item-section>关闭其他</q-item-section>
+        </q-item>
+        
+        <q-item clickable v-close-popup @click="closeAllTabs">
+          <q-item-section>关闭全部</q-item-section>
+        </q-item>
+      </q-list>
+    </q-menu>
 
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-grey-1">
       <q-list>
-        <q-item-label header> 导航菜单 </q-item-label>
+        <q-item-label header> YWHC 后台管理系统 </q-item-label>
 
         <!-- 仪表盘 - 保留静态菜单 -->
         <q-item
@@ -207,6 +287,23 @@ export default defineComponent({
     // 菜单展开状态管理
     const expandedMenus = ref(new Set());
 
+    // 标签页管理
+    const openTabs = ref([
+      {
+        path: '/dashboard',
+        title: 'Dashboard',
+        icon: 'dashboard'
+      }
+    ]);
+    const activeTab = ref('/dashboard');
+    
+    // 右键菜单
+    const contextMenuVisible = ref(false);
+    const contextTab = ref(null);
+
+    // 面包屑导航
+    const breadcrumbs = ref([]);
+
     // 计算属性
     const userInfo = computed(() => authStore.userInfo);
     const menuList = computed(() => authStore.menus || []);
@@ -266,6 +363,82 @@ export default defineComponent({
       }
     };
 
+    // 更新面包屑导航
+    const updateBreadcrumbs = (currentPath) => {
+      breadcrumbs.value = [];
+      
+      if (currentPath === '/dashboard') return;
+
+      const findBreadcrumbPath = (menus, targetPath, path = []) => {
+        for (const menu of menus) {
+          const currentPath = [...path, { label: menu.menuName, icon: menu.icon, to: { path: menu.path } }];
+          
+          if (menu.path === targetPath) {
+            return currentPath;
+          }
+          
+          if (menu.children) {
+            const found = findBreadcrumbPath(menu.children, targetPath, currentPath);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const breadcrumbPath = findBreadcrumbPath(authStore.menus || [], currentPath);
+      if (breadcrumbPath) {
+        breadcrumbs.value = breadcrumbPath;
+      }
+    };
+
+    // 标签页管理方法
+    const addTab = (path) => {
+      // 如果标签页已存在，直接切换
+      const existingTab = openTabs.value.find(tab => tab.path === path);
+      if (existingTab) {
+        activeTab.value = path;
+        return;
+      }
+
+      // 根据路径获取页面信息
+      const pageInfo = getPageInfo(path);
+      if (pageInfo) {
+        openTabs.value.push({
+          path: path,
+          title: pageInfo.title,
+          icon: pageInfo.icon
+        });
+        activeTab.value = path;
+      }
+    };
+
+    const getPageInfo = (path) => {
+      // 从菜单中查找页面信息
+      const findInMenus = (menus, targetPath) => {
+        for (const menu of menus) {
+          if (menu.path === targetPath) {
+            return { title: menu.menuName, icon: menu.icon };
+          }
+          if (menu.children) {
+            const found = findInMenus(menu.children, targetPath);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+
+      const menuInfo = findInMenus(authStore.menus || [], path);
+      if (menuInfo) return menuInfo;
+
+      // 默认页面信息
+      const defaultPages = {
+        '/dashboard': { title: 'Dashboard', icon: 'dashboard' },
+        '/profile': { title: '个人中心', icon: 'person' }
+      };
+
+      return defaultPages[path] || { title: '未知页面', icon: 'help' };
+    };
+
     // 监听菜单数据变化
     watch(
       () => authStore.menus,
@@ -281,12 +454,21 @@ export default defineComponent({
       { immediate: true }
     );
 
-    // 监听路由变化，更新菜单展开状态
+    // 监听路由变化，更新菜单展开状态、面包屑和标签页
     watch(
       () => route.path,
       (newPath) => {
         console.log("🚦 路由变化:", newPath);
         updateExpandedMenus(newPath);
+        updateBreadcrumbs(newPath);
+        
+        // 更新活动标签页
+        activeTab.value = newPath;
+        
+        // 如果是通过直接访问URL进入的页面，确保标签页存在
+        if (!openTabs.value.find(tab => tab.path === newPath)) {
+          addTab(newPath);
+        }
       },
       { immediate: true }
     );
@@ -297,7 +479,63 @@ export default defineComponent({
     };
 
     const navigateTo = (path) => {
+      addTab(path);
       router.push(path);
+    };
+
+    const switchTab = (path) => {
+      activeTab.value = path;
+      router.push(path);
+    };
+
+    const closeTab = (path) => {
+      if (path === '/dashboard') return; // Dashboard 不可关闭
+
+      const index = openTabs.value.findIndex(tab => tab.path === path);
+      if (index === -1) return;
+
+      openTabs.value.splice(index, 1);
+
+      // 如果关闭的是当前活动标签页，切换到其他标签页
+      if (activeTab.value === path) {
+        const newActiveTab = openTabs.value[Math.max(0, index - 1)];
+        switchTab(newActiveTab.path);
+      }
+    };
+
+    const showContextMenu = (event, tab) => {
+      contextTab.value = tab;
+      contextMenuVisible.value = true;
+    };
+
+    const refreshTab = () => {
+      if (contextTab.value) {
+        // 强制刷新当前页面
+        const currentPath = contextTab.value.path;
+        router.replace('/').then(() => {
+          router.replace(currentPath);
+        });
+      }
+    };
+
+    const closeOtherTabs = () => {
+      if (!contextTab.value) return;
+      
+      const keepTab = contextTab.value;
+      openTabs.value = openTabs.value.filter(tab => 
+        tab.path === '/dashboard' || tab.path === keepTab.path
+      );
+      
+      if (activeTab.value !== keepTab.path && activeTab.value !== '/dashboard') {
+        switchTab(keepTab.path);
+      }
+    };
+
+    const closeAllTabs = () => {
+      openTabs.value = openTabs.value.filter(tab => tab.path === '/dashboard');
+      if (activeTab.value !== '/dashboard') {
+        switchTab('/dashboard');
+      }
     };
 
     const goToProfile = () => {
@@ -389,6 +627,13 @@ export default defineComponent({
       userInfo,
       menuList,
       expandedMenus,
+      // 标签页相关
+      openTabs,
+      activeTab,
+      contextMenuVisible,
+      contextTab,
+      breadcrumbs,
+      // 方法
       toggleLeftDrawer,
       navigateTo,
       goToProfile,
@@ -398,13 +643,186 @@ export default defineComponent({
       isMenuActive,
       isMenuExpanded,
       onMenuToggle,
+      // 标签页方法
+      addTab,
+      switchTab,
+      closeTab,
+      showContextMenu,
+      refreshTab,
+      closeOtherTabs,
+      closeAllTabs,
     };
   },
 });
 </script>
 
-<style lang="sass" scoped>
-.q-toolbar__title
-  font-size: 1.2rem
-  font-weight: 500
+<style lang="scss" scoped>
+.q-toolbar__title {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tab-item {
+  min-width: 120px;
+  max-width: 200px;
+  
+  .q-tab__content {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.tab-item:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.tab-item .q-icon {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+  
+.tab-item:hover .q-icon {
+  opacity: 1;
+}
+
+// 覆盖 Quasar 默认的 header 背景色
+:deep(.q-header) {
+  background-color: white !important;
+  color: #333 !important;
+}
+
+:deep(.q-toolbar) {
+  background-color: white !important;
+  color: #333 !important;
+  min-height: 48px !important;
+}
+
+// 面包屑样式 - 不可点击，灰色字体
+.breadcrumb-static {
+  :deep(.q-breadcrumbs__el) {
+    color: #666 !important;
+    cursor: default !important;
+  }
+    
+  :deep(.q-breadcrumbs__el:hover) {
+    color: #666 !important;
+    text-decoration: none !important;
+  }
+}
+
+// 紧凑标签页样式
+.compact-tabs {
+  :deep(.q-tab) {
+    min-height: 28px !important;
+    padding: 0 8px !important;
+    font-size: 12px !important;
+    margin-right: 2px !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 4px 4px 0 0 !important;
+  }
+    
+  // 选中标签页的背景色为 primary 色
+  :deep(.q-tab--active) {
+    background-color: #1976D2 !important;
+    color: white !important;
+    border-color: #1976D2 !important;
+  }
+    
+  :deep(.q-tab:not(.q-tab--active)) {
+    color: #666 !important;
+    background-color: #f5f5f5 !important;
+  }
+    
+  :deep(.q-tab:not(.q-tab--active):hover) {
+    background-color: rgba(0, 0, 0, 0.04) !important;
+  }
+
+  // 隐藏指示器和箭头
+  :deep(.q-tabs__content) {
+    .q-tab-panels {
+      display: none;
+    }
+  }
+      
+  :deep(.q-tabs__arrow) {
+    display: none !important;
+  }
+    
+  :deep(.q-tabs__arrow--left) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+    
+  :deep(.q-tabs__arrow--right) {
+    display: none !important;
+  }
+    
+  :deep(.material-icons) {
+    &.q-tabs__arrow {
+      display: none !important;
+      visibility: hidden !important;
+    }
+  }
+}
+
+// 关闭按钮样式
+.tab-close-btn {
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  cursor: pointer;
+
+  &:hover {
+    opacity: 1;
+  }
+}
+
+// 确保关闭按钮颜色与文字一致
+:deep(.q-tab--active .tab-close-btn) {
+  color: white !important;
+}
+
+:deep(.q-tab:not(.q-tab--active) .tab-close-btn) {
+  color: #666 !important;
+}
+
+// 隐藏箭头的正确方法
+.hide-arrows {
+  :deep(.q-tabs__arrow) {
+    display: none !important;
+  }
+    
+  :deep(.q-tabs__arrow--left),
+  :deep(.q-tabs__arrow--right) {
+    display: none !important;
+  }
+    
+  // 针对不同版本的 Quasar 可能的类名
+  :deep(.q-tab__arrow),
+  :deep(.q-tab__arrow--left),
+  :deep(.q-tab__arrow--right) {
+    display: none !important;
+  }
+    
+  // 隐藏所有可能的箭头图标
+  :deep(.material-icons) {
+    &:contains('chevron_left'),
+    &:contains('chevron_right') {
+      display: none !important;
+    }
+  }
+      
+  // 更暴力的方法 - 隐藏包含特定内容的图标
+  :deep([class*="arrow"]) {
+    display: none !important;
+  }
+    
+  :deep([class*="chevron"]) {
+    display: none !important;
+  }
+}
 </style>
