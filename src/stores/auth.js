@@ -39,8 +39,9 @@ export const useAuthStore = defineStore("auth", {
         LocalStorage.set("token", accessToken);
         LocalStorage.set("refreshToken", refreshToken);
 
-        // 获取用户详细信息
+        // 获取用户详细信息和菜单
         await this.getUserInfo();
+        await this.getUserMenus();
 
         return response.data;
       } catch (error) {
@@ -78,12 +79,12 @@ export const useAuthStore = defineStore("auth", {
     async getUserInfo() {
       try {
         const response = await api.get("/auth/user-info");
-        const { userInfo, permissions, roles, menus } = response.data.data;
+        const { userInfo, permissions, roles } = response.data.data;
 
         this.userInfo = userInfo;
         this.permissions = permissions || [];
         this.roles = roles || [];
-        this.menus = menus || [];
+        // 不在这里设置menus，专门用getUserMenus获取
 
         return response.data;
       } catch (error) {
@@ -126,23 +127,48 @@ export const useAuthStore = defineStore("auth", {
     // 获取用户动态菜单（用于侧边栏显示）
     async getUserMenus() {
       try {
-        console.log("正在获取用户菜单...");
+        console.log("📋 正在获取用户菜单...");
         const response = await api.get("/system/menu/user-tree");
-        console.log("用户菜单API响应:", response.data);
+        console.log("📋 用户菜单API响应:", response.data);
 
         if (response.data && response.data.code === 200) {
           this.menus = response.data.data || [];
-          console.log("用户菜单数据已更新:", this.menus);
+          console.log("✅ 用户菜单数据已更新，菜单数量:", this.menus.length);
+          console.log("📋 菜单详情:", this.menus);
           return this.menus;
         } else {
-          console.warn("获取用户菜单失败，响应数据异常:", response.data);
+          console.warn("⚠️ 获取用户菜单失败，响应数据异常:", response.data);
           this.menus = [];
           return [];
         }
       } catch (error) {
-        console.error("获取用户菜单失败:", error);
+        console.error("❌ 获取用户菜单失败:", error);
         this.menus = [];
         return [];
+      }
+    },
+
+    // 初始化用户认证信息（用于应用启动时）
+    async initializeAuth() {
+      try {
+        if (!this.token) {
+          throw new Error("No token found");
+        }
+
+        console.log("🔄 初始化用户认证信息...");
+
+        // 获取用户信息
+        await this.getUserInfo();
+
+        // 获取用户菜单
+        await this.getUserMenus();
+
+        console.log("✅ 用户认证信息初始化完成");
+        return true;
+      } catch (error) {
+        console.error("❌ 用户认证信息初始化失败:", error);
+        this.clearAuth();
+        throw error;
       }
     },
   },
