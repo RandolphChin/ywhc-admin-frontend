@@ -25,7 +25,6 @@
               <q-input
                 v-model="loginForm.username"
                 placeholder="用户名"
-                dense
                 :rules="[val => !!val || '请输入用户名']"
                 outlined
                 class="modern-input"
@@ -36,14 +35,13 @@
               </q-input>
             </div>
 
-            <div class="input-group">
+            <div class="input-group" style="margin-bottom: 2px;">
               <q-input
                 v-model="loginForm.password"
                 type="password"
                 placeholder="密码"
                 :rules="[val => !!val || '请输入密码']"
                 outlined
-                dense
                 class="modern-input"
               >
                 <template v-slot:prepend>
@@ -52,24 +50,24 @@
               </q-input>
             </div>
 
-            <div class="row items-center justify-between q-mt-md">
+            <div class="row items-center justify-between q-mt-md" >
               <q-checkbox
                 v-model="loginForm.rememberMe"
                 label="记住我"
                 color="primary"
                 class="remember-me"
               />
-              <a href="#" class="forgot-password">忘记密码？</a>
             </div>
-
+            <div class="input-group" style="margin-top: 2px;">
             <q-btn
               type="submit"
-              class="login-btn full-width q-mt-sm"
+              class="login-btn full-width"
               label="登录"
               :loading="loading"
               size="lg"
               no-caps
             />
+            </div>
           </q-form>
         </q-card-section>
       </q-card>
@@ -366,7 +364,7 @@ export default defineComponent({
   font-weight: 600;
   font-size: 1rem;
   letter-spacing: 0.5px;
-  padding: 16px 0;
+  padding: 7px 0;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   
