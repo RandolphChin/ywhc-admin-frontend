@@ -400,7 +400,7 @@ export default defineComponent({
 
     // 检查菜单是否应该展开
     const isMenuExpanded = (menu) => {
-      return expandedMenus.value.has(menu.id) || isMenuActive(menu);
+      return expandedMenus.value.has(menu.id);
     };
 
     // 处理菜单展开/折叠事件
