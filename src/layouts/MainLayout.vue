@@ -1,7 +1,7 @@
 <template>
   <q-layout view="lHh Lpr lFf">
-    <q-header elevated class="bg-white text-dark">
-      <q-toolbar class="bg-white text-dark">
+    <q-header elevated class="modern-header">
+      <q-toolbar class="modern-toolbar">
         <q-btn
           flat
           dense
@@ -13,20 +13,29 @@
         />
 
         <!-- 面包屑导航 -->
-        <q-breadcrumbs class="q-ml-md breadcrumb-static">
+        <q-breadcrumbs class="q-ml-md modern-breadcrumbs">
           <q-breadcrumbs-el
+            icon="dashboard"
             label="Dashboard"
+            class="breadcrumb-item"
           />
           <q-breadcrumbs-el
             v-for="(breadcrumb, index) in breadcrumbs"
             :key="index"
             :label="breadcrumb.label"
+            :icon="breadcrumb.icon"
+            class="breadcrumb-item"
           />
         </q-breadcrumbs>
 
         <q-space />
 
-        <q-toolbar-title class="text-right text-dark"> YWHC 后台管理系统 </q-toolbar-title>
+        <q-toolbar-title class="system-title-header">
+          <div class="title-content">
+            <span class="title-text">YWHC 后台管理系统</span>
+            <span class="title-version">v2.0</span>
+          </div>
+        </q-toolbar-title>
 
         <div class="q-gutter-sm row items-center no-wrap">
           <!-- 全屏切换 -->
@@ -75,16 +84,16 @@
           </q-btn-dropdown>
         </div>
       </q-toolbar>
-      
+
       <!-- 标签页区域 -->
-      <div class="bg-white border-bottom">
+      <div class="tabs-container">
         <q-tabs
           v-model="activeTab"
           no-caps
           dense
-          class="text-grey compact-tabs hide-arrows"
-          active-color="white"
-          indicator-color="transparent"
+          class="modern-tabs hide-arrows"
+          active-color="primary"
+          indicator-color="primary"
           align="left"
         >
           <q-tab
@@ -93,16 +102,19 @@
             :name="tab.path"
             @click="switchTab(tab.path)"
             @contextmenu.prevent="showContextMenu($event, tab)"
-            class="tab-item"
+            class="modern-tab-item"
           >
-            <div class="row items-center no-wrap">
-              <span>{{ tab.title }}</span>
-              <q-icon
+            <div class="tab-content">
+              <q-icon :name="tab.icon || 'description'" class="tab-icon" />
+              <span class="tab-label">{{ tab.title }}</span>
+              <q-btn
                 v-if="tab.path !== '/dashboard'"
-                name="close"
+                flat
+                dense
+                round
                 size="xs"
-                style="font-size: 12px;margin-left: 8px;"
-                class="q-ml-xs tab-close-btn"
+                icon="close"
+                class="tab-close-btn"
                 @click.stop="closeTab(tab.path)"
               />
             </div>
@@ -112,49 +124,67 @@
     </q-header>
 
     <!-- 右键菜单 -->
-    <q-menu
-      v-model="contextMenuVisible"
-      context-menu
-    >
+    <q-menu v-model="contextMenuVisible" context-menu>
       <q-list dense style="min-width: 80px">
         <q-item clickable v-close-popup @click="refreshTab">
           <q-item-section>刷新</q-item-section>
         </q-item>
-        
-        <q-item 
+
+        <q-item
           v-if="contextTab?.path !== '/dashboard'"
-          clickable 
-          v-close-popup 
+          clickable
+          v-close-popup
           @click="closeTab(contextTab?.path)"
         >
           <q-item-section>关闭</q-item-section>
         </q-item>
-        
+
         <q-item clickable v-close-popup @click="closeOtherTabs">
           <q-item-section>关闭其他</q-item-section>
         </q-item>
-        
+
         <q-item clickable v-close-popup @click="closeAllTabs">
           <q-item-section>关闭全部</q-item-section>
         </q-item>
       </q-list>
     </q-menu>
 
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-grey-1">
-      <q-list>
-        <q-item-label header> YWHC 后台管理系统 </q-item-label>
+    <q-drawer
+      v-model="leftDrawerOpen"
+      show-if-above
+      class="modern-drawer"
+      style="background: #1a1d29 !important"
+    >
+      <div class="drawer-header" style="background: #0f1419 !important">
+        <div class="logo-container">
+          <q-icon name="admin_panel_settings" class="logo-icon" />
+          <div class="logo-text">
+            <div class="system-name">YWHC</div>
+            <div class="system-desc">管理系统</div>
+          </div>
+        </div>
+      </div>
 
+      <q-list
+        class="navigation-menu"
+        style="background: transparent !important"
+      >
         <!-- 仪表盘 - 保留静态菜单 -->
         <q-item
           clickable
           v-ripple
           :active="$route.path === '/dashboard'"
           @click="navigateTo('/dashboard')"
+          class="menu-item"
+          :class="{ 'menu-item--active': $route.path === '/dashboard' }"
         >
           <q-item-section avatar>
-            <q-icon name="dashboard" />
+            <q-icon name="dashboard" class="menu-icon" />
           </q-item-section>
-          <q-item-section> 仪表盘 </q-item-section>
+          <q-item-section class="menu-label">
+            <span>仪表盘</span>
+            <div class="item-indicator"></div>
+          </q-item-section>
         </q-item>
 
         <!-- 动态菜单 -->
@@ -165,7 +195,19 @@
             :label="menu.menuName"
             :model-value="isMenuExpanded(menu)"
             @update:model-value="(val) => onMenuToggle(menu, val)"
+            class="menu-group"
+            header-class="menu-group-header"
+            expand-icon="keyboard_arrow_down"
           >
+            <template v-slot:header>
+              <q-item-section avatar>
+                <q-icon :name="menu.icon" class="menu-icon" />
+              </q-item-section>
+              <q-item-section class="menu-label">
+                <span>{{ menu.menuName }}</span>
+              </q-item-section>
+            </template>
+
             <q-item
               v-for="child in menu.children"
               :key="child.id"
@@ -173,13 +215,15 @@
               v-ripple
               :active="$route.path === child.path"
               @click="navigateTo(child.path)"
-              class="q-ml-md"
+              class="menu-item menu-item--sub"
+              :class="{ 'menu-item--active': $route.path === child.path }"
             >
               <q-item-section avatar>
-                <q-icon :name="child.icon" />
+                <q-icon :name="child.icon" class="menu-icon" />
               </q-item-section>
-              <q-item-section>
-                {{ child.menuName }}
+              <q-item-section class="menu-label">
+                <span>{{ child.menuName }}</span>
+                <div class="item-indicator"></div>
               </q-item-section>
             </q-item>
           </q-expansion-item>
@@ -190,12 +234,15 @@
             v-ripple
             :active="$route.path === menu.path"
             @click="navigateTo(menu.path)"
+            class="menu-item"
+            :class="{ 'menu-item--active': $route.path === menu.path }"
           >
             <q-item-section avatar>
-              <q-icon :name="menu.icon" />
+              <q-icon :name="menu.icon" class="menu-icon" />
             </q-item-section>
-            <q-item-section>
-              {{ menu.menuName }}
+            <q-item-section class="menu-label">
+              <span>{{ menu.menuName }}</span>
+              <div class="item-indicator"></div>
             </q-item-section>
           </q-item>
         </template>
@@ -290,13 +337,13 @@ export default defineComponent({
     // 标签页管理
     const openTabs = ref([
       {
-        path: '/dashboard',
-        title: 'Dashboard',
-        icon: 'dashboard'
-      }
+        path: "/dashboard",
+        title: "Dashboard",
+        icon: "dashboard",
+      },
     ]);
-    const activeTab = ref('/dashboard');
-    
+    const activeTab = ref("/dashboard");
+
     // 右键菜单
     const contextMenuVisible = ref(false);
     const contextTab = ref(null);
@@ -366,26 +413,36 @@ export default defineComponent({
     // 更新面包屑导航
     const updateBreadcrumbs = (currentPath) => {
       breadcrumbs.value = [];
-      
-      if (currentPath === '/dashboard') return;
+
+      if (currentPath === "/dashboard") return;
 
       const findBreadcrumbPath = (menus, targetPath, path = []) => {
         for (const menu of menus) {
-          const currentPath = [...path, { label: menu.menuName, icon: menu.icon, to: { path: menu.path } }];
-          
+          const currentPath = [
+            ...path,
+            { label: menu.menuName, icon: menu.icon, to: { path: menu.path } },
+          ];
+
           if (menu.path === targetPath) {
             return currentPath;
           }
-          
+
           if (menu.children) {
-            const found = findBreadcrumbPath(menu.children, targetPath, currentPath);
+            const found = findBreadcrumbPath(
+              menu.children,
+              targetPath,
+              currentPath
+            );
             if (found) return found;
           }
         }
         return null;
       };
 
-      const breadcrumbPath = findBreadcrumbPath(authStore.menus || [], currentPath);
+      const breadcrumbPath = findBreadcrumbPath(
+        authStore.menus || [],
+        currentPath
+      );
       if (breadcrumbPath) {
         breadcrumbs.value = breadcrumbPath;
       }
@@ -394,7 +451,7 @@ export default defineComponent({
     // 标签页管理方法
     const addTab = (path) => {
       // 如果标签页已存在，直接切换
-      const existingTab = openTabs.value.find(tab => tab.path === path);
+      const existingTab = openTabs.value.find((tab) => tab.path === path);
       if (existingTab) {
         activeTab.value = path;
         return;
@@ -406,7 +463,7 @@ export default defineComponent({
         openTabs.value.push({
           path: path,
           title: pageInfo.title,
-          icon: pageInfo.icon
+          icon: pageInfo.icon,
         });
         activeTab.value = path;
       }
@@ -432,11 +489,11 @@ export default defineComponent({
 
       // 默认页面信息
       const defaultPages = {
-        '/dashboard': { title: 'Dashboard', icon: 'dashboard' },
-        '/profile': { title: '个人中心', icon: 'person' }
+        "/dashboard": { title: "Dashboard", icon: "dashboard" },
+        "/profile": { title: "个人中心", icon: "person" },
       };
 
-      return defaultPages[path] || { title: '未知页面', icon: 'help' };
+      return defaultPages[path] || { title: "未知页面", icon: "help" };
     };
 
     // 监听菜单数据变化
@@ -461,12 +518,12 @@ export default defineComponent({
         console.log("🚦 路由变化:", newPath);
         updateExpandedMenus(newPath);
         updateBreadcrumbs(newPath);
-        
+
         // 更新活动标签页
         activeTab.value = newPath;
-        
+
         // 如果是通过直接访问URL进入的页面，确保标签页存在
-        if (!openTabs.value.find(tab => tab.path === newPath)) {
+        if (!openTabs.value.find((tab) => tab.path === newPath)) {
           addTab(newPath);
         }
       },
@@ -489,9 +546,9 @@ export default defineComponent({
     };
 
     const closeTab = (path) => {
-      if (path === '/dashboard') return; // Dashboard 不可关闭
+      if (path === "/dashboard") return; // Dashboard 不可关闭
 
-      const index = openTabs.value.findIndex(tab => tab.path === path);
+      const index = openTabs.value.findIndex((tab) => tab.path === path);
       if (index === -1) return;
 
       openTabs.value.splice(index, 1);
@@ -512,7 +569,7 @@ export default defineComponent({
       if (contextTab.value) {
         // 强制刷新当前页面
         const currentPath = contextTab.value.path;
-        router.replace('/').then(() => {
+        router.replace("/").then(() => {
           router.replace(currentPath);
         });
       }
@@ -520,21 +577,26 @@ export default defineComponent({
 
     const closeOtherTabs = () => {
       if (!contextTab.value) return;
-      
+
       const keepTab = contextTab.value;
-      openTabs.value = openTabs.value.filter(tab => 
-        tab.path === '/dashboard' || tab.path === keepTab.path
+      openTabs.value = openTabs.value.filter(
+        (tab) => tab.path === "/dashboard" || tab.path === keepTab.path
       );
-      
-      if (activeTab.value !== keepTab.path && activeTab.value !== '/dashboard') {
+
+      if (
+        activeTab.value !== keepTab.path &&
+        activeTab.value !== "/dashboard"
+      ) {
         switchTab(keepTab.path);
       }
     };
 
     const closeAllTabs = () => {
-      openTabs.value = openTabs.value.filter(tab => tab.path === '/dashboard');
-      if (activeTab.value !== '/dashboard') {
-        switchTab('/dashboard');
+      openTabs.value = openTabs.value.filter(
+        (tab) => tab.path === "/dashboard"
+      );
+      if (activeTab.value !== "/dashboard") {
+        switchTab("/dashboard");
       }
     };
 
@@ -657,172 +719,514 @@ export default defineComponent({
 </script>
 
 <style lang="scss" scoped>
-.q-toolbar__title {
-  font-size: 1.2rem;
-  font-weight: 500;
-}
-
-.border-bottom {
+// ========== Header 样式 ==========
+.modern-header {
+  background: #ffffff;
+  color: #333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   border-bottom: 1px solid #e0e0e0;
 }
 
-.tab-item {
-  min-width: 120px;
-  max-width: 200px;
-  
-  .q-tab__content {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.modern-toolbar {
+  background: #ffffff;
+  color: #333;
+  min-height: 64px;
+  padding: 0 24px;
+}
+
+.system-title-header {
+  text-align: right;
+
+  .title-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+
+    .title-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .title-version {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
   }
 }
 
-.tab-item:hover {
-  background-color: rgba(0, 0, 0, 0.04);
-}
-
-.tab-item .q-icon {
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-  
-.tab-item:hover .q-icon {
-  opacity: 1;
-}
-
-// 覆盖 Quasar 默认的 header 背景色
-:deep(.q-header) {
-  background-color: white !important;
-  color: #333 !important;
-}
-
-:deep(.q-toolbar) {
-  background-color: white !important;
-  color: #333 !important;
-  min-height: 48px !important;
-}
-
-// 面包屑样式 - 不可点击，灰色字体
-.breadcrumb-static {
+// ========== 面包屑导航样式 ==========
+.modern-breadcrumbs {
   :deep(.q-breadcrumbs__el) {
     color: #666 !important;
     cursor: default !important;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .q-icon {
+      font-size: 1.1rem;
+      opacity: 0.8;
+      color: #1976d2;
+    }
   }
-    
-  :deep(.q-breadcrumbs__el:hover) {
-    color: #666 !important;
-    text-decoration: none !important;
+
+  :deep(.q-breadcrumbs__separator) {
+    color: #999 !important;
+    margin: 0 8px;
+  }
+
+  .breadcrumb-item:hover {
+    :deep(.q-icon) {
+      opacity: 1;
+    }
   }
 }
 
-// 紧凑标签页样式
-.compact-tabs {
-  :deep(.q-tab) {
-    min-height: 28px !important;
-    padding: 0 8px !important;
-    font-size: 12px !important;
-    margin-right: 2px !important;
-    border: 1px solid #e0e0e0 !important;
-    border-radius: 4px 4px 0 0 !important;
-  }
-    
-  // 选中标签页的背景色为 primary 色
-  :deep(.q-tab--active) {
-    background-color: #1976D2 !important;
-    color: white !important;
-    border-color: #1976D2 !important;
-  }
-    
-  :deep(.q-tab:not(.q-tab--active)) {
-    color: #666 !important;
-    background-color: #f5f5f5 !important;
-  }
-    
-  :deep(.q-tab:not(.q-tab--active):hover) {
-    background-color: rgba(0, 0, 0, 0.04) !important;
-  }
+// ========== 标签页样式 ==========
+.tabs-container {
+  background: linear-gradient(to right, #f8f9fa, #ffffff);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  padding: 8px 16px 0;
+}
 
-  // 隐藏指示器和箭头
+.modern-tabs {
   :deep(.q-tabs__content) {
-    .q-tab-panels {
-      display: none;
+    border-bottom: none;
+  }
+
+  :deep(.q-tab-panels) {
+    display: none;
+  }
+}
+
+.modern-tab-item {
+  min-width: 140px;
+  max-width: 220px;
+  margin-right: 4px;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  transition: all 0.3s ease;
+
+  :deep(.q-tab__content) {
+    padding: 8px 16px;
+    overflow: visible;
+  }
+
+  &:not(.q-tab--active) {
+    background: rgba(255, 255, 255, 0.7);
+    color: #666;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    border-bottom: none;
+
+    &:hover {
+      background: rgba(102, 126, 234, 0.08);
+      color: #333;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
     }
   }
-      
-  :deep(.q-tabs__arrow) {
-    display: none !important;
-  }
-    
-  :deep(.q-tabs__arrow--left) {
-    display: none !important;
-    visibility: hidden !important;
-  }
-    
-  :deep(.q-tabs__arrow--right) {
-    display: none !important;
-  }
-    
-  :deep(.material-icons) {
-    &.q-tabs__arrow {
-      display: none !important;
-      visibility: hidden !important;
+
+  &.q-tab--active {
+    background: white;
+    color: #667eea;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-bottom: 1px solid white;
+    box-shadow: 0 -2px 8px rgba(102, 126, 234, 0.1);
+    z-index: 1;
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 0 0 2px 2px;
     }
   }
 }
 
-// 关闭按钮样式
+.tab-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.tab-icon {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.tab-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
 .tab-close-btn {
-  opacity: 0.7;
-  transition: opacity 0.2s;
-  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  margin-left: 4px;
 
   &:hover {
     opacity: 1;
+    background: rgba(255, 0, 0, 0.1);
+    color: #ff4757;
   }
 }
 
-// 确保关闭按钮颜色与文字一致
-:deep(.q-tab--active .tab-close-btn) {
-  color: white !important;
+// ========== 左侧抽屉样式 ==========
+.modern-drawer {
+  background: #1a1d29 !important;
+  border: none;
+  width: 280px;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 }
 
-:deep(.q-tab:not(.q-tab--active) .tab-close-btn) {
-  color: #666 !important;
+// 全局强制覆盖
+:deep(.modern-drawer) {
+  background: #1a1d29 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+
+  &,
+  &.q-drawer,
+  &.q-drawer--standard,
+  &.q-drawer--bordered,
+  &.q-drawer--elevated {
+    background: #1a1d29 !important;
+  }
+
+  .q-drawer__content {
+    background: #1a1d29 !important;
+  }
+
+  .q-drawer__backdrop {
+    background: #1a1d29 !important;
+  }
+
+  .q-list {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .q-item {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .q-expansion-item {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .q-item__section {
+    background: transparent !important;
+    color: inherit !important;
+  }
+
+  .q-icon {
+    color: inherit !important;
+  }
 }
 
-// 隐藏箭头的正确方法
+.drawer-header {
+  background: #0f1419;
+  padding: 24px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+
+  .logo-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .logo-icon {
+      font-size: 2.5rem;
+      color: #4fc3f7;
+      background: rgba(79, 195, 247, 0.1);
+      border-radius: 12px;
+      padding: 8px;
+    }
+
+    .logo-text {
+      .system-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: 2px;
+      }
+
+      .system-desc {
+        font-size: 0.875rem;
+        color: rgba(255, 255, 255, 0.6);
+        margin-top: 2px;
+        letter-spacing: 1px;
+      }
+    }
+  }
+}
+
+.navigation-menu {
+  padding: 16px 0;
+  background: transparent !important;
+
+  .menu-item {
+    margin: 4px 16px;
+    border-radius: 10px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: rgba(255, 255, 255, 0.85);
+
+    &:hover {
+      background: rgba(79, 195, 247, 0.12);
+      color: #ffffff;
+      transform: translateX(6px);
+      box-shadow: 0 2px 8px rgba(79, 195, 247, 0.2);
+    }
+
+    &--active {
+      background: #4fc3f7;
+      color: #000000;
+      box-shadow: 0 4px 20px rgba(79, 195, 247, 0.4);
+      font-weight: 600;
+
+      .item-indicator {
+        opacity: 1;
+        transform: scaleY(1);
+        background: #000000;
+      }
+
+      .menu-icon {
+        color: #000000;
+        transform: scale(1.1);
+      }
+
+      &:hover {
+        background: #29b6f6;
+        transform: translateX(6px);
+      }
+    }
+
+    &--sub {
+      margin-left: 40px;
+      margin-right: 16px;
+      border-left: 2px solid rgba(79, 195, 247, 0.3);
+      border-radius: 0 10px 10px 0;
+      padding-left: 8px;
+
+      .menu-icon {
+        font-size: 1rem;
+      }
+
+      &--active {
+        border-left-color: #4fc3f7;
+      }
+    }
+  }
+
+  .menu-icon {
+    color: rgba(255, 255, 255, 0.75);
+    transition: all 0.3s ease;
+    font-size: 1.2rem;
+  }
+
+  .menu-label {
+    position: relative;
+
+    span {
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .item-indicator {
+      position: absolute;
+      right: -16px;
+      top: 50%;
+      transform: translateY(-50%) scaleY(0);
+      width: 3px;
+      height: 20px;
+      background: #4fc3f7;
+      border-radius: 2px;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+  }
+
+  .menu-group {
+    margin: 8px 16px;
+    border-radius: 10px;
+    overflow: hidden;
+
+    :deep(.q-expansion-item__container) {
+      background: transparent;
+    }
+
+    :deep(.q-expansion-item__header) {
+      color: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      border-radius: 10px;
+
+      &:hover {
+        background: rgba(79, 195, 247, 0.08);
+        color: #ffffff;
+      }
+    }
+
+    :deep(.q-expansion-item__toggle-icon) {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    :deep(.q-expansion-item__content) {
+      background: rgba(0, 0, 0, 0.15);
+      margin-top: 4px;
+      border-radius: 0 0 10px 10px;
+    }
+  }
+}
+
+// ========== 响应式设计 ==========
+@media (max-width: 768px) {
+  .modern-toolbar {
+    padding: 0 16px;
+    min-height: 56px;
+  }
+
+  .system-title-header .title-content {
+    .title-text {
+      font-size: 1.1rem;
+    }
+
+    .title-version {
+      display: none;
+    }
+  }
+
+  .tabs-container {
+    padding: 4px 8px 0;
+  }
+
+  .modern-tab-item {
+    min-width: 100px;
+    max-width: 160px;
+
+    :deep(.q-tab__content) {
+      padding: 6px 12px;
+    }
+  }
+
+  .tab-label {
+    font-size: 0.8rem;
+  }
+
+  .modern-drawer {
+    width: 260px;
+  }
+
+  .drawer-header {
+    padding: 20px 16px;
+
+    .logo-container {
+      gap: 12px;
+
+      .logo-icon {
+        font-size: 2rem;
+        padding: 6px;
+      }
+
+      .system-name {
+        font-size: 1.3rem;
+      }
+    }
+  }
+}
+
+// ========== 隐藏箭头 ==========
 .hide-arrows {
   :deep(.q-tabs__arrow) {
     display: none !important;
   }
-    
+
   :deep(.q-tabs__arrow--left),
   :deep(.q-tabs__arrow--right) {
     display: none !important;
   }
-    
-  // 针对不同版本的 Quasar 可能的类名
-  :deep(.q-tab__arrow),
-  :deep(.q-tab__arrow--left),
-  :deep(.q-tab__arrow--right) {
-    display: none !important;
+}
+
+// ========== 深色主题适配 ==========
+.body--dark {
+  .modern-header {
+    background: #1e1e1e;
+    border-bottom-color: rgba(255, 255, 255, 0.1);
   }
-    
-  // 隐藏所有可能的箭头图标
-  :deep(.material-icons) {
-    &:contains('chevron_left'),
-    &:contains('chevron_right') {
-      display: none !important;
+
+  .modern-toolbar {
+    background: #1e1e1e;
+    color: #ffffff;
+  }
+
+  .modern-breadcrumbs {
+    :deep(.q-breadcrumbs__el) {
+      color: rgba(255, 255, 255, 0.7) !important;
+
+      .q-icon {
+        color: #4fc3f7 !important;
+      }
+    }
+
+    :deep(.q-breadcrumbs__separator) {
+      color: rgba(255, 255, 255, 0.5) !important;
     }
   }
-      
-  // 更暴力的方法 - 隐藏包含特定内容的图标
-  :deep([class*="arrow"]) {
-    display: none !important;
+
+  .system-title-header {
+    .title-content {
+      .title-text {
+        color: #ffffff;
+      }
+
+      .title-version {
+        background: rgba(79, 195, 247, 0.2);
+        color: #4fc3f7;
+      }
+    }
   }
-    
-  :deep([class*="chevron"]) {
-    display: none !important;
+
+  .tabs-container {
+    background: linear-gradient(to right, #1e1e1e, #2a2a2a);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .modern-tab-item {
+    &:not(.q-tab--active) {
+      background: rgba(255, 255, 255, 0.05);
+      color: #ccc;
+      border-color: rgba(255, 255, 255, 0.1);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+      }
+    }
+
+    &.q-tab--active {
+      background: #2a2a2a;
+      color: #4fc3f7;
+      border-color: rgba(79, 195, 247, 0.3);
+
+      &::after {
+        background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+      }
+    }
   }
 }
 </style>
