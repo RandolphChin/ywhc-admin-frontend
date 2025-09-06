@@ -29,14 +29,14 @@
         </q-breadcrumbs>
 
         <q-space />
-
+<!-- 
         <q-toolbar-title class="system-title-header">
           <div class="title-content">
             <span class="title-text">YWHC 后台管理系统</span>
             <span class="title-version">v2.0</span>
           </div>
         </q-toolbar-title>
-
+-->
         <div class="q-gutter-sm row items-center no-wrap">
           <!-- 全屏切换 -->
           <q-btn

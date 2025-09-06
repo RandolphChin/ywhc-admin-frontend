@@ -1,13 +1,12 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="text-h4 q-mb-md">日志管理</div>
+    <!-- <div class="text-h4 q-mb-md">日志管理</div> -->
 
     <!-- 搜索和操作栏 -->
-    <q-card class="q-mb-md">
+    <q-card class="q-mb-sm">
       <q-card-section>
         <div class="row q-gutter-sm items-center">
             <!-- 操作用户查询 -->
-            <div class="column q-gutter-xs">
               <q-input
                 v-model="queryForm.username"
                 label="操作用户"
@@ -17,8 +16,6 @@
                 style="width: 160px;"
               />
   
-            </div>
-            
             <!-- 操作描述 - 固定模糊查询 -->
             <q-input
               v-model="queryForm.operationDesc"

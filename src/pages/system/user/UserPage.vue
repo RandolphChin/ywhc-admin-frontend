@@ -1,6 +1,6 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="text-h4 q-mb-md">用户管理</div>
+    <!-- <div class="text-h4 q-mb-md">用户管理</div> -->
 
     <!-- 搜索和操作栏 -->
     <q-card class="q-mb-md">
