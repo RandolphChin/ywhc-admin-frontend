@@ -248,3 +248,13 @@ body {
   border: none !important; // 移除可能的伪元素边框
 }
 // *******************输入框边框强制都是实线 END*******************
+
+// *******************LoadingBar 进度条颜色自定义 BEGIN*******************
+// 修改 Quasar LoadingBar 的颜色
+.q-loading-bar {
+  background: #4fc3f7 !important; // 改为蓝色，你可以修改为任何你想要的颜色
+  // background: #667eea !important; // 紫色选项
+  // background: #00f2fe !important; // 青色选项
+  // background: #4facfe !important; // 浅蓝色选项
+}
+// *******************LoadingBar 进度条颜色自定义 END*******************
