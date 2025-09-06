@@ -159,8 +159,10 @@
         <div class="logo-container">
           <q-icon name="admin_panel_settings" class="logo-icon" />
           <div class="logo-text">
-            <div class="system-name">YWHC</div>
+            <div class="system-name">YWHC 后台管理系统</div>
+            <!-- 
             <div class="system-desc">管理系统</div>
+             -->
           </div>
         </div>
       </div>
@@ -942,7 +944,7 @@ export default defineComponent({
 
 .drawer-header {
   background: #0f1419;
-  padding: 24px 20px;
+  padding: 2px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 
   .logo-container {
@@ -953,14 +955,13 @@ export default defineComponent({
     .logo-icon {
       font-size: 2.5rem;
       color: #4fc3f7;
-      background: rgba(79, 195, 247, 0.1);
       border-radius: 12px;
       padding: 8px;
     }
 
     .logo-text {
       .system-name {
-        font-size: 1.5rem;
+        font-size: 1.0rem;
         font-weight: 700;
         color: #ffffff;
         letter-spacing: 2px;
@@ -999,6 +1000,7 @@ export default defineComponent({
       color: #000000;
       box-shadow: 0 4px 20px rgba(79, 195, 247, 0.4);
       font-weight: 600;
+      border-left: 2px solid rgba(79, 195, 247, 0.3);
 
       .item-indicator {
         opacity: 1;
@@ -1020,7 +1022,7 @@ export default defineComponent({
     &--sub {
       margin-left: 40px;
       margin-right: 16px;
-      border-left: 2px solid rgba(79, 195, 247, 0.3);
+      
       border-radius: 0 10px 10px 0;
       padding-left: 8px;
 
