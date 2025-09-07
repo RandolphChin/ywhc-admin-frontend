@@ -1,113 +1,80 @@
 <template>
-  <q-dialog v-model="visible" persistent>
-    <q-card style="min-width: 600px; max-width: 800px">
-      <q-card-section>
-        <div class="text-h6">日志详情</div>
-      </q-card-section>
-
-      <q-card-section class="q-pt-none">
-        <q-list v-if="logData" dense>
-          <q-item>
-            <q-item-section>
-              <q-item-label>操作用户</q-item-label>
-              <q-item-label caption>{{ logData.username }}</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item>
-            <q-item-section>
-              <q-item-label>操作类型</q-item-label>
-              <q-item-label caption>{{ logData.operation }}</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item>
-            <q-item-section>
-              <q-item-label>请求方法</q-item-label>
-              <q-item-label caption>{{ logData.method }}</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item>
-            <q-item-section>
-              <q-item-label>请求URI</q-item-label>
-              <q-item-label caption>{{ logData.uri }}</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item>
-            <q-item-section>
-              <q-item-label>IP地址</q-item-label>
-              <q-item-label caption>{{ logData.ip }}</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item>
-            <q-item-section>
-              <q-item-label>用户代理</q-item-label>
-              <q-item-label caption>{{ logData.userAgent }}</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item>
-            <q-item-section>
-              <q-item-label>响应状态</q-item-label>
-              <q-item-label caption>{{ logData.status }}</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item>
-            <q-item-section>
-              <q-item-label>执行时间</q-item-label>
-              <q-item-label caption>{{ logData.time }}ms</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item>
-            <q-item-section>
-              <q-item-label>操作时间</q-item-label>
-              <q-item-label caption>{{ new Date(logData.createTime).toLocaleString() }}</q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item v-if="logData.params">
-            <q-item-section>
-              <q-item-label>请求参数</q-item-label>
-              <q-item-label caption>
-                <pre class="text-caption">{{ formatJson(logData.params) }}</pre>
-              </q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item v-if="logData.result">
-            <q-item-section>
-              <q-item-label>响应结果</q-item-label>
-              <q-item-label caption>
-                <pre class="text-caption">{{ formatJson(logData.result) }}</pre>
-              </q-item-label>
-            </q-item-section>
-          </q-item>
-          
-          <q-item v-if="logData.errorMsg">
-            <q-item-section>
-              <q-item-label>错误信息</q-item-label>
-              <q-item-label caption class="text-negative">{{ logData.errorMsg }}</q-item-label>
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-card-section>
-
-      <q-card-section>
-        <div class="row justify-end">
-          <q-btn flat label="关闭" @click="handleClose" />
+  <q-dialog v-model="visible" persistent class="detail-dialog">
+    <q-card class="dialog-card" style="min-width: 800px; max-width: 1200px; max-height: 90vh">
+      <!-- Header with actions -->
+      <q-card-section class="dialog-header">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <q-icon name="article" class="q-mr-sm text-primary" size="24px" />
+            <div>
+              <div class="text-h6">日志详情</div>
+              <div class="text-caption text-grey-6" v-if="logData">
+                ID: {{ logData.id }} | {{ formatDateTime(logData.createTime) }}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center q-gutter-sm">
+            <q-btn 
+              flat 
+              round 
+              icon="refresh" 
+              color="primary"
+              @click="handleRefresh"
+              class="q-mr-sm"
+            >
+              <q-tooltip>刷新</q-tooltip>
+            </q-btn>
+            <q-btn 
+              flat 
+              round 
+              icon="close" 
+              color="grey-7"
+              @click="handleClose"
+            >
+              <q-tooltip>关闭</q-tooltip>
+            </q-btn>
+          </div>
         </div>
       </q-card-section>
+
+      <q-separator />
+
+      <!-- Content with skeleton loading -->
+      <q-card-section class="dialog-content">
+        <div v-if="loading" class="q-pa-md">
+          <q-skeleton height="200px" class="q-mb-md" />
+          <q-skeleton height="150px" class="q-mb-md" />
+          <q-skeleton height="100px" />
+        </div>
+        <LogForm 
+          v-else-if="logData" 
+          :model-value="logData" 
+          :is-readonly="true"
+        />
+        <div v-else class="text-center q-pa-xl text-grey-6">
+          <q-icon name="info" size="48px" class="q-mb-md" />
+          <div>暂无数据</div>
+        </div>
+      </q-card-section>
+
+      <!-- Footer -->
+      <q-separator />
+      <q-card-actions align="right" class="dialog-footer">
+        <q-btn 
+          flat 
+          label="关闭" 
+          color="grey-7"
+          @click="handleClose" 
+          class="q-px-lg"
+        />
+      </q-card-actions>
     </q-card>
   </q-dialog>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import LogForm from './LogForm.vue'
 
 const props = defineProps({
   modelValue: {
@@ -120,33 +87,38 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'refresh'])
+
+const loading = ref(false)
 
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
 
-const formatJson = (jsonStr) => {
-  try {
-    const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
-    return JSON.stringify(obj, null, 2)
-  } catch (error) {
-    return jsonStr
-  }
-}
-
 const handleClose = () => {
   visible.value = false
 }
+
+const handleRefresh = () => {
+  emit('refresh')
+}
+
+const formatDateTime = (dateTime) => {
+  if (!dateTime) return '-'
+  try {
+    return new Date(dateTime).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    })
+  } catch (error) {
+    return dateTime
+  }
+}
 </script>
 
-<style lang="scss" scoped>
-//用于显示预格式化文本（如代码、日志、JSON数据等）
-pre {
-  white-space: pre-wrap;
-  word-break: break-all;
-  max-height: 200px;
-  overflow-y: auto;
-}
-</style>
+<!-- 样式已移至全局 CSS: src/css/detail-edit-common.scss -->

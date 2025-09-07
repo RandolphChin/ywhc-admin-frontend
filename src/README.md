@@ -101,3 +101,34 @@ src/api/system/
 ### 注册权限指令
 
 创建了 `ywhc-admin\ywhc-admin-frontend\src\boot\directives.js` 启动文件，并在 `quasar.config.js` 中注册。
+#### 详情和编辑表单通用样式
+
+创建了 `ywhc-admin\ywhc-admin-frontend\src\css\detail-edit-common.scss` 文件，用于统一管理详情和编辑表单的样式。
+
+详情页面样式 (Detail View Styles)
+* .detail-form - 详情表单容器
+* .detail-field-inline - 行内字段显示（标签和值同一行）
+* .detail-field-block - 块级字段显示（标签在上，值在下）
+* .code-block - 代码块样式（JSON、参数等）
+* .error-block - 错误信息块样式
+编辑表单样式 (Edit Form Styles)
+* .edit-form - 编辑表单容器
+* .form-section - 表单分组样式
+对话框通用样式 (Dialog Common Styles)
+* .dialog-card - 对话框卡片样式
+* .dialog-header - 对话框头部样式
+* .dialog-content - 对话框内容区域（含自定义滚动条）
+* .dialog-footer - 对话框底部样式
+特定对话框样式 (Specific Dialog Styles)
+* .detail-dialog - 详情对话框特定样式
+* .edit-dialog - 编辑对话框特定样式
+* .dialog-sticky-actions - 粘性操作栏样式
+工具类 (Utility Classes)
+* .copy-btn - 复制按钮样式
+* .status-badge - 状态徽章样式
+* .section-divider - 分组分隔线样式
+响应式设计 (Responsive Design)
+移动端适配样式（768px以下）
+动画效果 (Animations)
+* .fade-enter-active / .fade-leave-active - 淡入淡出动画
+* .slide-up-enter-active / .slide-up-leave-active - 滑入滑出动画

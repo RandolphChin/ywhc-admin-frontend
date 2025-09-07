@@ -1,463 +1,173 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="text-h4 q-mb-md">日志管理</div>
-
-    <!-- 搜索和操作栏 -->
-    <q-card class="q-mb-md">
-      <q-card-section>
-        <div class="row q-gutter-sm items-center">
-            <!-- 操作用户查询 -->
-            <div class="column q-gutter-xs">
-              <q-input
-                v-model="queryForm.username"
-                label="操作用户"
-                outlined
-                dense
-                clearable
-                style="width: 160px;"
-              />
-  
-            </div>
-            
-            <!-- 操作描述 - 固定模糊查询 -->
-            <q-input
-              v-model="queryForm.operationDesc"
-              label="操作描述 (模糊)"
-              outlined
-              dense
-              clearable
-              style="width: 160px;"
-            />
-            
-            <!-- 请求方法查询 -->
-              <q-select
-                v-model="queryForm.requestMethod"
-                :options="methodOptions"
-                label="请求方法"
-                outlined
-                dense
-                clearable
-                emit-value
-                map-options
-                style="width: 160px;"
-              />
-                
-            <!-- 状态查询 -->
-            <q-select
-              v-model="queryForm.status"
-              :options="statusOptions"
-              label="操作状态"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              style="width: 140px;"
-            />
-
-            <q-input
-              v-model="dateRangeDisplay"
-              label="时间范围"
-              outlined
-              dense
-              clearable
-              style="width: 250px;"
-              class="cursor-pointer"
-              @clear="clearDateRange"
-            >
-              <template v-slot:append>
-                <q-icon name="event" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-date
-                      v-model="queryForm.dateRange"
-                      mask="YYYY-MM-DD"
-                      range
-                    >
-                      <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="关闭" color="primary" flat />
-                      </div>
-                    </q-date>
-                  </q-popup-proxy>
-                </q-icon>
-              </template>
-              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                <q-date
-                  v-model="queryForm.dateRange"
-                  mask="YYYY-MM-DD"
-                  range
-                >
-                  <div class="row items-center justify-end">
-                    <q-btn v-close-popup label="关闭" color="primary" flat />
-                  </div>
-                </q-date>
-              </q-popup-proxy>
-            </q-input>
-                <q-btn color="primary" icon="search" label="搜索" @click="loadLogs" />
-                <q-btn color="secondary" icon="refresh" label="重置" @click="resetQuery" />
-                <q-btn
-                  color="warning"
-                  icon="clear_all"
-                  label="清空日志"
-                  @click="clearLogs"
-                  v-permission="'system:log:clear'"
-                />
-          </div>
-      </q-card-section>
-    </q-card>
-
-    <!-- 日志表格 -->
+  <q-page padding>
     <q-card>
       <q-card-section>
-        <div class="text-h6 q-mb-md">操作日志</div>
-
-        <q-table
-          :rows="logs"
-          :columns="columns"
-          row-key="id"
-          :loading="loading"
-          :pagination="pagination"
-          @request="onRequest"
-          binary-state-sort
-          :rows-per-page-options="rowsPerPageOptions"
-          :no-data-label="'暂无数据'"
-          :no-results-label="'未找到匹配的记录'"
-          :loading-label="'加载中...'"
-          :rows-per-page-label="'每页显示:'"
-        >
-          <template v-slot:body-cell-method="props">
-            <q-td :props="props">
-              <q-badge
-                :color="getMethodColor(props.row.method)"
-                :label="props.row.method"
-              />
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-status="props">
-            <q-td :props="props">
-              <q-badge
-                :color="props.row.status == 1 ? 'positive' : 'negative'"
-                :label="getStatusLabel(props.row.status)"
-              />
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-executionTime="props">
-            <q-td :props="props">
-              <q-badge
-                :color="getTimeColor(props.row.executionTime)"
-                :label="props.row.executionTime + 'ms'"
-              />
-            </q-td>
-          </template>
-
-          <template v-slot:body-cell-actions="props">
-            <q-td :props="props">
-              <q-btn
-                flat
-                dense
-                color="primary"
-                icon="visibility"
-                @click="showLogDetail(props.row)"
-              >
-                <q-tooltip>查看详情</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-
-          <template v-slot:bottom>
-            <DataTablePagination
-              :pagination="pagination"
-              :rows-per-page-options="rowsPerPageOptions"
-              @rows-per-page-change="onRowsPerPageChange"
-              @page-change="onPageChange"
-            />
-          </template>
-        </q-table>
+        <q-form ref="formRef">
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <!-- 用户名 -->
+              <div class="q-form-row">
+                <label class="q-form-label"><span class="text-red">*</span> 用户名：</label>
+                <div>
+                  <q-input
+                    v-model="formData.username"
+                    outlined
+                    dense
+                    style="width: 180px"
+                    :disable="null != formData.id"
+                    class="q-input-sm"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <!-- 昵称 -->
+              <div class="q-form-row">
+                <label class="q-form-label"><span class="text-red">*</span> 昵称：</label>
+                <q-input
+                  v-model="formData.realName"
+                  outlined
+                  dense
+                  style="width: 180px"
+                  class="q-input-sm"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="row" v-if="null == formData.id">
+            <div class="col-12 col-md-6">
+              <div class="q-form-row">
+                <label class="q-form-label"><span class="text-red">*</span> 密码：</label>
+                <q-input v-model="formData.password" dense outlined :type="isPwd ? 'password' : 'text'" style="width: 180px" class="q-input-sm">
+                  <template v-slot:append>
+                    <q-icon
+                      :name="isPwd ? 'visibility_off' : 'visibility'"
+                      class="cursor-pointer"
+                      @click="isPwd = !isPwd"
+                    />
+                  </template>
+                </q-input>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <!-- 手机 -->
+              <div class="q-form-row">
+                <label class="q-form-label"><span class="text-red">*</span> 确认密码：</label>
+                <q-input v-model="formData.verifyPassword" dense outlined :type="isVerifyPwd ? 'password' : 'text'"  style="width: 180px" class="q-input-sm">
+                  <template v-slot:append>
+                    <q-icon
+                      :name="isVerifyPwd ? 'visibility_off' : 'visibility'"
+                      class="cursor-pointer"
+                      @click="isVerifyPwd = !isVerifyPwd"
+                    />
+                  </template>
+                </q-input>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <!-- 工号 -->
+              <div class="q-form-row">
+                <label class="q-form-label"><span class="text-red">*</span> 工号：</label>
+                <q-input
+                  v-model="formData.no"
+                  outlined
+                  dense
+                  style="width: 180px"
+                  class="q-input-sm"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <!-- 手机 -->
+              <div class="q-form-row">
+                <label class="q-form-label"><span class="text-red">*</span> 手机：</label>
+                <q-input
+                  v-model="formData.mobile"
+                  outlined
+                  dense
+                  style="width: 180px"
+                  class="q-input-sm"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <!-- 邮箱 -->
+              <div class="q-form-row">
+                <label class="q-form-label"><span class="text-red">*</span> 邮箱：</label>
+                <q-input
+                  v-model="formData.email"
+                  outlined
+                  dense
+                  style="width: 180px"
+                  class="q-input-sm"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="q-form-row">
+                <label class="q-form-label">签名：</label>
+                <q-input
+                  v-model="formData.sign"
+                  outlined
+                  dense
+                  style="width: 180px"
+                  class="q-input-sm"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 col-md-6">
+              <!-- 备注 -->
+              <div class="q-form-row">
+                <label class="q-form-label">切换租户：</label>
+                <q-select outlined v-model="formData.enableSwitchTenant"
+                          :options="enableSwitchTenantOptions"
+                          option-value="dictValue"
+                          option-label="dictName"
+                          emit-value
+                          map-options
+                          options-dense
+                          dense
+                          style="width: 180px"
+                          class="q-select-sm"
+                          placeholder="切换租户" />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="q-form-row">
+                <label class="q-form-label">备注：</label>
+                <q-input
+                  v-model="formData.remark"
+                  outlined
+                  dense
+                  style="width: 180px"
+                  class="q-input-sm"
+                />
+              </div>
+            </div>
+          </div>
+        </q-form>
       </q-card-section>
-    </q-card>
 
-    <!-- 日志详情对话框 -->
-    <LogDetailDialog
-      v-model="logDetailDialog"
-      :log-data="currentLog"
-    />
+    </q-card>
   </q-page>
 </template>
+<script>
+import { defineComponent, ref, computed, onMounted, watch } from "vue";
+export default defineComponent({
+  name: "testLogPage",
 
-<script setup>
-import { ref, onMounted, computed } from 'vue'
-import { logApi } from 'src/api'
-import { useQuasar } from 'quasar'
-import DataTablePagination from 'src/components/DataTablePagination.vue'
-import LogDetailDialog from './LogDetailDialog.vue'
-
-defineOptions({
-  name: 'LogPage'
-})
-
-const $q = useQuasar()
-
-const loading = ref(false)
-const logDetailDialog = ref(false)
-const logs = ref([])
-const currentLog = ref(null)
-
-const queryForm = ref({
-  username: '',
-  requestMethod: '',
-  status: null,
-  // 时间范围
-  dateRange: null,
-})
-
-const pagination = ref({
-  sortBy: 'createTime',
-  descending: true,
-  page: 1,
-  rowsPerPage: 10,
-  rowsNumber: 0
-})
-
-const columns = [
-  {
-    name: 'username',
-    label: '操作用户',
-    field: 'username',
-    align: 'left',
-    sortable: true
-  },
-  {
-    name: 'operationDesc',
-    label: '操作描述',
-    field: 'operationDesc',
-    align: 'left',
-    sortable: true
-  },
-  {
-    name: 'operationType',
-    label: '操作类型',
-    field: 'operationType',
-    align: 'left',
-    format: (val) => getOperationTypeDescription(val)
-  },
-  {
-    name: 'requestMethod',
-    label: '请求方法',
-    field: 'requestMethod',
-    align: 'center'
-  },
-  {
-    name: 'requestUrl',
-    label: '请求URI',
-    field: 'requestUrl',
-    align: 'left'
-  },
-  {
-    name: 'ipAddress',
-    label: 'IP地址',
-    field: 'ipAddress',
-    align: 'left'
-  },
-  {
-    name: 'status',
-    label: '状态码',
-    field: 'status',
-    align: 'center'
-  },
-  {
-    name: 'executionTime',
-    label: '执行时间',
-    field: 'executionTime',
-    align: 'center'
-  },
-  {
-    name: 'createTime',
-    label: '操作时间',
-    field: 'createTime',
-    align: 'center',
-    format: (val) => new Date(val).toLocaleString(),
-    sortable: true
-  },
-  {
-    name: 'actions',
-    label: '操作',
-    field: 'actions',
-    align: 'center'
-  }
-]
-
-const methodOptions = [
-  { label: 'GET', value: 'GET' },
-  { label: 'POST', value: 'POST' },
-  { label: 'PUT', value: 'PUT' },
-  { label: 'DELETE', value: 'DELETE' }
-]
-
-const statusOptions = [
-  { label: '成功', value: 1 },
-  { label: '失败', value: 0 }
-]
-
-const rowsPerPageOptions = [5, 10, 20, 50, 100]
-
-const dateRangeDisplay = computed(() => {
-  if (!queryForm.value.dateRange) return ''
-  if (queryForm.value.dateRange.from && queryForm.value.dateRange.to) {
-    return `${queryForm.value.dateRange.from} ~ ${queryForm.value.dateRange.to}`
-  }
-  if (queryForm.value.dateRange &&!queryForm.value.dateRange.from) {
-    return `${queryForm.value.dateRange} ~ ${queryForm.value.dateRange}`
-  }
-  return ''
-})
-
-const getMethodColor = (method) => {
-  const colors = {
-    'GET': 'blue',
-    'POST': 'green',
-    'PUT': 'orange',
-    'DELETE': 'red'
-  }
-  return colors[method] || 'grey'
-}
-
-const getTimeColor = (time) => {
-  if (time < 500) return 'positive'
-  if (time < 1000) return 'warning'
-  return 'negative'
-}
-
-const getOperationTypeDescription = (code) => {
-  const typeMap = {
-    1: '新增',
-    2: '修改',
-    3: '删除',
-    4: '查询',
-    5: '登录',
-    6: '登出'
-  }
-  return typeMap[code] || '未知'
-}
-
-const loadLogs = async (props) => {
-  loading.value = true
-  
-  try {
-    const { page, rowsPerPage, sortBy, descending } = props?.pagination || pagination.value
-    
-    // 构建查询参数，根据查询类型选择对应字段
-    const params = {
-      current: page,
-      size: rowsPerPage,
-      orderBy: sortBy || 'createTime',
-      orderDirection: descending ? 'desc' : 'asc',
-      usernameLike: queryForm.value.username, // 用户名查询（模糊查询）
-      operationDescLike: queryForm.value.operationDesc,
-      requestMethod: queryForm.value.requestMethod,
-      status: queryForm.value.status,
+  setup() {
+    return {
+      formData: {
+        
+      }
     }
-
-    // 日期范围查询方式2************可选链操作符 和 空值合并操作符****
-    const dateRange = queryForm.value.dateRange
-    if (dateRange) {
-      const startDate = dateRange?.from ?? dateRange
-      const endDate = dateRange?.to ?? dateRange
-      
-      params.createTimeBetween = [
-        `${startDate} 00:00:01`,
-        `${endDate} 23:59:59`
-      ]
-    }
-    
-    const response = await logApi.getList(params)
-    
-    // MyBatis-Plus IPage structure: { records: [], total: number, size: number, current: number, pages: number }
-    const pageData = response.data.data
-    const records = pageData.records || []
-    const total = pageData.total || 0
-
-    logs.value = records
-    pagination.value.rowsNumber = total
-    pagination.value.page = page
-    pagination.value.rowsPerPage = rowsPerPage
-    pagination.value.sortBy = sortBy
-    pagination.value.descending = descending
-  } catch (error) {
-    console.error('加载日志列表失败:', error)
-  } finally {
-    loading.value = false
   }
-}
-
-const onRequest = (props) => {
-  loadLogs(props)
-}
-
-const onRowsPerPageChange = (newRowsPerPage) => {
-  pagination.value.rowsPerPage = newRowsPerPage
-  pagination.value.page = 1 // Reset to first page when changing rows per page
-  loadLogs()
-}
-
-const onPageChange = (newPage) => {
-  pagination.value.page = newPage
-  onRequest({ pagination: pagination.value })
-}
-
-const resetQuery = () => {
-  queryForm.value = {
-    username: '',
-    requestMethod: '',
-    status: null,
-    // 时间范围
-    dateRange: null,
-  }
-  loadLogs()
-}
-
-const showLogDetail = (log) => {
-  currentLog.value = log
-  logDetailDialog.value = true
-}
-
-const clearLogs = () => {
-  $q.dialog({
-    title: '确认清空',
-    message: '确定要清空所有操作日志吗？此操作不可恢复！',
-    cancel: true,
-    persistent: true
-  }).onOk(async () => {
-    try {
-      await logApi.clear()
-      $q.notify({
-        type: 'positive',
-        message: '日志清空成功'
-      })
-      loadLogs()
-    } catch (error) {
-      $q.notify({
-        type: 'negative',
-        message: error.response?.data?.message || '清空失败'
-      })
-    }
-  })
-}
-
-const getStatusLabel = (status) => {
-  // 操作状态：0-失败，1-成功
-  const labels = { 0: '失败', 1: '成功' }
-  return labels[status] || '未知'
-}
-
-const clearDateRange = () => {
-  queryForm.value.dateRange = null
-}
-
-onMounted(() => {
-  loadLogs()
 })
 </script>
-
-<style lang="scss" scoped>
-</style>

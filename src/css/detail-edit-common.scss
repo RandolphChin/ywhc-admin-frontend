@@ -1,0 +1,230 @@
+/* 详情和编辑界面通用样式 */
+
+/* ===== 详情页面样式 ===== */
+.detail-form {
+  .q-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* 行内字段显示 - 标签和值在同一行 */
+.detail-field-inline {
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 8px 0;
+  
+  .field-label {
+    font-weight: 500;
+    color: #666;
+    min-width: 80px;
+    margin-right: 8px;
+  }
+  
+  .field-value {
+    flex: 1;
+    color: #333;
+    word-break: break-all;
+  }
+}
+
+/* 块级字段显示 - 标签在上，值在下 */
+.detail-field-block {
+  padding: 8px 0;
+  
+  .field-label {
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 4px;
+  }
+  
+  .field-value {
+    color: #333;
+    word-break: break-all;
+    line-height: 1.4;
+  }
+}
+
+/* 代码块样式 */
+.code-block {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 12px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #333;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* 错误信息块样式 */
+.error-block {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  padding: 12px;
+  color: #dc2626;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+/* 表单分组样式 */
+.form-section {
+  margin-bottom: 24px;
+  
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e0e0e0;
+  }
+}
+
+/* ===== 编辑表单样式 ===== */
+.edit-form {
+  .q-input {
+    .q-field__control {
+      border-radius: 6px;
+    }
+  }
+}
+
+/* ===== 对话框通用样式 ===== */
+.dialog-card {
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+.dialog-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+  padding: 20px 24px;
+}
+
+.dialog-content {
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+}
+
+.dialog-footer {
+  background: #fafafa;
+  border-top: 1px solid #e2e8f0;
+  padding: 16px 24px;
+}
+
+/* ===== 详情对话框特定样式 ===== */
+.detail-dialog {
+  .dialog-content {
+    max-height: calc(90vh - 200px);
+    padding: 0;
+  }
+}
+
+/* ===== 编辑对话框特定样式 ===== */
+.edit-dialog {
+  .dialog-content {
+    max-height: calc(90vh - 280px);
+    padding: 24px;
+  }
+  
+  .dialog-sticky-actions {
+    z-index: 2000;
+    
+    .q-card {
+      border-radius: 0;
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+/* ===== 响应式设计 ===== */
+@media (max-width: 768px) {
+  .detail-field-inline {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    .field-label {
+      min-width: auto;
+      margin-right: 0;
+      margin-bottom: 4px;
+    }
+  }
+  
+  .dialog-header {
+    padding: 16px 20px;
+  }
+  
+  .dialog-content {
+    padding: 16px 20px;
+  }
+  
+  .dialog-footer {
+    padding: 12px 20px;
+  }
+}
+
+/* ===== 工具类 ===== */
+.copy-btn {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  
+  &:hover {
+    opacity: 1;
+  }
+}
+
+.status-badge {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-divider {
+  margin: 24px 0;
+  border-color: #e2e8f0;
+}
+
+/* ===== 动画效果 ===== */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(20px);
+}
