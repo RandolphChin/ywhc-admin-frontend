@@ -43,46 +43,44 @@
         </q-form>
       </q-card-section>
 
-      <!-- Sticky Footer Actions -->
-      <q-page-sticky position="bottom" :offset="[0, 0]" class="dialog-sticky-actions">
-        <q-card class="full-width">
-          <q-separator />
-          <q-card-actions align="right" class="q-pa-md bg-grey-1">
-            <div class="flex items-center justify-between full-width">
-              <div class="text-caption text-grey-6">
-                <q-icon name="info" class="q-mr-xs" />
-                {{ isDirty ? '表单已修改，请保存更改' : '表单未修改' }}
-              </div>
-              <div class="q-gutter-sm">
-                <q-btn 
-                  flat 
-                  label="重置" 
-                  color="grey-7"
-                  @click="handleReset"
-                  :disable="!isDirty || submitting"
-                  class="q-px-lg"
-                />
-                <q-btn 
-                  flat 
-                  label="取消" 
-                  color="grey-7"
-                  @click="handleClose" 
-                  :disable="submitting"
-                  class="q-px-lg"
-                />
-                <q-btn 
-                  color="primary" 
-                  label="保存" 
-                  @click="handleSubmit"
-                  :loading="submitting"
-                  :disable="!isDirty"
-                  class="q-px-lg"
-                />
-              </div>
-            </div>
-          </q-card-actions>
-        </q-card>
-      </q-page-sticky>
+      <q-separator />
+
+      <!-- Footer Actions -->
+      <q-card-actions align="right" class="dialog-footer q-pa-md bg-grey-1">
+        <div class="flex items-center justify-between full-width">
+          <div class="text-caption text-grey-6">
+            <q-icon name="info" class="q-mr-xs" />
+            {{ isDirty ? '表单已修改，请保存更改' : '表单未修改' }}
+          </div>
+          <div class="q-gutter-sm">
+            <q-btn 
+              flat 
+              label="重置" 
+              color="grey-7"
+              @click="handleReset"
+              :disable="!isDirty || submitting"
+              class="q-px-lg"
+            />
+            <q-btn 
+              flat 
+              label="取消" 
+              color="grey-7"
+              @click="handleClose" 
+              :disable="submitting"
+              class="q-px-lg"
+            />
+            <q-btn 
+              color="primary" 
+              label="保存" 
+              @click="handleSubmit"
+              :loading="submitting"
+              :disable="!isDirty"
+              class="q-px-lg"
+            />
+          </div>
+        </div>
+      </q-card-actions>
+
     </q-card>
   </q-dialog>
 </template>

@@ -159,6 +159,15 @@
               >
                 <q-tooltip>查看详情</q-tooltip>
               </q-btn>
+              <q-btn
+                flat
+                dense
+                color="primary"
+                icon="edit"
+                @click="showLogEdit(props.row)"
+              >
+                <q-tooltip>编辑</q-tooltip>
+              </q-btn>
             </q-td>
           </template>
 
@@ -179,6 +188,12 @@
       v-model="logDetailDialog"
       :log-data="currentLog"
     />
+    <!-- 日志编辑对话框 -->
+    <LogEditDialog
+      v-model="logEditDialog"
+      :log-data="currentLog"
+      :is-edit="true"
+    />
   </q-page>
 </template>
 
@@ -188,6 +203,7 @@ import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
 import DataTablePagination from 'src/components/DataTablePagination.vue'
 import LogDetailDialog from './LogDetailDialog.vue'
+import LogEditDialog from './LogEditDialog.vue'
 
 defineOptions({
   name: 'LogPage'
@@ -197,6 +213,7 @@ const $q = useQuasar()
 
 const loading = ref(false)
 const logDetailDialog = ref(false)
+const logEditDialog = ref(false)
 const logs = ref([])
 const currentLog = ref(null)
 
@@ -416,6 +433,11 @@ const resetQuery = () => {
 const showLogDetail = (log) => {
   currentLog.value = log
   logDetailDialog.value = true
+}
+
+const showLogEdit = (log) => {
+  currentLog.value = log
+  logEditDialog.value = true
 }
 
 const clearLogs = () => {

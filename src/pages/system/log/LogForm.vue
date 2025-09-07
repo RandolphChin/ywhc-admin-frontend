@@ -67,51 +67,65 @@
       </q-card-section>
     </q-card>
     
-    <div v-else class="form-section">
-      <div class="section-title">基本信息</div>
-      
-      <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formData.username"
-            label="操作用户"
-            outlined
-            dense
-            readonly
-          />
+    <q-card v-else class="q-mb-md">
+      <q-card-section>
+        <div class="text-h6 q-mb-md flex items-center">
+          <q-icon name="info" class="q-mr-sm text-primary" />
+          基本信息
         </div>
+        <q-separator class="q-mb-md" />
         
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formData.operation"
-            label="操作类型"
-            outlined
-            dense
-            readonly
-          />
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-md-6">
+            <div class="edit-field-inline">
+              <span class="field-label">操作用户：</span>
+              <q-input
+                v-model="formData.username"
+                outlined
+                dense
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div class="col-12 col-md-6">
+            <div class="edit-field-inline">
+              <span class="field-label">操作类型：</span>
+              <q-input
+                v-model="formData.operation"
+                outlined
+                dense
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div class="col-12 col-md-6">
+            <div class="edit-field-inline">
+              <span class="field-label">IP地址：</span>
+              <q-input
+                v-model="formData.ip"
+                outlined
+                dense
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div class="col-12 col-md-6">
+            <div class="edit-field-inline">
+              <span class="field-label">操作时间：</span>
+              <q-input
+                v-model="formattedCreateTime"
+                outlined
+                dense
+                class="field-input"
+              />
+            </div>
+          </div>
         </div>
-        
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formData.ip"
-            label="IP地址"
-            outlined
-            dense
-            readonly
-          />
-        </div>
-        
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formattedCreateTime"
-            label="操作时间"
-            outlined
-            dense
-            readonly
-          />
-        </div>
-      </div>
-    </div>
+      </q-card-section>
+    </q-card>
 
     <!-- 请求信息 -->
     <q-card v-if="isReadonly" class="q-mb-md">
@@ -183,63 +197,80 @@
       </q-card-section>
     </q-card>
     
-    <div v-else class="form-section">
-      <div class="section-title">请求信息</div>
-      
-      <div class="row q-col-gutter-md">
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formData.method"
-            label="请求方法"
-            outlined
-            dense
-            readonly
-          />
+    <q-card v-else class="q-mb-md">
+      <q-card-section>
+        <div class="text-h6 q-mb-md flex items-center">
+          <q-icon name="http" class="q-mr-sm text-primary" />
+          请求信息
         </div>
+        <q-separator class="q-mb-md" />
         
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formData.status"
-            label="响应状态"
-            outlined
-            dense
-            readonly
-          />
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-md-6">
+            <div class="edit-field-inline">
+              <span class="field-label">请求方法：</span>
+              <q-input
+                v-model="formData.method"
+                outlined
+                dense
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div class="col-12 col-md-6">
+            <div class="edit-field-inline">
+              <span class="field-label">响应状态：</span>
+              <q-input
+                v-model="formData.status"
+                outlined
+                dense
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div class="col-12">
+            <div class="edit-field-inline">
+              <span class="field-label">请求URI：</span>
+              <q-input
+                v-model="formData.uri"
+                outlined
+                dense
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div class="col-12 col-md-6">
+            <div class="edit-field-inline">
+              <span class="field-label">执行时间：</span>
+              <q-input
+                v-model="formData.time"
+                suffix="ms"
+                outlined
+                dense
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div class="col-12">
+            <div class="edit-field-block">
+              <div class="field-label q-mb-xs">用户代理：</div>
+              <q-input
+                v-model="formData.userAgent"
+                type="textarea"
+                outlined
+                dense
+                rows="2"
+                class="field-input"
+              />
+            </div>
+          </div>
         </div>
-        
-        <div class="col-12">
-          <q-input
-            v-model="formData.uri"
-            label="请求URI"
-            outlined
-            dense
-            readonly
-          />
-        </div>
-        
-        <div class="col-12 col-md-6">
-          <q-input
-            v-model="formData.time"
-            label="执行时间(ms)"
-            outlined
-            dense
-            readonly
-          />
-        </div>
-        
-        <div class="col-12">
-          <q-input
-            v-model="formData.userAgent"
-            label="用户代理"
-            type="textarea"
-            outlined
-            dense
-            rows="2"
-            readonly
-          />
-        </div>
-      </div>
-    </div>
+      </q-card-section>
+    </q-card>
 
     <!-- 详细数据 -->
     <q-card v-if="hasDetailData && isReadonly" class="q-mb-md">
@@ -307,48 +338,60 @@
       </q-card-section>
     </q-card>
     
-    <div v-else-if="hasDetailData" class="form-section">
-      <div class="section-title">详细数据</div>
-      
-      <div class="row q-col-gutter-md">
-        <div v-if="formData.params" class="col-12">
-          <q-input
-            v-model="formattedParams"
-            label="请求参数"
-            type="textarea"
-            outlined
-            dense
-            rows="6"
-            readonly
-          />
+    <q-card v-else-if="hasDetailData" class="q-mb-md">
+      <q-card-section>
+        <div class="text-h6 q-mb-md flex items-center">
+          <q-icon name="data_object" class="q-mr-sm text-primary" />
+          详细数据
         </div>
+        <q-separator class="q-mb-md" />
         
-        <div v-if="formData.result" class="col-12">
-          <q-input
-            v-model="formattedResult"
-            label="响应结果"
-            type="textarea"
-            outlined
-            dense
-            rows="6"
-            readonly
-          />
+        <div class="row q-col-gutter-md">
+          <div v-if="formData.params" class="col-12">
+            <div class="edit-field-block">
+              <div class="field-label q-mb-xs">请求参数：</div>
+              <q-input
+                v-model="formattedParams"
+                type="textarea"
+                outlined
+                dense
+                rows="6"
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div v-if="formData.result" class="col-12">
+            <div class="edit-field-block">
+              <div class="field-label q-mb-xs">响应结果：</div>
+              <q-input
+                v-model="formattedResult"
+                type="textarea"
+                outlined
+                dense
+                rows="6"
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div v-if="formData.errorMsg" class="col-12">
+            <div class="edit-field-block">
+              <div class="field-label q-mb-xs">错误信息：</div>
+              <q-input
+                v-model="formData.errorMsg"
+                type="textarea"
+                outlined
+                dense
+                rows="3"
+                color="negative"
+                class="field-input"
+              />
+            </div>
+          </div>
         </div>
-        
-        <div v-if="formData.errorMsg" class="col-12">
-          <q-input
-            v-model="formData.errorMsg"
-            label="错误信息"
-            type="textarea"
-            outlined
-            dense
-            rows="3"
-            readonly
-            color="negative"
-          />
-        </div>
-      </div>
-    </div>
+      </q-card-section>
+    </q-card>
   </div>
 </template>
 

@@ -97,6 +97,49 @@
   }
 }
 
+/* 编辑模式行内字段显示 - 标签和输入框在同一行 */
+.edit-field-inline {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 0;
+  
+  .field-label {
+    font-weight: 500;
+    color: #666;
+    min-width: 80px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+  
+  .field-input {
+    flex: 1;
+    
+    .q-field__control {
+      border-radius: 6px;
+    }
+  }
+}
+
+/* 编辑模式块级字段显示 - 标签在上，输入框在下 */
+.edit-field-block {
+  padding: 8px 0;
+  
+  .field-label {
+    font-weight: 500;
+    color: #666;
+    margin-bottom: 8px;
+  }
+  
+  .field-input {
+    width: 100%;
+    
+    .q-field__control {
+      border-radius: 6px;
+    }
+  }
+}
+
 /* ===== 对话框通用样式 ===== */
 .dialog-card {
   border-radius: 12px;
@@ -146,18 +189,23 @@
 
 /* ===== 编辑对话框特定样式 ===== */
 .edit-dialog {
-  .dialog-content {
-    max-height: calc(90vh - 280px);
-    padding: 24px;
+  .dialog-card {
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
   }
   
-  .dialog-sticky-actions {
-    z-index: 2000;
-    
-    .q-card {
-      border-radius: 0;
-      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-    }
+  .dialog-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    min-height: 0; /* 允许flex子项收缩 */
+  }
+  
+  .dialog-footer {
+    flex-shrink: 0; /* 防止footer被压缩 */
+    border-top: 1px solid #e2e8f0;
+    background: #fafafa;
   }
 }
 
