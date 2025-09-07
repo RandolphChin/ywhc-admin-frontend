@@ -50,7 +50,7 @@
         <div class="flex items-center justify-between full-width">
           <div class="text-caption text-grey-6">
             <q-icon name="info" class="q-mr-xs" />
-            {{ isDirty ? '表单已修改，请保存更改' : '表单未修改' }}
+表单编辑中
           </div>
           <div class="q-gutter-sm">
             <q-btn 
@@ -58,7 +58,7 @@
               label="重置" 
               color="grey-7"
               @click="handleReset"
-              :disable="!isDirty || submitting"
+              :disable="submitting"
               class="q-px-lg"
             />
             <q-btn 
@@ -74,7 +74,7 @@
               label="保存" 
               @click="handleSubmit"
               :loading="submitting"
-              :disable="!isDirty"
+              :disable="submitting"
               class="q-px-lg"
             />
           </div>
@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { computed, watch, ref, nextTick } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import LogForm from './LogForm.vue'
 
@@ -118,7 +118,6 @@ const visible = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const initialData = ref({})
 const formData = ref({
   id: null,
   username: '',
@@ -135,33 +134,13 @@ const formData = ref({
   errorMsg: ''
 })
 
-// 检查表单是否有修改
-const isDirty = computed(() => {
-  return JSON.stringify(formData.value) !== JSON.stringify(initialData.value)
-})
 
 watch(() => props.logData, (newData) => {
   if (newData) {
     formData.value = { ...newData }
-    initialData.value = { ...newData }
   }
 }, { deep: true, immediate: true })
 
-// 离开确认
-watch(visible, (newVal) => {
-  if (!newVal && isDirty.value) {
-    $q.dialog({
-      title: '确认离开',
-      message: '表单已修改但未保存，确定要离开吗？',
-      cancel: true,
-      persistent: true
-    }).onCancel(() => {
-      nextTick(() => {
-        visible.value = true
-      })
-    })
-  }
-})
 
 const handleSubmit = async () => {
   if (!formRef.value) return
@@ -184,7 +163,7 @@ const handleSubmit = async () => {
     await emit('submit', formData.value)
     
     $q.notify({
-      message: isEdit ? '编辑成功' : '添加成功',
+      message: props.isEdit ? '编辑成功' : '添加成功',
       color: 'positive',
       position: 'top'
     })
@@ -202,18 +181,7 @@ const handleSubmit = async () => {
 }
 
 const handleClose = () => {
-  if (isDirty.value) {
-    $q.dialog({
-      title: '确认关闭',
-      message: '表单已修改但未保存，确定要关闭吗？',
-      cancel: true,
-      persistent: true
-    }).onOk(() => {
-      visible.value = false
-    })
-  } else {
-    visible.value = false
-  }
+  visible.value = false
 }
 
 const handleReset = () => {
@@ -223,7 +191,7 @@ const handleReset = () => {
     cancel: true,
     persistent: true
   }).onOk(() => {
-    formData.value = { ...initialData.value }
+    formData.value = { ...props.logData }
     $q.notify({
       message: '表单已重置',
       color: 'info',
