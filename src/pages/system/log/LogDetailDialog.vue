@@ -5,12 +5,12 @@
       <q-card-section class="dialog-header">
         <div class="flex items-center justify-between">
           <div class="flex items-center">
-            <q-icon name="article" class="q-mr-sm text-primary" size="24px" />
+          <!--   <q-icon name="article" class="q-mr-sm text-primary" size="24px" /> -->
             <div>
               <div class="text-h6">日志详情</div>
-              <div class="text-caption text-grey-6" v-if="logData">
+              <!-- <div class="text-caption text-grey-6" v-if="logData">
                 ID: {{ logData.id }} | {{ formatDateTime(logData.createTime) }}
-              </div>
+              </div> -->
             </div>
           </div>
           <div class="flex items-center q-gutter-sm">
@@ -41,20 +41,11 @@
 
       <!-- Content with skeleton loading -->
       <q-card-section class="dialog-content">
-        <div v-if="loading" class="q-pa-md">
-          <q-skeleton height="200px" class="q-mb-md" />
-          <q-skeleton height="150px" class="q-mb-md" />
-          <q-skeleton height="100px" />
-        </div>
         <LogForm 
-          v-else-if="logData" 
+          v-if="logData" 
           :model-value="logData" 
           :is-readonly="true"
         />
-        <div v-else class="text-center q-pa-xl text-grey-6">
-          <q-icon name="info" size="48px" class="q-mb-md" />
-          <div>暂无数据</div>
-        </div>
       </q-card-section>
 
       <!-- Footer -->

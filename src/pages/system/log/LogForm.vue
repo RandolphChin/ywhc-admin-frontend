@@ -3,12 +3,6 @@
     <!-- 基本信息 -->
     <q-card class="q-mb-md">
       <q-card-section>
-        <div class="text-h6 q-mb-md flex items-center">
-          <q-icon name="info" class="q-mr-sm text-primary" />
-          基本信息
-        </div>
-        <q-separator class="q-mb-md" />
-        
         <div class="row q-col-gutter-md">
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
@@ -51,23 +45,12 @@
             <div class="edit-field-inline">
               <span class="field-label">IP地址：</span>
               <q-input
-                v-model="formData.ip"
+                v-model="formData.ipAddress"
                 outlined
                 dense
                 :readonly="isReadonly"
                 class="field-input"
-              >
-                <template v-if="isReadonly && formData.ip" #append>
-                  <q-btn 
-                    flat 
-                    round 
-                    dense 
-                    size="sm" 
-                    icon="content_copy" 
-                    @click="handleCopy(formData.ip)"
-                  />
-                </template>
-              </q-input>
+              />
             </div>
           </div>
           
@@ -83,20 +66,7 @@
               />
             </div>
           </div>
-        </div>
-      </q-card-section>
-    </q-card>
 
-    <!-- 请求信息 -->
-    <q-card class="q-mb-md">
-      <q-card-section>
-        <div class="text-h6 q-mb-md flex items-center">
-          <q-icon name="http" class="q-mr-sm text-primary" />
-          请求信息
-        </div>
-        <q-separator class="q-mb-md" />
-        
-        <div class="row q-col-gutter-md">
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
               <span class="field-label">请求方法：</span>
@@ -109,7 +79,7 @@
               />
             </div>
           </div>
-          
+
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
               <span class="field-label">响应状态：</span>
@@ -178,6 +148,7 @@
         </div>
       </q-card-section>
     </q-card>
+
 
     <!-- 详细数据 -->
     <q-card v-if="hasDetailData" class="q-mb-md">
@@ -326,7 +297,7 @@ const formData = ref({
   operation: '',
   method: '',
   uri: '',
-  ip: '',
+  ipAddress: '',
   userAgent: '',
   status: '',
   time: '',
