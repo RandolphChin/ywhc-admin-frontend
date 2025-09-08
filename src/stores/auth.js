@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
-import { api } from "src/boot/axios";
 import { LocalStorage } from "quasar";
+import { authApi, menuApi } from 'src/api'
 
 export const useAuthStore = defineStore("auth", {
   state: () => ({
@@ -28,7 +28,7 @@ export const useAuthStore = defineStore("auth", {
     // 登录
     async login(loginData) {
       try {
-        const response = await api.post("/auth/login", loginData);
+        const response = await authApi.login(loginData);
         const { accessToken, refreshToken, userInfo } = response.data.data;
 
         this.token = accessToken;
@@ -52,7 +52,7 @@ export const useAuthStore = defineStore("auth", {
     // 登出
     async logout() {
       try {
-        await api.post("/auth/logout");
+        await authApi.logout();
       } catch (error) {
         console.error("登出请求失败:", error);
       } finally {
@@ -79,7 +79,7 @@ export const useAuthStore = defineStore("auth", {
     // 获取用户信息
     async getUserInfo() {
       try {
-        const response = await api.get("/auth/user-info");
+        const response = await authApi.getUserInfo();
         const { userInfo, permissions, roles } = response.data.data;
 
         this.userInfo = userInfo;
@@ -96,7 +96,7 @@ export const useAuthStore = defineStore("auth", {
     // 刷新Token
     async refreshAccessToken() {
       try {
-        const response = await api.post("/auth/refresh", {
+        const response = await authApi.refreshToken({
           refreshToken: this.refreshToken,
         });
 
@@ -118,7 +118,7 @@ export const useAuthStore = defineStore("auth", {
     // 修改密码
     async changePassword(passwordData) {
       try {
-        const response = await api.put("/auth/change-password", passwordData);
+        const response = await authApi.changePassword(passwordData);
         return response.data;
       } catch (error) {
         throw error;
@@ -129,7 +129,7 @@ export const useAuthStore = defineStore("auth", {
     async getUserMenus() {
       try {
         console.log("📋 正在获取用户菜单...");
-        const response = await api.get("/system/menu/user-tree");
+        const response = await menuApi.getUserMenus();
         console.log("📋 用户菜单API响应:", response.data);
 
         if (response.data && response.data.code === 200) {
