@@ -53,7 +53,7 @@
             flat
             dense
             no-caps
-            :label="userInfo?.nickname || '用户'"
+            :label="userInfo?.username || '用户'"
             icon="account_circle"
             color="dark"
           >
@@ -657,23 +657,41 @@ export default defineComponent({
       });
     };
 
-    const loadUserMenus = async () => {
+    const loadUserData = async () => {
       try {
-        console.log("🔄 MainLayout - 开始加载用户菜单");
+        console.log("🔄 MainLayout - 开始加载用户数据");
         console.log("🔄 MainLayout - 当前token:", !!authStore.token);
+        console.log(
+          "🔄 MainLayout - 当前用户信息:", authStore.userInfo
+        );
         console.log(
           "🔄 MainLayout - 当前菜单数量:",
           authStore.menus?.length || 0
         );
 
-        if (authStore.token && !authStore.menus?.length) {
-          await authStore.getUserMenus();
-          console.log("✅ MainLayout - 菜单加载完成");
+        if (authStore.token) {
+          // 如果没有用户信息，先获取用户信息
+          if (!authStore.userInfo) {
+            console.log("📝 MainLayout - 用户信息为空，开始获取用户信息");
+            await authStore.getUserInfo();
+            console.log("📝 MainLayout - 获取用户信息完成，当前userInfo:", authStore.userInfo);
+          } else {
+            console.log("📝 MainLayout - 用户信息已存在，跳过获取");
+          }
+          
+          // 如果没有菜单数据，获取菜单
+          if (!authStore.menus?.length) {
+            console.log("📋 MainLayout - 获取用户菜单");
+            await authStore.getUserMenus();
+          }
+          
+          console.log("✅ MainLayout - 用户数据加载完成");
+          console.log("✅ MainLayout - 最终userInfo:", authStore.userInfo);
         } else {
-          console.log("ℹ️ MainLayout - 跳过菜单加载，已存在或无token");
+          console.log("ℹ️ MainLayout - 跳过数据加载，无token");
         }
       } catch (error) {
-        console.error("❌ MainLayout - 加载用户菜单失败:", error);
+        console.error("❌ MainLayout - 加载用户数据失败:", error);
       }
     };
 
@@ -681,7 +699,7 @@ export default defineComponent({
       console.log("🚀 MainLayout - 组件已挂载");
       console.log("🚀 MainLayout - 用户信息:", userInfo.value);
       console.log("🚀 MainLayout - 菜单列表:", menuList.value);
-      loadUserMenus();
+      loadUserData();
     });
 
     return {
