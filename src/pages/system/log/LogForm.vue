@@ -30,9 +30,9 @@
           
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
-              <span class="field-label">操作类型：</span>
+              <span class="field-label">操作描述：</span>
               <q-input
-                v-model="formData.operation"
+                v-model="formData.operationDesc"
                 outlined
                 dense
                 :readonly="isReadonly"
@@ -71,7 +71,7 @@
             <div class="edit-field-inline">
               <span class="field-label">请求方法：</span>
               <q-input
-                v-model="formData.method"
+                v-model="formData.requestMethod"
                 outlined
                 dense
                 :readonly="isReadonly"
@@ -95,22 +95,22 @@
           
           <div class="col-12">
             <div class="edit-field-inline">
-              <span class="field-label">请求URI：</span>
+              <span class="field-label">请求URL：</span>
               <q-input
-                v-model="formData.uri"
+                v-model="formData.requestUrl"
                 outlined
                 dense
                 :readonly="isReadonly"
                 class="field-input"
               >
-                <template v-if="isReadonly && formData.uri" #append>
+                <template v-if="isReadonly && formData.requestUrl" #append>
                   <q-btn 
                     flat 
                     round 
                     dense 
                     size="sm" 
                     icon="content_copy" 
-                    @click="handleCopy(formData.uri)"
+                    @click="handleCopy(formData.requestUrl)"
                   />
                 </template>
               </q-input>
@@ -121,7 +121,7 @@
             <div class="edit-field-inline">
               <span class="field-label">执行时间：</span>
               <q-input
-                v-model="formData.time"
+                v-model="formData.executionTime"
                 suffix="ms"
                 outlined
                 dense
@@ -162,15 +162,15 @@
         <!-- 只读模式显示标签页 -->
         <template v-if="isReadonly">
           <q-tabs v-model="activeTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify">
-            <q-tab v-if="formData.params" name="params" label="请求参数" />
-            <q-tab v-if="formData.result" name="result" label="响应结果" />
+            <q-tab v-if="formData.requestParams" name="params" label="请求参数" />
+            <q-tab v-if="formData.responseResult" name="result" label="响应结果" />
             <q-tab v-if="formData.errorMsg" name="error" label="错误信息" />
           </q-tabs>
           
           <q-separator />
           
           <q-tab-panels v-model="activeTab" animated>
-            <q-tab-panel v-if="formData.params" name="params" class="q-pa-md">
+            <q-tab-panel v-if="formData.requestParams" name="params" class="q-pa-md">
               <div class="flex justify-between items-center q-mb-sm">
                 <div class="text-subtitle2">请求参数</div>
                 <q-btn 
@@ -179,13 +179,13 @@
                   dense 
                   size="sm" 
                   icon="content_copy" 
-                  @click="handleCopy(formatJson(formData.params))"
+                  @click="handleCopy(formatJson(formData.requestParams))"
                 />
               </div>
-              <pre class="code-block">{{ formatJson(formData.params) }}</pre>
+              <pre class="code-block">{{ formatJson(formData.requestParams) }}</pre>
             </q-tab-panel>
             
-            <q-tab-panel v-if="formData.result" name="result" class="q-pa-md">
+            <q-tab-panel v-if="formData.responseResult" name="result" class="q-pa-md">
               <div class="flex justify-between items-center q-mb-sm">
                 <div class="text-subtitle2">响应结果</div>
                 <q-btn 
@@ -194,10 +194,10 @@
                   dense 
                   size="sm" 
                   icon="content_copy" 
-                  @click="handleCopy(formatJson(formData.result))"
+                  @click="handleCopy(formatJson(formData.responseResult))"
                 />
               </div>
-              <pre class="code-block">{{ formatJson(formData.result) }}</pre>
+              <pre class="code-block">{{ formatJson(formData.responseResult) }}</pre>
             </q-tab-panel>
             
             <q-tab-panel v-if="formData.errorMsg" name="error" class="q-pa-md">
@@ -220,7 +220,7 @@
         <!-- 编辑模式显示表单 -->
         <template v-else>
           <div class="row q-col-gutter-md">
-            <div v-if="formData.params || !isReadonly" class="col-12">
+            <div v-if="formData.requestParams || !isReadonly" class="col-12">
               <div class="edit-field-block">
                 <div class="field-label q-mb-xs">请求参数：</div>
                 <q-input
@@ -235,7 +235,7 @@
               </div>
             </div>
             
-            <div v-if="formData.result || !isReadonly" class="col-12">
+            <div v-if="formData.responseResult || !isReadonly" class="col-12">
               <div class="edit-field-block">
                 <div class="field-label q-mb-xs">响应结果：</div>
                 <q-input
@@ -293,25 +293,32 @@ const emit = defineEmits(['update:modelValue'])
 
 const formData = ref({
   id: null,
+  userId: null,
   username: '',
-  operation: '',
-  method: '',
-  uri: '',
+  createBy: null,
+  deptId: null,
+  deptName: '',
+  module: '',
+  operationType: null,
+  operationDesc: '',
+  requestMethod: '',
+  requestUrl: '',
+  requestParams: '',
+  responseResult: '',
+  executionTime: null,
+  status: null,
+  errorMsg: '',
   ipAddress: '',
   userAgent: '',
-  status: '',
-  time: '',
-  createTime: '',
-  params: '',
-  result: '',
-  errorMsg: ''
+  location: '',
+  createTime: ''
 })
 
 const activeTab = ref('params')
 
 // 计算属性
 const hasDetailData = computed(() => {
-  return formData.value.params || formData.value.result || formData.value.errorMsg
+  return formData.value.requestParams || formData.value.responseResult || formData.value.errorMsg
 })
 
 const formattedCreateTime = computed(() => {
@@ -319,16 +326,16 @@ const formattedCreateTime = computed(() => {
 })
 
 const formattedParams = computed({
-  get: () => formatJson(formData.value.params),
+  get: () => formatJson(formData.value.requestParams),
   set: (value) => {
-    formData.value.params = value
+    formData.value.requestParams = value
   }
 })
 
 const formattedResult = computed({
-  get: () => formatJson(formData.value.result),
+  get: () => formatJson(formData.value.responseResult),
   set: (value) => {
-    formData.value.result = value
+    formData.value.responseResult = value
   }
 })
 
@@ -337,9 +344,9 @@ watch(() => props.modelValue, (newData) => {
   if (newData) {
     Object.assign(formData.value, newData)
     // 设置默认激活的标签页
-    if (newData.params) {
+    if (newData.requestParams) {
       activeTab.value = 'params'
-    } else if (newData.result) {
+    } else if (newData.responseResult) {
       activeTab.value = 'result'
     } else if (newData.errorMsg) {
       activeTab.value = 'error'
