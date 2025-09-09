@@ -198,7 +198,7 @@
   .dialog-content {
     flex: 1;
     overflow-y: auto;
-    padding: 0px 24px;
+    padding: 5px 24px 0px 24px;
     min-height: 0; /* 允许flex子项收缩 */
   }
   

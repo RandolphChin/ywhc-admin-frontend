@@ -184,15 +184,28 @@
     </q-card>
 
     <!-- 日志详情对话框 -->
-    <LogDetailDialog
-      v-model="logDetailDialog"
-      :log-data="currentLog"
+    <LogEditDialog 
+      v-model="logDetailDialog" 
+      :log-data="currentLog" 
+      :is-readonly="true"
+      @refresh="handleRefresh"
     />
+
     <!-- 日志编辑对话框 -->
-    <LogEditDialog
-      v-model="logEditDialog"
-      :log-data="currentLog"
+    <LogEditDialog 
+      v-model="logEditDialog" 
+      :log-data="currentLog" 
       :is-edit="true"
+      :is-readonly="false"
+      @submit="handleSubmit"
+    />
+
+    <!-- 日志新增对话框 -->
+    <LogEditDialog 
+      v-model="logCreateDialog" 
+      :is-edit="false"
+      :is-readonly="false"
+      @submit="handleSubmit"
     />
   </q-page>
 </template>
@@ -202,7 +215,6 @@ import { ref, onMounted, computed } from 'vue'
 import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
 import DataTablePagination from 'src/components/DataTablePagination.vue'
-import LogDetailDialog from './LogDetailDialog.vue'
 import LogEditDialog from './LogEditDialog.vue'
 
 defineOptions({
@@ -214,6 +226,7 @@ const $q = useQuasar()
 const loading = ref(false)
 const logDetailDialog = ref(false)
 const logEditDialog = ref(false)
+const logCreateDialog = ref(false)
 const logs = ref([])
 const currentLog = ref(null)
 
@@ -471,6 +484,36 @@ const getStatusLabel = (status) => {
 
 const clearDateRange = () => {
   queryForm.value.dateRange = null
+}
+
+const handleRefresh = () => {
+  loadLogs()
+}
+
+const handleSubmit = async (logData) => {
+  try {
+    if (logData.id) {
+      // 编辑日志
+      await logApi.update(logData.id, logData)
+      $q.notify({
+        type: 'positive',
+        message: '日志更新成功'
+      })
+    } else {
+      // 新增日志
+      await logApi.create(logData)
+      $q.notify({
+        type: 'positive',
+        message: '日志创建成功'
+      })
+    }
+    loadLogs()
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.message || '操作失败'
+    })
+  }
 }
 
 onMounted(() => {

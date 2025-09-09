@@ -5,23 +5,30 @@
       <q-card-section class="dialog-header">
         <div class="flex items-center justify-between">
           <div class="flex items-center">
-            <q-icon :name="isEdit ? 'edit' : 'add'" class="q-mr-sm text-primary" size="24px" />
-            <div>
-              <div class="text-h6">{{ isEdit ? '编辑日志' : '添加日志' }}</div>
-              <div class="text-caption text-grey-6">
-                {{ isEdit ? '修改日志信息' : '创建新的日志记录' }}
-              </div>
-            </div>
+            <div class="text-h6">{{ getHeaderTitle }}</div>
           </div>
-          <q-btn 
-            flat 
-            round 
-            icon="close" 
-            color="grey-7"
-            @click="handleClose"
-          >
-            <q-tooltip>关闭</q-tooltip>
-          </q-btn>
+          <div class="flex items-center q-gutter-sm">
+            <q-btn 
+              v-if="isReadonly"
+              flat 
+              round 
+              icon="refresh" 
+              color="primary"
+              @click="handleRefresh"
+              class="q-mr-sm"
+            >
+              <q-tooltip>刷新</q-tooltip>
+            </q-btn>
+            <q-btn 
+              flat 
+              round 
+              icon="close" 
+              color="grey-7"
+              @click="handleClose"
+            >
+              <q-tooltip>关闭</q-tooltip>
+            </q-btn>
+          </div>
         </div>
       </q-card-section>
 
@@ -38,7 +45,7 @@
           <LogForm 
             v-else
             v-model="formData" 
-            :is-readonly="false"
+            :is-readonly="isReadonly"
           />
         </q-form>
       </q-card-section>
@@ -46,14 +53,11 @@
       <q-separator />
 
       <!-- Footer Actions -->
-      <q-card-actions align="right" class="dialog-footer q-pa-md bg-grey-1">
-        <div class="flex items-center justify-between full-width">
-          <div class="text-caption text-grey-6">
-            <q-icon name="info" class="q-mr-xs" />
-表单编辑中
-          </div>
+      <q-card-actions class="dialog-footer q-pa-md bg-grey-1">
+        <div class="flex items-center justify-end full-width">
           <div class="q-gutter-sm">
             <q-btn 
+              v-if="!isReadonly"
               flat 
               label="重置" 
               color="grey-7"
@@ -70,6 +74,7 @@
               class="q-px-lg"
             />
             <q-btn 
+              v-if="!isReadonly"
               color="primary" 
               label="保存" 
               @click="handleSubmit"
@@ -104,10 +109,14 @@ const props = defineProps({
   isEdit: {
     type: Boolean,
     default: false
+  },
+  isReadonly: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['update:modelValue', 'submit'])
+const emit = defineEmits(['update:modelValue', 'submit', 'refresh'])
 
 const formRef = ref()
 const loading = ref(false)
@@ -120,19 +129,33 @@ const visible = computed({
 
 const formData = ref({
   id: null,
+  userId: null,
   username: '',
-  operation: '',
-  method: '',
-  uri: '',
-  ip: '',
+  createBy: null,
+  deptId: null,
+  deptName: '',
+  module: '',
+  operationType: null,
+  operationDesc: '',
+  requestMethod: '',
+  requestUrl: '',
+  requestParams: '',
+  responseResult: '',
+  executionTime: null,
+  status: null,
+  errorMsg: '',
+  ipAddress: '',
   userAgent: '',
-  status: '',
-  time: '',
-  createTime: '',
-  params: '',
-  result: '',
-  errorMsg: ''
+  location: '',
+  createTime: ''
 })
+
+// 计算属性
+const getHeaderTitle = computed(() => {
+  if (props.isReadonly) return '日志详情'
+  return props.isEdit ? '编辑日志' : '添加日志'
+})
+
 
 
 watch(() => props.logData, (newData) => {
@@ -143,7 +166,7 @@ watch(() => props.logData, (newData) => {
 
 
 const handleSubmit = async () => {
-  if (!formRef.value) return
+  if (!formRef.value || props.isReadonly) return
   
   try {
     submitting.value = true
@@ -185,6 +208,8 @@ const handleClose = () => {
 }
 
 const handleReset = () => {
+  if (props.isReadonly) return
+  
   $q.dialog({
     title: '确认重置',
     message: '确定要重置表单吗？所有修改将丢失。',
@@ -198,6 +223,10 @@ const handleReset = () => {
       position: 'top'
     })
   })
+}
+
+const handleRefresh = () => {
+  emit('refresh')
 }
 </script>
 

@@ -145,135 +145,61 @@
               />
             </div>
           </div>
-        </div>
-      </q-card-section>
-    </q-card>
 
-
-    <!-- 详细数据 -->
-    <q-card v-if="hasDetailData" class="q-mb-md">
-      <q-card-section>
-        <div class="text-h6 q-mb-md flex items-center">
-          <q-icon name="data_object" class="q-mr-sm text-primary" />
-          详细数据
-        </div>
-        <q-separator class="q-mb-md" />
-        
-        <!-- 只读模式显示标签页 -->
-        <template v-if="isReadonly">
-          <q-tabs v-model="activeTab" dense class="text-grey" active-color="primary" indicator-color="primary" align="justify">
-            <q-tab v-if="formData.requestParams" name="params" label="请求参数" />
-            <q-tab v-if="formData.responseResult" name="result" label="响应结果" />
-            <q-tab v-if="formData.errorMsg" name="error" label="错误信息" />
-          </q-tabs>
-          
-          <q-separator />
-          
-          <q-tab-panels v-model="activeTab" animated>
-            <q-tab-panel v-if="formData.requestParams" name="params" class="q-pa-md">
-              <div class="flex justify-between items-center q-mb-sm">
-                <div class="text-subtitle2">请求参数</div>
-                <q-btn 
-                  flat 
-                  round 
-                  dense 
-                  size="sm" 
-                  icon="content_copy" 
-                  @click="handleCopy(formatJson(formData.requestParams))"
-                />
-              </div>
-              <pre class="code-block">{{ formatJson(formData.requestParams) }}</pre>
-            </q-tab-panel>
-            
-            <q-tab-panel v-if="formData.responseResult" name="result" class="q-pa-md">
-              <div class="flex justify-between items-center q-mb-sm">
-                <div class="text-subtitle2">响应结果</div>
-                <q-btn 
-                  flat 
-                  round 
-                  dense 
-                  size="sm" 
-                  icon="content_copy" 
-                  @click="handleCopy(formatJson(formData.responseResult))"
-                />
-              </div>
-              <pre class="code-block">{{ formatJson(formData.responseResult) }}</pre>
-            </q-tab-panel>
-            
-            <q-tab-panel v-if="formData.errorMsg" name="error" class="q-pa-md">
-              <div class="flex justify-between items-center q-mb-sm">
-                <div class="text-subtitle2 text-negative">错误信息</div>
-                <q-btn 
-                  flat 
-                  round 
-                  dense 
-                  size="sm" 
-                  icon="content_copy" 
-                  @click="handleCopy(formData.errorMsg)"
-                />
-              </div>
-              <div class="error-block">{{ formData.errorMsg }}</div>
-            </q-tab-panel>
-          </q-tab-panels>
-        </template>
-        
-        <!-- 编辑模式显示表单 -->
-        <template v-else>
-          <div class="row q-col-gutter-md">
-            <div v-if="formData.requestParams || !isReadonly" class="col-12">
-              <div class="edit-field-block">
-                <div class="field-label q-mb-xs">请求参数：</div>
-                <q-input
-                  v-model="formattedParams"
-                  type="textarea"
-                  outlined
-                  dense
-                  rows="6"
-                  :readonly="isReadonly"
-                  class="field-input"
-                />
-              </div>
-            </div>
-            
-            <div v-if="formData.responseResult || !isReadonly" class="col-12">
-              <div class="edit-field-block">
-                <div class="field-label q-mb-xs">响应结果：</div>
-                <q-input
-                  v-model="formattedResult"
-                  type="textarea"
-                  outlined
-                  dense
-                  rows="6"
-                  :readonly="isReadonly"
-                  class="field-input"
-                />
-              </div>
-            </div>
-            
-            <div v-if="formData.errorMsg || !isReadonly" class="col-12">
-              <div class="edit-field-block">
-                <div class="field-label q-mb-xs">错误信息：</div>
-                <q-input
-                  v-model="formData.errorMsg"
-                  type="textarea"
-                  outlined
-                  dense
-                  rows="3"
-                  :readonly="isReadonly"
-                  color="negative"
-                  class="field-input"
-                />
-              </div>
+          <div v-if="formData.requestParams || !isReadonly" class="col-12">
+            <div class="edit-field-block">
+              <div class="field-label q-mb-xs">请求参数：</div>
+              <q-input
+                v-model="formattedParams"
+                type="textarea"
+                outlined
+                dense
+                rows="6"
+                :readonly="isReadonly"
+                class="field-input"
+              />
             </div>
           </div>
-        </template>
+
+          <div v-if="formData.responseResult || !isReadonly" class="col-12">
+            <div class="edit-field-block">
+              <div class="field-label q-mb-xs">响应结果：</div>
+              <q-input
+                v-model="formattedResult"
+                type="textarea"
+                outlined
+                dense
+                rows="6"
+                :readonly="isReadonly"
+                class="field-input"
+              />
+            </div>
+          </div>
+          
+          <div v-if="formData.errorMsg || !isReadonly" class="col-12">
+            <div class="edit-field-block">
+              <div class="field-label q-mb-xs">错误信息：</div>
+              <q-input
+                v-model="formData.errorMsg"
+                type="textarea"
+                outlined
+                dense
+                rows="3"
+                :readonly="isReadonly"
+                color="negative"
+                class="field-input"
+              />
+            </div>
+          </div>
+
+        </div>
       </q-card-section>
     </q-card>
   </div>
 </template>
 
 <script setup>
-import { computed, watch, ref, nextTick } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useQuasar, copyToClipboard } from 'quasar'
 
 const $q = useQuasar()
