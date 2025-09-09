@@ -160,3 +160,105 @@ src/api/system/
   @submit="handleSubmit"
 />
 ```
+### 1. 字典工具类使用
+
+```javascript
+import { useDictionary } from 'src/utils/dict'
+
+const { getDictData, getDictLabel, getDictOptions } = useDictionary()
+
+// 获取字典数据
+const genderDict = await getDictData('sys_user_sex')
+
+// 获取字典标签
+const genderLabel = await getDictLabel('sys_user_sex', '1')
+
+// 获取字典选项（用于下拉框）
+const genderOptions = await getDictOptions('sys_user_sex')
+```
+
+### 2. 字典下拉选择组件
+
+```vue
+<template>
+  <DictSelect
+    v-model="formData.gender"
+    dict-type="sys_user_sex"
+    label="性别"
+    :include-all="true"
+  />
+</template>
+
+<script setup>
+import DictSelect from 'src/components/DictSelect.vue'
+import { ref } from 'vue'
+
+const formData = ref({
+  gender: ''
+})
+</script>
+```
+
+### 3. 在页面中使用字典
+
+```vue
+<template>
+  <div>
+    <!-- 使用字典下拉选择 -->
+    <q-select
+      v-model="queryForm.status"
+      :options="statusOptions"
+      label="状态"
+      emit-value
+      map-options
+    />
+    
+    <!-- 在表格中显示字典标签 -->
+    <q-table :columns="columns" :rows="rows">
+      <template v-slot:body-cell-status="props">
+        <q-td :props="props">
+          <q-badge :label="getStatusLabel(props.row.status)" />
+        </q-td>
+      </template>
+    </q-table>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useDictionary } from 'src/utils/dict'
+
+const { getDictOptions, getDictLabel } = useDictionary()
+
+const statusOptions = ref([])
+const queryForm = ref({ status: '' })
+
+// 获取状态字典选项
+const loadStatusOptions = async () => {
+  statusOptions.value = await getDictOptions('sys_common_status')
+}
+
+// 获取状态标签
+const getStatusLabel = async (status) => {
+  return await getDictLabel('sys_common_status', status)
+}
+
+onMounted(() => {
+  loadStatusOptions()
+})
+</script>
+```
+
+### 4. 批量加载字典
+
+```javascript
+import { useDictionary, createDictData } from 'src/utils/dict'
+
+// 方法1：使用 useDictionary
+const { getBatchDictData } = useDictionary()
+const dictData = await getBatchDictData(['sys_user_sex', 'sys_common_status'])
+
+// 方法2：使用 createDictData（响应式）
+const dictDataMap = createDictData(['sys_user_sex', 'sys_common_status'])
+// dictDataMap.sys_user_sex 和 dictDataMap.sys_common_status 是响应式的
+```
