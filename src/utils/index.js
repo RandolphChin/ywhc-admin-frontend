@@ -274,3 +274,14 @@ export const serializeParams = (params) => {
   
   return searchParams.toString()
 }
+
+// 格式化JSON字符串
+export const formatJson = (jsonStr) => {
+  if (!jsonStr) return ''
+  try {
+    const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
+    return JSON.stringify(obj, null, 2)
+  } catch (error) {
+    return jsonStr
+  }
+}

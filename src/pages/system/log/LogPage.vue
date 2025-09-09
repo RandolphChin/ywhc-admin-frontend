@@ -203,6 +203,7 @@ import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
 import DataTablePagination from 'src/components/DataTablePagination.vue'
 import LogEditDialog from './LogEditDialog.vue'
+import { formatTime } from 'src/utils/index'
 // 字典表引入
 import { createDictData } from 'src/utils/dict'
 // 方法1：使用 useDictionary
@@ -299,7 +300,7 @@ const columns = [
     label: '操作时间',
     field: 'createTime',
     align: 'center',
-    format: (val) => new Date(val).toLocaleString(),
+    format: (val) => formatTime(val, 'YYYY-MM-DD HH:mm:ss'),
     sortable: true
   },
   {

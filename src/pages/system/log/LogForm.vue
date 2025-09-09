@@ -58,7 +58,7 @@
             <div class="edit-field-inline">
               <span class="field-label">操作时间：</span>
               <q-input
-                v-model="formattedCreateTime"
+                v-model="formData.createTime"
                 outlined
                 dense
                 :readonly="isReadonly"
@@ -205,6 +205,7 @@
 <script setup>
 import { computed, watch, ref } from 'vue'
 import { useQuasar, copyToClipboard } from 'quasar'
+import { formatTime, formatJson } from 'src/utils/index'
 
 const $q = useQuasar()
 
@@ -251,16 +252,6 @@ const formData = ref({
   createTime: ''
 })
 
-const activeTab = ref('params')
-
-// 计算属性
-const hasDetailData = computed(() => {
-  return formData.value.requestParams || formData.value.responseResult || formData.value.errorMsg
-})
-
-const formattedCreateTime = computed(() => {
-  return formatDateTime(formData.value.createTime)
-})
 
 const formattedParams = computed({
   get: () => formatJson(formData.value.requestParams),
@@ -276,22 +267,28 @@ const formattedResult = computed({
   }
 })
 
+/**
+ *  为什么不直接使用 v-model="modelValue.username" 
+ * 1）Props的单向数据流原则：Vue遵循单向数据流原则，
+ *  当用户在输入框中输入时，会直接修改父组件的数据，这违反了Vue的设计原则
+ * 
+ * 2）避免直接修改Props警告：如果直接修改props，Vue会在开发环境中发出警告
+ */
 // 监听数据变化
 watch(() => props.modelValue, (newData) => {
   if (newData) {
     Object.assign(formData.value, newData)
     // 设置默认激活的标签页
-    if (newData.requestParams) {
-      activeTab.value = 'params'
-    } else if (newData.responseResult) {
-      activeTab.value = 'result'
-    } else if (newData.errorMsg) {
-      activeTab.value = 'error'
-    }
   }
 }, { deep: true, immediate: true })
 
 // 使用防抖来避免频繁更新
+/**
+ *  Vue 3中 v-model 的标准工作机制：
+    1) 子组件接收 modelValue prop
+    2) 子组件通过 emit('update:modelValue', newValue) 通知父组件更新数据
+    3) 父组件接收到事件后更新绑定的数据
+ */
 let updateTimeout = null
 watch(formData, (newData) => {
   if (updateTimeout) {
@@ -320,53 +317,8 @@ const handleCopy = async (text) => {
   }
 }
 
-// 工具方法
-const formatDateTime = (dateTime) => {
-  if (!dateTime) return '-'
-  try {
-    return new Date(dateTime).toLocaleString('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    })
-  } catch (error) {
-    return dateTime
-  }
-}
 
-const formatJson = (jsonStr) => {
-  if (!jsonStr) return ''
-  try {
-    const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
-    return JSON.stringify(obj, null, 2)
-  } catch (error) {
-    return jsonStr
-  }
-}
 
-const getMethodColor = (method) => {
-  const colors = {
-    'GET': 'green',
-    'POST': 'blue',
-    'PUT': 'orange',
-    'DELETE': 'red',
-    'PATCH': 'purple'
-  }
-  return colors[method] || 'grey'
-}
-
-const getStatusColor = (status) => {
-  if (!status) return 'grey'
-  const statusCode = parseInt(status)
-  if (statusCode >= 200 && statusCode < 300) return 'green'
-  if (statusCode >= 300 && statusCode < 400) return 'blue'
-  if (statusCode >= 400 && statusCode < 500) return 'orange'
-  if (statusCode >= 500) return 'red'
-  return 'grey'
-}
 </script>
 
 <!-- 样式已移至全局 CSS: src/css/detail-edit-common.scss -->
