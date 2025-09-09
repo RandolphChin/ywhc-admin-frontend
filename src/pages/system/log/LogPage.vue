@@ -94,8 +94,6 @@
     <!-- 日志表格 -->
     <q-card>
       <q-card-section>
-        <div class="text-h6 q-mb-md">操作日志</div>
-
         <q-table
           :rows="logs"
           :columns="columns"
@@ -205,6 +203,15 @@ import { logApi } from 'src/api'
 import { useQuasar } from 'quasar'
 import DataTablePagination from 'src/components/DataTablePagination.vue'
 import LogEditDialog from './LogEditDialog.vue'
+// 字典表引入
+import { createDictData } from 'src/utils/dict'
+// 方法1：使用 useDictionary
+// const { getBatchDictData } = useDictionary()
+// const dictData = await getBatchDictData(['request_methods', 'sys_common_status'])
+
+// 方法2：使用 createDictData（响应式）
+const dictDataMap = createDictData(['request_methods', 'response_status'])
+
 
 defineOptions({
   name: 'LogPage'
@@ -303,17 +310,28 @@ const columns = [
   }
 ]
 
-const methodOptions = [
-  { label: 'GET', value: 'GET' },
-  { label: 'POST', value: 'POST' },
-  { label: 'PUT', value: 'PUT' },
-  { label: 'DELETE', value: 'DELETE' }
-]
+// 调用方法 下拉框
+const methodOptions = computed(() => {
+  if (!dictDataMap.request_methods?.value) {
+    return []
+  }
+  return dictDataMap.request_methods.value.map(item => ({
+    label: item.dictLabel,
+    value: item.dictLabel // 使用 dictLabel 作为 value，因为实际请求方法是 GET、POST 等
+  }))
+})
 
-const statusOptions = [
-  { label: '成功', value: 1 },
-  { label: '失败', value: 0 }
-]
+
+const statusOptions = computed(() => {
+  if(!dictDataMap.response_status?.value) {
+      return []
+  }
+  return dictDataMap.response_status.value.map(item => ({
+    label: item.dictLabel,
+    value: item.dictValue
+  }))
+})
+
 
 const rowsPerPageOptions = [5, 10, 20, 50, 100]
 
@@ -465,10 +483,13 @@ const clearLogs = () => {
   })
 }
 
+// 根据字典的key 获取字典值
 const getStatusLabel = (status) => {
-  // 操作状态：0-失败，1-成功
-  const labels = { 0: '失败', 1: '成功' }
-  return labels[status] || '未知'
+  if (!dictDataMap.response_status?.value) {
+    return status
+  }
+  const item = dictDataMap.response_status.value.find(item => item.dictValue == status)
+  return item ? item.dictLabel : status
 }
 
 const clearDateRange = () => {
