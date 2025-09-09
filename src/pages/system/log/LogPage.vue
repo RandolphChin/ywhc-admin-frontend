@@ -61,23 +61,12 @@
               style="width: 250px;"
               class="cursor-pointer"
               @clear="clearDateRange"
+              @click="$refs.datePopup.show()"
             >
               <template v-slot:append>
-                <q-icon name="event" class="cursor-pointer">
-                  <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                    <q-date
-                      v-model="queryForm.dateRange"
-                      mask="YYYY-MM-DD"
-                      range
-                    >
-                      <div class="row items-center justify-end">
-                        <q-btn v-close-popup label="关闭" color="primary" flat />
-                      </div>
-                    </q-date>
-                  </q-popup-proxy>
-                </q-icon>
+                <q-icon name="event" class="cursor-pointer" />
               </template>
-              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-popup-proxy ref="datePopup" cover transition-show="scale" transition-hide="scale">
                 <q-date
                   v-model="queryForm.dateRange"
                   mask="YYYY-MM-DD"

@@ -83,12 +83,16 @@
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
               <span class="field-label">响应状态：</span>
-              <q-input
+              <q-select
                 v-model="formData.status"
+                :options="statusOptions"
                 outlined
                 dense
                 :readonly="isReadonly"
                 class="field-input"
+                emit-value
+                map-options
+                clearable
               />
             </div>
           </div>
@@ -212,6 +216,13 @@ const props = defineProps({
   isReadonly: {
     type: Boolean,
     default: true
+  },
+  statusOptions: {
+    type: Array,
+    default: () => [
+      { label: '成功', value: 1 },
+      { label: '失败', value: 0 }
+    ]
   }
 })
 

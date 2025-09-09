@@ -132,3 +132,31 @@ src/api/system/
 动画效果 (Animations)
 * .fade-enter-active / .fade-leave-active - 淡入淡出动画
 * .slide-up-enter-active / .slide-up-leave-active - 滑入滑出动画
+
+#### 弹窗详情或编辑或新增
+```
+<!-- 日志详情对话框 -->
+<LogEditDialog 
+  v-model="logDetailDialog" 
+  :log-data="currentLog" 
+  :is-readonly="true"
+  @refresh="handleRefresh"
+/>
+
+<!-- 日志编辑对话框 -->
+<LogEditDialog 
+  v-model="logEditDialog" 
+  :log-data="currentLog" 
+  :is-edit="true"
+  :is-readonly="false"
+  @submit="handleSubmit"
+/>
+
+<!-- 日志新增对话框 -->
+<LogEditDialog 
+  v-model="logCreateDialog" 
+  :is-edit="false"
+  :is-readonly="false"
+  @submit="handleSubmit"
+/>
+```
