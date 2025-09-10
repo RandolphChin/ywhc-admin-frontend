@@ -5,7 +5,7 @@
       <q-card-section>
         <div class="row q-gutter-md items-center">
             <q-input
-              v-model="typeQueryForm.dictNameLike"
+              v-model="typeQueryForm.dictName"
               label="字典名称"
               outlined
               dense
@@ -13,24 +13,14 @@
               style="width: 160px;"
             />
             <q-input
-              v-model="typeQueryForm.dictTypeLike"
+              v-model="typeQueryForm.dictType"
               label="字典类型"
               outlined
               dense
               clearable
               style="width: 160px;"
             />
-            <q-select
-              v-model="typeQueryForm.status"
-              :options="statusOptions"
-              label="状态"
-              outlined
-              dense
-              clearable
-              emit-value
-              map-options
-              style="width: 160px;"
-            />
+           
             <q-btn color="primary" icon="search" label="搜索" @click="loadDictTypes" />
             <q-btn color="secondary" icon="refresh" label="重置" @click="resetTypeQuery" />
         </div>
@@ -38,12 +28,12 @@
     </q-card>
 
     <!-- 左右布局 -->
-    <div class="row q-gutter-md" style="height: calc(100vh - 200px)">
+    <div class="row q-gutter-sm" style="height: calc(100vh - 200px)">
       <!-- 左侧：字典类型表格 -->
       <div class="col-5">
-        <q-card class="full-height">
+        <q-card>
           <q-card-section>
-            <div class="row justify-between items-center q-mb-md">
+            <div class="row justify-between items-center q-mb-xs">
               <div class="text-h6">字典类型</div>
               <q-btn
                 color="primary"
@@ -71,17 +61,15 @@
                     color="primary"
                     icon="edit"
                     @click="showTypeEdit(props.row)"
-                    v-permission="'system:dict:edit'"
                   >
                     <q-tooltip>编辑</q-tooltip>
                   </q-btn>
                   <q-btn
                     flat
                     dense
-                    color="negative"
+                    color="primary"
                     icon="delete"
                     @click="deleteType(props.row)"
-                    v-permission="'system:dict:delete'"
                   >
                     <q-tooltip>删除</q-tooltip>
                   </q-btn>
@@ -102,9 +90,9 @@
 
       <!-- 右侧：字典数据列表 -->
       <div class="col">
-        <q-card class="full-height">
+        <q-card>
           <q-card-section>
-            <div class="row justify-between items-center q-mb-md">
+            <div class="row justify-between items-center q-mb-xs">
               <div class="text-h6">
                 字典数据
                 <span v-if="currentDictType" class="text-caption text-grey-6">
@@ -131,35 +119,7 @@
                 @request="onDataRequest"
                 binary-state-sort
               >
-                <template v-slot:body-cell-status="props">
-                  <q-td :props="props">
-                    <q-badge
-                      :color="props.row.status == 1 ? 'positive' : 'negative'"
-                      :label="props.row.status == 1 ? '正常' : '停用'"
-                    />
-                  </q-td>
-                </template>
-
-                <template v-slot:body-cell-isDefault="props">
-                  <q-td :props="props">
-                    <q-badge
-                      :color="props.row.isDefault == 1 ? 'primary' : 'grey'"
-                      :label="props.row.isDefault == 1 ? '是' : '否'"
-                    />
-                  </q-td>
-                </template>
-
-                <template v-slot:body-cell-listClass="props">
-                  <q-td :props="props">
-                    <q-badge
-                      v-if="props.row.listClass"
-                      :color="props.row.listClass"
-                      :label="props.row.listClass"
-                    />
-                  </q-td>
-                </template>
-
-                <template v-slot:body-cell-actions="props">
+               <template v-slot:body-cell-actions="props">
                   <q-td :props="props">
                     <q-btn
                       flat
@@ -167,7 +127,6 @@
                       color="primary"
                       icon="edit"
                       @click="showDataEdit(props.row)"
-                      v-permission="'system:dict:edit'"
                     >
                       <q-tooltip>编辑</q-tooltip>
                     </q-btn>
@@ -253,14 +212,14 @@ const isDataEdit = ref(false)
 
 // 查询表单
 const typeQueryForm = ref({
-  dictNameLike: '',
-  dictTypeLike: '',
+  dictName: '',
+  dictType: '',
   status: null
 })
 
 const dataQueryForm = ref({
-  dictLabelLike: '',
-  dictValueLike: '',
+  dictLabel: '',
+  dictValue: '',
   status: null
 })
 
@@ -347,12 +306,6 @@ const dataColumns = [
   }
 ]
 
-const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '停用', value: 0 }
-]
-
-const rowsPerPageOptions = [5, 10, 20, 50, 100]
 
 // 监听字典类型选择
 watch(selectedDictType, (newVal) => {
@@ -376,11 +329,10 @@ const loadDictTypes = async (props) => {
     const params = {
       current: page,
       size: rowsPerPage,
-      orderBy: sortBy || 'createTime',
+      orderBy: sortBy || 'id',
       orderDirection: descending ? 'desc' : 'asc',
-      dictNameLike: typeQueryForm.value.dictNameLike,
-      dictTypeLike: typeQueryForm.value.dictTypeLike,
-      status: typeQueryForm.value.status
+      dictNameLike: typeQueryForm.value.dictName,
+      dictTypeLike: typeQueryForm.value.dictType
     }
     
     const response = await dictApi.getDictTypeList(params)
@@ -418,22 +370,13 @@ const onTypePageChange = (newPage) => {
 
 const resetTypeQuery = () => {
   typeQueryForm.value = {
-    dictNameLike: '',
-    dictTypeLike: '',
+    dictName: '',
+    dictType: '',
     status: null
   }
   loadDictTypes()
 }
 
-const onDictTypeSelection = ({ added, removed }) => {
-  if (added.length > 0) {
-    selectDictType(added[0])
-  } else if (removed.length > 0 && added.length === 0) {
-    selectedDictType.value = null
-    currentDictType.value = null
-    dictData.value = []
-  }
-}
 
 const onRowClick = (evt, row) => {
   selectDictType(row)
@@ -497,15 +440,6 @@ const onDataRowsPerPageChange = (newRowsPerPage) => {
 const onDataPageChange = (newPage) => {
   dataPagination.value.page = newPage
   onDataRequest({ pagination: dataPagination.value })
-}
-
-const resetDataQuery = () => {
-  dataQueryForm.value = {
-    dictLabelLike: '',
-    dictValueLike: '',
-    status: null
-  }
-  loadDictData()
 }
 
 // 字典类型CRUD操作

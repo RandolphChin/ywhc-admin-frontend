@@ -6,34 +6,29 @@
       </q-card-section>
 
       <q-card-section>
-        <q-form @submit="onSubmit" class="q-gutter-md">
+        <q-form ref="formRef" @submit="onSubmit" class="q-gutter-md">
           <q-input
             v-model="formData.dictName"
-            label="字典名称 *"
             outlined
-            :rules="[val => !!val || '字典名称不能为空']"
-          />
+            label="字典名称"
+            :rules="[rules.required('字典名称')]"
+          >
+            <template v-slot:before>
+              <span class="text-red">*</span>
+            </template>
+          </q-input>
 
           <q-input
             v-model="formData.dictType"
-            label="字典类型 *"
             outlined
-            :rules="[
-              val => !!val || '字典类型不能为空',
-              val => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val) || '字典类型只能包含字母、数字和下划线，且不能以数字开头'
-            ]"
+            label="字典类型"
+            :rules="[rules.required('字典类型'), rules.dictType]"
             hint="建议格式：sys_user_sex"
-          />
-
-          <q-select
-            v-model="formData.status"
-            :options="statusOptions"
-            label="状态 *"
-            outlined
-            emit-value
-            map-options
-            :rules="[val => val !== null && val !== undefined || '请选择状态']"
-          />
+          >
+            <template v-slot:before>
+              <span class="text-red">*</span>
+            </template>
+          </q-input>
 
           <q-input
             v-model="formData.remark"
@@ -41,6 +36,7 @@
             outlined
             type="textarea"
             rows="3"
+            style="margin-left: 38px;"
           />
         </q-form>
       </q-card-section>
@@ -79,6 +75,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'submit'])
 
 const loading = ref(false)
+const formRef = ref(null);
 
 const dialogVisible = computed({
   get: () => props.modelValue,
@@ -89,14 +86,14 @@ const formData = ref({
   id: null,
   dictName: '',
   dictType: '',
-  status: 1,
   remark: ''
 })
 
-const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '停用', value: 0 }
-]
+const rules = {
+  required: (fieldName) => (val) => !!val || `${fieldName}不能为空`,
+  dictType: (val) =>
+    /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val) || '字典类型只能包含字母、数字和下划线，且不能以数字开头',
+};
 
 // 监听数据变化，初始化表单
 watch(() => props.dictTypeData, (newData) => {
@@ -105,7 +102,6 @@ watch(() => props.dictTypeData, (newData) => {
       id: newData.id,
       dictName: newData.dictName,
       dictType: newData.dictType,
-      status: newData.status,
       remark: newData.remark || ''
     }
   } else {
@@ -113,7 +109,6 @@ watch(() => props.dictTypeData, (newData) => {
       id: null,
       dictName: '',
       dictType: '',
-      status: 1,
       remark: ''
     }
   }
@@ -121,28 +116,20 @@ watch(() => props.dictTypeData, (newData) => {
 
 const onSubmit = () => {
   // 验证表单
-  if (!formData.value.dictName) {
-    return
-  }
-  if (!formData.value.dictType) {
-    return
-  }
-  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(formData.value.dictType)) {
-    return
-  }
-  if (formData.value.status === null || formData.value.status === undefined) {
-    return
-  }
-
-  loading.value = true
-  
-  // 提交数据
-  emit('submit', { ...formData.value })
-  
-  setTimeout(() => {
-    loading.value = false
-    dialogVisible.value = false
-  }, 500)
+  formRef.value.validate().then((success) => {
+    if (!success) {
+      return
+    }
+    loading.value = true
+    
+    // 提交数据
+    emit('submit', { ...formData.value })
+    
+    setTimeout(() => {
+      loading.value = false
+      dialogVisible.value = false
+    }, 500)
+  })
 }
 
 const onCancel = () => {
