@@ -1,6 +1,6 @@
 <template>
   <q-select
-    v-model="modelValue"
+    :model-value="modelValue"
     :options="dictOptions"
     :label="label"
     :outlined="outlined"
@@ -42,7 +42,7 @@ const props = defineProps({
   },
   dense: {
     type: Boolean,
-    default: false
+    default: true
   },
   clearable: {
     type: Boolean,

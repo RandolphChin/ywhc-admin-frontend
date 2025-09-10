@@ -812,7 +812,7 @@ export default defineComponent({
 .tabs-container {
   background: linear-gradient(to right, #f8f9fa, #ffffff);
   border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-  padding: 8px 16px 0;
+  padding: 1px 1px 0;
 }
 
 .modern-tabs {

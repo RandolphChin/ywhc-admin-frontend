@@ -1,47 +1,58 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="row q-gutter-md" style="height: calc(100vh - 120px)">
-      <!-- 左侧字典类型列表 -->
-      <div class="col-4">
+  <q-page>
+    <!-- 搜索和操作栏 -->
+    <q-card class="q-mb-sm">
+      <q-card-section>
+        <div class="row q-gutter-md items-center">
+            <q-input
+              v-model="typeQueryForm.dictNameLike"
+              label="字典名称"
+              outlined
+              dense
+              clearable
+              style="width: 160px;"
+            />
+            <q-input
+              v-model="typeQueryForm.dictTypeLike"
+              label="字典类型"
+              outlined
+              dense
+              clearable
+              style="width: 160px;"
+            />
+            <q-select
+              v-model="typeQueryForm.status"
+              :options="statusOptions"
+              label="状态"
+              outlined
+              dense
+              clearable
+              emit-value
+              map-options
+              style="width: 160px;"
+            />
+            <q-btn color="primary" icon="search" label="搜索" @click="loadDictTypes" />
+            <q-btn color="secondary" icon="refresh" label="重置" @click="resetTypeQuery" />
+        </div>
+      </q-card-section>
+    </q-card>
+
+    <!-- 左右布局 -->
+    <div class="row q-gutter-md" style="height: calc(100vh - 200px)">
+      <!-- 左侧：字典类型表格 -->
+      <div class="col-5">
         <q-card class="full-height">
           <q-card-section>
-            <div class="text-h6 q-mb-md">字典类型</div>
-            
-            <!-- 搜索栏 -->
-            <div class="row q-gutter-sm q-mb-md">
-              <q-input
-                v-model="typeQueryForm.dictNameLike"
-                label="字典名称"
-                outlined
-                dense
-                clearable
-                style="width: 120px;"
-              />
-              <q-input
-                v-model="typeQueryForm.dictTypeLike"
-                label="字典类型"
-                outlined
-                dense
-                clearable
-                style="width: 120px;"
-              />
-              <q-btn color="primary" icon="search" @click="loadDictTypes" dense />
-              <q-btn color="secondary" icon="refresh" @click="resetTypeQuery" dense />
-            </div>
-
-            <!-- 操作按钮 -->
-            <div class="q-mb-md">
+            <div class="row justify-between items-center q-mb-md">
+              <div class="text-h6">字典类型</div>
               <q-btn
                 color="primary"
                 icon="add"
-                label="新增"
+                label="添加类型"
                 @click="showTypeCreate"
-                v-permission="'system:dict:add'"
-                size="sm"
               />
             </div>
 
-            <!-- 字典类型表格 -->
             <q-table
               :rows="dictTypes"
               :columns="typeColumns"
@@ -50,25 +61,8 @@
               :pagination="typePagination"
               @request="onTypeRequest"
               binary-state-sort
-              :rows-per-page-options="rowsPerPageOptions"
-              :no-data-label="'暂无数据'"
-              :no-results-label="'未找到匹配的记录'"
-              :loading-label="'加载中...'"
-              :rows-per-page-label="'每页显示:'"
-              selection="single"
-              v-model:selected="selectedDictType"
-              @selection="onDictTypeSelect"
-              dense
+              @row-click="onRowClick"
             >
-              <template v-slot:body-cell-status="props">
-                <q-td :props="props">
-                  <q-badge
-                    :color="props.row.status == 1 ? 'positive' : 'negative'"
-                    :label="props.row.status == 1 ? '正常' : '停用'"
-                  />
-                </q-td>
-              </template>
-
               <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
                   <q-btn
@@ -97,79 +91,37 @@
               <template v-slot:bottom>
                 <DataTablePagination
                   :pagination="typePagination"
-                  :rows-per-page-options="rowsPerPageOptions"
                   @rows-per-page-change="onTypeRowsPerPageChange"
                   @page-change="onTypePageChange"
                 />
-              </template>
+          </template>
             </q-table>
           </q-card-section>
         </q-card>
       </div>
 
-      <!-- 右侧字典数据列表 -->
-      <div class="col-8">
+      <!-- 右侧：字典数据列表 -->
+      <div class="col">
         <q-card class="full-height">
           <q-card-section>
-            <div class="text-h6 q-mb-md">
-              字典数据
-              <span v-if="currentDictType" class="text-caption text-grey-6">
-                ({{ currentDictType.dictName }} - {{ currentDictType.dictType }})
-              </span>
+            <div class="row justify-between items-center q-mb-md">
+              <div class="text-h6">
+                字典数据
+                <span v-if="currentDictType" class="text-caption text-grey-6">
+                  - {{ currentDictType.dictName }}
+                </span>
+              </div>
+              <q-btn
+                color="primary"
+                icon="add"
+                label="添加数据"
+                @click="showDataCreate"
+                :disable="!currentDictType"
+              />
             </div>
 
-            <div v-if="!currentDictType" class="text-center text-grey-6 q-mt-xl">
-              <q-icon name="info" size="48px" />
-              <div class="q-mt-md">请先选择左侧字典类型</div>
-            </div>
+            <div v-if="currentDictType">
 
-            <div v-else>
-              <!-- 搜索栏 -->
-              <div class="row q-gutter-sm q-mb-md">
-                <q-input
-                  v-model="dataQueryForm.dictLabelLike"
-                  label="字典标签"
-                  outlined
-                  dense
-                  clearable
-                  style="width: 120px;"
-                />
-                <q-input
-                  v-model="dataQueryForm.dictValueLike"
-                  label="字典键值"
-                  outlined
-                  dense
-                  clearable
-                  style="width: 120px;"
-                />
-                <q-select
-                  v-model="dataQueryForm.status"
-                  :options="statusOptions"
-                  label="状态"
-                  outlined
-                  dense
-                  clearable
-                  emit-value
-                  map-options
-                  style="width: 100px;"
-                />
-                <q-btn color="primary" icon="search" @click="loadDictData" dense />
-                <q-btn color="secondary" icon="refresh" @click="resetDataQuery" dense />
-              </div>
-
-              <!-- 操作按钮 -->
-              <div class="q-mb-md">
-                <q-btn
-                  color="primary"
-                  icon="add"
-                  label="新增"
-                  @click="showDataCreate"
-                  v-permission="'system:dict:add'"
-                  size="sm"
-                />
-              </div>
-
-              <!-- 字典数据表格 -->
               <q-table
                 :rows="dictData"
                 :columns="dataColumns"
@@ -178,12 +130,6 @@
                 :pagination="dataPagination"
                 @request="onDataRequest"
                 binary-state-sort
-                :rows-per-page-options="rowsPerPageOptions"
-                :no-data-label="'暂无数据'"
-                :no-results-label="'未找到匹配的记录'"
-                :loading-label="'加载中...'"
-                :rows-per-page-label="'每页显示:'"
-                dense
               >
                 <template v-slot:body-cell-status="props">
                   <q-td :props="props">
@@ -241,12 +187,15 @@
                 <template v-slot:bottom>
                   <DataTablePagination
                     :pagination="dataPagination"
-                    :rows-per-page-options="rowsPerPageOptions"
                     @rows-per-page-change="onDataRowsPerPageChange"
                     @page-change="onDataPageChange"
                   />
                 </template>
               </q-table>
+            </div>
+            <div v-else class="text-center text-grey-6 q-pa-xl">
+              <q-icon name="list" size="48px" class="q-mb-md" />
+              <div>请选择一个字典类型查看其数据</div>
             </div>
           </q-card-section>
         </q-card>
@@ -289,7 +238,7 @@ const $q = useQuasar()
 // 字典类型相关
 const typeLoading = ref(false)
 const dictTypes = ref([])
-const selectedDictType = ref([])
+const selectedDictType = ref(null)
 const currentDictType = ref(null)
 const currentTypeData = ref(null)
 const typeEditDialog = ref(false)
@@ -326,7 +275,7 @@ const typePagination = ref({
 
 const dataPagination = ref({
   sortBy: 'dictSort',
-  descending: false,
+  descending: true,
   page: 1,
   rowsPerPage: 10,
   rowsNumber: 0
@@ -349,24 +298,10 @@ const typeColumns = [
     sortable: true
   },
   {
-    name: 'status',
-    label: '状态',
-    field: 'status',
-    align: 'center'
-  },
-  {
     name: 'remark',
     label: '备注',
     field: 'remark',
     align: 'left'
-  },
-  {
-    name: 'createTime',
-    label: '创建时间',
-    field: 'createTime',
-    align: 'center',
-    format: (val) => new Date(val).toLocaleString(),
-    sortable: true
   },
   {
     name: 'actions',
@@ -399,24 +334,6 @@ const dataColumns = [
     sortable: true
   },
   {
-    name: 'listClass',
-    label: '回显样式',
-    field: 'listClass',
-    align: 'center'
-  },
-  {
-    name: 'isDefault',
-    label: '默认',
-    field: 'isDefault',
-    align: 'center'
-  },
-  {
-    name: 'status',
-    label: '状态',
-    field: 'status',
-    align: 'center'
-  },
-  {
     name: 'remark',
     label: '备注',
     field: 'remark',
@@ -439,9 +356,9 @@ const rowsPerPageOptions = [5, 10, 20, 50, 100]
 
 // 监听字典类型选择
 watch(selectedDictType, (newVal) => {
-  if (newVal && newVal.length > 0) {
-    currentDictType.value = newVal[0]
-    dataQueryForm.value.dictType = newVal[0].dictType
+  if (newVal) {
+    currentDictType.value = newVal
+    dataQueryForm.value.dictType = newVal.dictType
     loadDictData()
   } else {
     currentDictType.value = null
@@ -508,8 +425,25 @@ const resetTypeQuery = () => {
   loadDictTypes()
 }
 
-const onDictTypeSelect = (details) => {
-  // 处理字典类型选择
+const onDictTypeSelection = ({ added, removed }) => {
+  if (added.length > 0) {
+    selectDictType(added[0])
+  } else if (removed.length > 0 && added.length === 0) {
+    selectedDictType.value = null
+    currentDictType.value = null
+    dictData.value = []
+  }
+}
+
+const onRowClick = (evt, row) => {
+  selectDictType(row)
+}
+
+const selectDictType = async (dictType) => {
+  selectedDictType.value = dictType
+  currentDictType.value = dictType
+  dataQueryForm.value.dictType = dictType.dictType
+  loadDictData()
 }
 
 // 字典数据相关方法
@@ -603,7 +537,7 @@ const deleteType = (dictType) => {
       loadDictTypes()
       // 如果删除的是当前选中的字典类型，清空右侧数据
       if (currentDictType.value && currentDictType.value.id === dictType.id) {
-        selectedDictType.value = []
+        selectedDictType.value = null
         currentDictType.value = null
         dictData.value = []
       }
@@ -706,4 +640,5 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+
 </style>

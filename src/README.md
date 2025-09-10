@@ -181,21 +181,20 @@ const genderOptions = await getDictOptions('sys_user_sex')
 
 ```vue
 <template>
-  <DictSelect
-    v-model="formData.gender"
-    dict-type="sys_user_sex"
-    label="性别"
-    :include-all="true"
-  />
+<DictSelect
+  v-model="queryForm.status"
+  dict-type="response_status"
+  label="操作状态"
+  :include-all="false"
+    style="width: 140px;"
+/>
 </template>
 
 <script setup>
 import DictSelect from 'src/components/DictSelect.vue'
 import { ref } from 'vue'
 
-const formData = ref({
-  gender: ''
-})
+
 </script>
 ```
 

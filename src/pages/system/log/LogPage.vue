@@ -1,9 +1,9 @@
 <template>
-  <q-page class="q-pa-md">
+  <q-page>
     <!-- <div class="text-h4 q-mb-md">日志管理</div> -->
 
     <!-- 搜索和操作栏 -->
-    <q-card class="q-mb-sm">
+    <q-card class="q-mb-xs">
       <q-card-section>
         <div class="row q-gutter-sm items-center">
             <!-- 操作用户查询 -->
@@ -39,7 +39,8 @@
                 style="width: 160px;"
               />
                 
-            <!-- 状态查询 -->
+            <!-- 状态查询 方式1-->
+<!-- 
             <q-select
               v-model="queryForm.status"
               :options="statusOptions"
@@ -51,7 +52,15 @@
               map-options
               style="width: 140px;"
             />
-
+             -->
+            <!-- 状态查询 方式2-->
+            <DictSelect
+              v-model="queryForm.status"
+              dict-type="response_status"
+              label="操作状态"
+              :include-all="false"
+               style="width: 140px;"
+            />
             <q-input
               v-model="dateRangeDisplay"
               label="时间范围"
@@ -212,7 +221,7 @@ import { createDictData } from 'src/utils/dict'
 
 // 方法2：使用 createDictData（响应式）
 const dictDataMap = createDictData(['request_methods', 'response_status'])
-
+import DictSelect from 'src/components/DictSelect.vue'
 
 defineOptions({
   name: 'LogPage'
