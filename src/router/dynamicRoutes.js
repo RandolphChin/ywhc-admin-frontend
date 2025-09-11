@@ -449,7 +449,6 @@ export const registerComponents = (components) => {
  */
 export const loadComponentMappingFromAPI = async () => {
   try {
-    debugger
     console.log("🔄 从后端获取组件映射配置...");
 
     // 调用后端API获取组件映射
@@ -544,7 +543,7 @@ export const loadComponentMappingFromAPI = async () => {
 
     // 如果API失败，设置一些基本的映射作为回退
     console.log("🔄 使用回退组件映射...");
-    debugger
+    console.log("🔄 使用回退组件映射...");
     setFallbackComponentMapping();
 
     return { success: false, error: error.message };
@@ -561,8 +560,6 @@ const setFallbackComponentMapping = () => {
     "system/role": "system/role",
     "system/menu": "system/menu",
     "system/log": "system/log",
-    "system/dict": "system/dict", // 添加字典管理
-    "system/dept": "system/dept", // 添加部门管理
   };
 
   Object.entries(fallbackMappings).forEach(([key, componentPath]) => {
