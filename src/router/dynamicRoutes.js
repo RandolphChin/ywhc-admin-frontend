@@ -29,20 +29,33 @@ let componentMappingLoaded = false;
  * 支持多种路径格式的转换
  */
 const normalizeComponentPath = (componentPath) => {
-  if (!componentPath) return null;
+  if (!componentPath) return [];
 
-  // 移除开头的斜杠
-  let normalized = componentPath.replace(/^\/+/, "");
+  // 移除开头的斜杠和 pages/ 前缀
+  let normalized = componentPath.replace(/^\/+/, "").replace(/^pages?\//, "");
 
   // 移除结尾的 .vue 扩展名
   normalized = normalized.replace(/\.vue$/, "");
 
-  // 支持不同的路径格式
+  // 支持不同的路径格式变体
   const pathVariants = [
-    normalized, // 原始路径
+    normalized, // 原始路径: system/user
+    `pages/${normalized}`, // 添加pages前缀: pages/system/user
+    `pages/${normalized}Page`, // 页面组件格式: pages/system/userPage
     normalized + "/index", // 添加 /index
     normalized.replace(/\/index$/, ""), // 移除 /index
   ];
+
+  // 特殊处理: 如果路径不包含页面组件名，尝试构建标准页面路径
+  if (!normalized.includes('Page')) {
+    const pathParts = normalized.split("/");
+    const moduleName = pathParts[pathParts.length - 1];
+    if (moduleName) {
+      const capitalizedModule = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+      pathVariants.push(`${normalized}/${capitalizedModule}Page`);
+      pathVariants.push(`pages/${normalized}/${capitalizedModule}Page`);
+    }
+  }
 
   return pathVariants;
 };
@@ -436,6 +449,7 @@ export const registerComponents = (components) => {
  */
 export const loadComponentMappingFromAPI = async () => {
   try {
+    debugger
     console.log("🔄 从后端获取组件映射配置...");
 
     // 调用后端API获取组件映射
@@ -530,6 +544,7 @@ export const loadComponentMappingFromAPI = async () => {
 
     // 如果API失败，设置一些基本的映射作为回退
     console.log("🔄 使用回退组件映射...");
+    debugger
     setFallbackComponentMapping();
 
     return { success: false, error: error.message };
@@ -546,25 +561,37 @@ const setFallbackComponentMapping = () => {
     "system/role": "system/role",
     "system/menu": "system/menu",
     "system/log": "system/log",
+    "system/dict": "system/dict", // 添加字典管理
+    "system/dept": "system/dept", // 添加部门管理
   };
 
   Object.entries(fallbackMappings).forEach(([key, componentPath]) => {
     const componentImport = () => {
-      // 使用相同的路径构建逻辑
+      // 使用改进的路径构建逻辑
       const pathParts = componentPath.split("/");
       const moduleName = pathParts[pathParts.length - 1];
-      const capitalizedModule =
-        moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
-      const fullModulePath = `../pages/${componentPath}/${capitalizedModule}Page.vue`;
+      const capitalizedModule = moduleName.charAt(0).toUpperCase() + moduleName.slice(1);
+      
+      // 尝试多种路径格式
+      const possiblePaths = [
+        `../pages/${componentPath}/${capitalizedModule}Page.vue`,
+        `../pages/${componentPath}Page.vue`,
+        `../pages/${componentPath}.vue`,
+      ];
 
-      if (modules[fullModulePath]) {
-        return modules[fullModulePath]();
-      } else {
-        return (
-          modules["../pages/ErrorNotFound.vue"]?.() ||
-          Promise.reject(new Error("ErrorNotFound.vue not found"))
-        );
+      for (const path of possiblePaths) {
+        if (modules[path]) {
+          console.log(`✅ 回退映射找到模块: ${key} -> ${path}`);
+          return modules[path]();
+        }
       }
+
+      // 如果都找不到，返回错误页面
+      console.warn(`⚠️ 回退映射未找到组件: ${key}`);
+      return (
+        modules["../pages/ErrorNotFound.vue"]?.() ||
+        Promise.reject(new Error("ErrorNotFound.vue not found"))
+      );
     };
     componentMap.set(key, componentImport);
   });
