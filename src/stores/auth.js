@@ -202,6 +202,30 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
+    // Helper function to recursively extract permissions from menu tree
+    extractPermissionsFromMenus(menus) {
+      const permissions = new Set()
+      
+      const traverse = (menuItems) => {
+        if (!menuItems || !Array.isArray(menuItems)) return
+        
+        menuItems.forEach(menu => {
+          // Extract permission if it exists and is not empty
+          if (menu.permission && typeof menu.permission === 'string' && menu.permission.trim()) {
+            permissions.add(menu.permission.trim())
+          }
+          
+          // Recursively process children
+          if (menu.children && Array.isArray(menu.children) && menu.children.length > 0) {
+            traverse(menu.children)
+          }
+        })
+      }
+      
+      traverse(menus)
+      return Array.from(permissions)
+    },
+
     // 获取用户动态菜单（用于侧边栏显示）
     async getUserMenus() {
       try {
@@ -211,10 +235,28 @@ export const useAuthStore = defineStore("auth", {
 
         if (response.data && response.data.code === 200) {
           this.menus = response.data.data || [];
-          // 持久化菜单数据到本地存储
+          
+          // Extract permissions from menu tree
+          const menuPermissions = this.extractPermissionsFromMenus(this.menus);
+          console.log("🔑 从菜单树中提取的权限:", menuPermissions);
+          
+          // Merge with existing permissions from getUserInfo()
+          const existingPermissions = this.permissions || [];
+          const allPermissions = [...new Set([...existingPermissions, ...menuPermissions])];
+          
+          // Update permissions array
+          this.permissions = allPermissions;
+          console.log("✅ 合并后的所有权限:", this.permissions);
+          console.log("🔍 检查system:menu:delete权限:", this.permissions.includes('system:menu:delete'));
+          
+          // Persist to localStorage
           LocalStorage.set("userMenus", this.menus);
+          LocalStorage.set("permissions", this.permissions);
+          
           console.log("✅ 用户菜单数据已更新，菜单数量:", this.menus.length);
           console.log("📋 菜单详情:", this.menus);
+          console.log("🔑 权限总数:", this.permissions.length);
+          
           return this.menus;
         } else {
           console.warn("⚠️ 获取用户菜单失败，响应数据异常:", response.data);
