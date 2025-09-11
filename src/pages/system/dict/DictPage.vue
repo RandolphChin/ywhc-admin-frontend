@@ -133,7 +133,7 @@
                     <q-btn
                       flat
                       dense
-                      color="negative"
+                      color="primary"
                       icon="delete"
                       @click="deleteData(props.row)"
                       v-permission="'system:dict:delete'"
@@ -225,7 +225,7 @@ const dataQueryForm = ref({
 
 // 分页
 const typePagination = ref({
-  sortBy: 'createTime',
+  sortBy: 'id',
   descending: true,
   page: 1,
   rowsPerPage: 10,

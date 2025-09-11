@@ -11,6 +11,7 @@
             v-model="formData.dictName"
             outlined
             label="字典名称"
+            dense
             :rules="[rules.required('字典名称')]"
           >
             <template v-slot:before>
@@ -22,6 +23,7 @@
             v-model="formData.dictType"
             outlined
             label="字典类型"
+            dense
             :rules="[rules.required('字典类型'), rules.dictType]"
             hint="建议格式：sys_user_sex"
           >
@@ -36,6 +38,7 @@
             outlined
             type="textarea"
             rows="3"
+            dense
             style="margin-left: 38px;"
           />
         </q-form>
