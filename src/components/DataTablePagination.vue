@@ -39,7 +39,8 @@ const props = defineProps({
       return value && 
              typeof value.page === 'number' &&
              typeof value.rowsPerPage === 'number' &&
-             typeof value.rowsNumber === 'number'
+             (typeof value.rowsNumber === 'number' || 
+              (typeof value.rowsNumber === 'string' && !isNaN(Number(value.rowsNumber))))
     }
   },
   rowsPerPageOptions: {

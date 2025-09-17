@@ -80,6 +80,7 @@ import { defineComponent, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import { useQuasar } from 'quasar'
+import { initDynamicRoutes } from 'src/router/dynamicRoutes'
 
 export default defineComponent({
   name: 'LoginPage',
@@ -108,8 +109,34 @@ export default defineComponent({
           position: 'top-right'
         })
         
-        // 跳转到首页
-        router.push('/')
+        // 获取重定向URL，如果存在则跳转到原页面，否则跳转到首页
+        const redirectUrl = authStore.getAndClearRedirectUrl()
+        console.log('🔄 登录成功，重定向URL:', redirectUrl)
+        
+        if (redirectUrl) {
+          console.log('🎯 准备跳转到重定向URL:', redirectUrl)
+          try {
+            // 手动初始化动态路由
+            console.log('🛣️ 手动初始化动态路由...')
+            const routeSuccess = await initDynamicRoutes(router, false)
+            if (routeSuccess) {
+              authStore.routesLoaded = true
+              console.log('✅ 动态路由初始化完成，准备跳转')
+              // 现在可以安全地跳转到目标路由
+              router.push(redirectUrl).catch(err => {
+                console.warn('重定向失败，跳转到首页:', err)
+                router.push('/')
+              })
+            } else {
+              router.push('/')
+            }
+          } catch (error) {
+            console.error('动态路由初始化出错:', error)
+            router.push('/')
+          }
+        } else {
+          router.push('/')
+        }
       } catch (error) {
         $q.notify({
           type: 'negative',

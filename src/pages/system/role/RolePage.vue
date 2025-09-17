@@ -144,6 +144,7 @@
                 v-model:ticked="checkedMenus"
                 tick-strategy="leaf-filtered"
                 :expanded="expandedNodes"
+                @update:expanded="expandedNodes = $event"
                 class="permission-tree"
               />
             </div>
@@ -356,7 +357,7 @@ const showRoleDialog = (role = null) => {
 const submitRole = async (formData) => {
   try {
     if (isEdit.value) {
-      await roleApi.update(formData.id, formData)
+      await roleApi.update(formData)
       $q.notify({
         type: 'positive',
         message: '角色更新成功'
@@ -372,6 +373,7 @@ const submitRole = async (formData) => {
     roleDialog.value = false
     loadRoles()
   } catch (error) {
+    console.error('加载角色列表失败:', error)
     $q.notify({
       type: 'negative',
       message: error.response?.data?.message || '操作失败'
@@ -411,7 +413,7 @@ const onRoleSelection = ({ added, removed }) => {
   }
 }
 
-const onRowClick = (evt, row) => {
+const onRowClick = (_, row) => {
   selectRole(row)
 }
 

@@ -1,8 +1,9 @@
 import { boot } from 'quasar/wrappers'
 import axios from 'axios'
-import { Notify, Loading } from 'quasar'
+import { Notify, Loading, LocalStorage } from 'quasar'
 import { useAuthStore } from 'src/stores/auth'
 import { serializeParams } from 'src/utils'
+import { resetDynamicRoutes } from 'src/router/dynamicRoutes'
 
 // Be careful when using SSR for cross-request state pollution
 // due to creating a Singleton instance here;
@@ -14,6 +15,25 @@ const api = axios.create({
   baseURL: process.env.API_BASE_URL || 'http://localhost:8080/api',
   timeout: 30000
 })
+
+// 辅助函数：安全获取 auth store
+const getAuthStore = () => {
+  try {
+    return useAuthStore()
+  } catch (error) {
+    console.warn('⚠️ AuthStore 未初始化')
+    return null
+  }
+}
+
+// 辅助函数：获取 token
+const getToken = () => {
+  const authStore = getAuthStore()
+  const storeToken = authStore ? authStore.token : null
+  const localToken = LocalStorage.getItem('token')
+  
+  return storeToken || localToken
+}
 
 // 清理空参数的工具函数
 const cleanEmptyParams = (obj) => {
@@ -46,20 +66,19 @@ const cleanEmptyParams = (obj) => {
   return cleaned
 }
 
-export default boot(({ app, router }) => {
-  // 请求拦截器
-  api.interceptors.request.use(
-    (config) => {
-      // 显示加载动画
-      Loading.show({
-        delay: 200
-      })
+// 在模块级别设置请求拦截器
+api.interceptors.request.use(
+  (config) => {
+    // 显示加载动画
+    Loading.show({
+      delay: 200
+    })
 
-      // 添加认证头
-      const authStore = useAuthStore()
-      if (authStore.token) {
-        config.headers.Authorization = `Bearer ${authStore.token}`
-      }
+    // 添加认证头
+    const token = getToken()
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
 
       // 处理GET请求的参数序列化
       if (config.method?.toLowerCase() === 'get' && config.params) {
@@ -88,8 +107,11 @@ export default boot(({ app, router }) => {
     }
   )
 
-  // 响应拦截器
-  api.interceptors.response.use(
+// 存储 router 实例的变量
+let routerInstance = null
+
+// 在模块级别设置响应拦截器
+api.interceptors.response.use(
     (response) => {
       Loading.hide()
       
@@ -112,7 +134,7 @@ export default boot(({ app, router }) => {
       Loading.hide()
       
       const { response } = error
-      const authStore = useAuthStore()
+      const authStore = getAuthStore()
       
       if (response) {
         const { status, data } = response
@@ -120,20 +142,111 @@ export default boot(({ app, router }) => {
         switch (status) {
           case 401:
             // Token过期或无效
-            if (authStore.refreshToken) {
+            const refreshToken = authStore?.refreshToken || LocalStorage.getItem('refreshToken')
+            if (refreshToken) {
               try {
                 // 尝试刷新Token
-                await authStore.refreshAccessToken()
+                if (authStore) {
+                  await authStore.refreshAccessToken()
+                } else {
+                  // 如果 store 未初始化，无法刷新token
+                  throw new Error('AuthStore not initialized')
+                }
                 // 重新发送原请求
                 return api.request(error.config)
               } catch (refreshError) {
-                // 刷新失败，跳转到登录页
-                authStore.clearAuth()
-                router.push('/login')
+                // 显示认证失败提示
+                Notify.create({
+                  type: 'negative',
+                  message: 'Token已失效，请重新登录',
+                  position: 'top-right'
+                })
+
+                // 刷新失败，保存当前路由并跳转到登录页
+                const currentRoute = routerInstance?.currentRoute.value.fullPath
+                if (currentRoute && currentRoute !== '/login' && currentRoute !== '/') {
+                  console.log('💾 保存重定向URL:', currentRoute)
+                  if (authStore) {
+                    authStore.setRedirectUrl(currentRoute)
+                  } else {
+                    LocalStorage.set('redirectUrl', currentRoute)
+                  }
+                }
+
+                if (authStore) {
+                  authStore.clearAuth()
+                } else {
+                  // 手动清理 LocalStorage
+                  LocalStorage.remove('token')
+                  LocalStorage.remove('refreshToken')
+                  LocalStorage.remove('userInfo')
+                  LocalStorage.remove('permissions')
+                  LocalStorage.remove('roles')
+                  LocalStorage.remove('userMenus')
+                }
+
+                // 清除动态路由
+                if (routerInstance) {
+                  resetDynamicRoutes(routerInstance)
+                }
+
+                // 确保跳转到登录页
+                if (routerInstance) {
+                  try {
+                    await routerInstance.replace('/login')
+                  } catch (routerError) {
+                    window.location.replace('/login')
+                  }
+                } else {
+                  window.location.replace('/login')
+                }
               }
             } else {
-              authStore.clearAuth()
-              router.push('/login')
+              // 显示认证失败提示
+              Notify.create({
+                type: 'negative',
+                message: 'Token已失效，请重新登录',
+                position: 'top-right'
+              })
+
+              // 保存当前路由并跳转到登录页
+              const currentRoute = routerInstance?.currentRoute.value.fullPath
+              if (currentRoute && currentRoute !== '/login' && currentRoute !== '/') {
+                console.log('💾 保存重定向URL:', currentRoute)
+                if (authStore) {
+                  authStore.setRedirectUrl(currentRoute)
+                } else {
+                  LocalStorage.set('redirectUrl', currentRoute)
+                }
+              }
+
+              if (authStore) {
+                authStore.clearAuth()
+              } else {
+                // 手动清理 LocalStorage
+                LocalStorage.remove('token')
+                LocalStorage.remove('refreshToken')
+                LocalStorage.remove('userInfo')
+                LocalStorage.remove('permissions')
+                LocalStorage.remove('roles')
+                LocalStorage.remove('userMenus')
+              }
+
+              // 清除动态路由
+              if (routerInstance) {
+                resetDynamicRoutes(routerInstance)
+              }
+
+              // 确保跳转到登录页
+              if (routerInstance) {
+                try {
+                  await routerInstance.replace('/login')
+                } catch (routerError) {
+                  window.location.replace('/login')
+                }
+              } else {
+                window.location.replace('/login')
+              }
             }
             break
             
@@ -180,6 +293,10 @@ export default boot(({ app, router }) => {
       return Promise.reject(error)
     }
   )
+
+export default boot(({ app, router }) => {
+  // 保存 router 实例供拦截器使用
+  routerInstance = router
 
   // for use inside Vue files (Options API) through this.$axios and this.$api
   app.config.globalProperties.$axios = axios

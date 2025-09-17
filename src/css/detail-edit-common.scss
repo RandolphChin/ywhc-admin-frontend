@@ -95,28 +95,137 @@
       border-radius: 6px;
     }
   }
+
+  /* 强制统一所有表单字段的间距 */
+  .q-field {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+    
+    &.q-field--with-bottom {
+      margin-bottom: 0 !important;
+      padding-bottom: 0 !important;
+    }
+  }
+
+  /* 统一所有 edit-field-inline 的间距 */
+  .edit-field-inline {
+    margin-bottom: 8px; /* 统一的底部间距 */
+  }
 }
 
 /* 编辑模式行内字段显示 - 标签和输入框在同一行 */
 .edit-field-inline {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* 改为顶部对齐 */
   min-height: 40px;
-  padding: 8px 0;
-  
+  padding: 4px 0; /* 减小上下内边距 */
+  margin-bottom: 0; /* 强制移除底部外边距 */
+
   .field-label {
     font-weight: 500;
     color: #666;
     min-width: 80px;
-    margin-right: 12px;
+    margin-right: 0px;
     flex-shrink: 0;
+    line-height: 1.2;
+    /* 关键：让标签与输入框的控制区域对齐 */
+    padding-top: 10px; /* 这个值对应 q-field__control 的内边距 */
+    height: 40px;
+    box-sizing: border-box;
   }
-  
+
   .field-input {
     flex: 1;
-    
-    .q-field__control {
-      border-radius: 6px;
+
+    /* 重置 Quasar 字段的默认样式 */
+    :deep(.q-field) {
+      /* 确保字段本身不影响对齐 */
+      margin-bottom: 0;
+
+      .q-field__control {
+        border-radius: 6px;
+        min-height: 40px;
+        /* 移除固定高度，让内容自然撑开 */
+      }
+
+      .q-field__native {
+        min-height: 24px; /* 减小最小高度 */
+        line-height: 1.2;
+      }
+
+      /* 关键：将验证消息区域完全移出布局流 */
+      .q-field__bottom {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        min-height: 0;
+        padding-top: 4px;
+        z-index: 1;
+      }
+
+      /* 强制移除 Quasar 为验证规则预留的底部间距 */
+      &.q-field--with-bottom {
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+      }
+
+      /* 更强力的样式重置 - 针对所有可能的底部间距 */
+      .q-field__marginal {
+        height: 40px !important;
+      }
+
+      .q-field__append {
+        height: 40px !important;
+      }
+
+      /* 强制重置所有可能影响高度的属性 */
+      &.q-field--outlined {
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+      }
+
+      /* 重置字段容器的高度 */
+      .q-field__inner {
+        padding-bottom: 0 !important;
+      }
+
+      /* 确保控制容器内容居中 */
+      .q-field__control-container {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+      }
+    }
+
+    /* 特殊处理不同类型的表单控件 */
+    :deep(.q-select) {
+      .q-field__native {
+        display: flex;
+        align-items: center;
+        min-height: 24px;
+      }
+    }
+
+    :deep(.q-input) {
+      .q-field__native {
+        display: flex;
+        align-items: center;
+        min-height: 24px;
+      }
+
+      input {
+        line-height: 1.2;
+      }
+    }
+
+    /* 处理 textarea */
+    :deep(.q-input) {
+      &.q-field--auto-height {
+        .q-field__control-container {
+          align-items: flex-start;
+        }
+      }
     }
   }
 }
@@ -124,16 +233,16 @@
 /* 编辑模式块级字段显示 - 标签在上，输入框在下 */
 .edit-field-block {
   padding: 8px 0;
-  
+
   .field-label {
     font-weight: 500;
     color: #666;
     margin-bottom: 8px;
   }
-  
+
   .field-input {
     width: 100%;
-    
+
     .q-field__control {
       border-radius: 6px;
     }

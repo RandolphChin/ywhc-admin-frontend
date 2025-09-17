@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { LocalStorage } from "quasar";
-import { authApi, menuApi } from 'src/api'
+import { authApi, menuApi } from "src/api";
+import { clearAllComponents } from "src/router/dynamicRoutes";
 
 export const useAuthStore = defineStore("auth", {
   state: () => {
@@ -9,23 +10,32 @@ export const useAuthStore = defineStore("auth", {
     const storedPermissions = LocalStorage.getItem("permissions");
     const storedRoles = LocalStorage.getItem("roles");
     const storedMenus = LocalStorage.getItem("userMenus");
-    
+
     console.log("📦 从localStorage读取的数据:");
     console.log("  - userInfo:", storedUserInfo, typeof storedUserInfo);
-    console.log("  - permissions:", storedPermissions, typeof storedPermissions);
+    console.log(
+      "  - permissions:",
+      storedPermissions,
+      typeof storedPermissions
+    );
     console.log("  - roles:", storedRoles, typeof storedRoles);
     console.log("  - menus:", storedMenus, typeof storedMenus);
-    
+
     // 处理userInfo，如果是字符串"undefined"或null，则设为null
-    const validUserInfo = (storedUserInfo && storedUserInfo !== "undefined" && storedUserInfo !== "null") ? storedUserInfo : null;
+    const validUserInfo =
+      storedUserInfo &&
+      storedUserInfo !== "undefined" &&
+      storedUserInfo !== "null"
+        ? storedUserInfo
+        : null;
     console.log("✅ 处理后的userInfo:", validUserInfo);
-    
+
     // 如果localStorage中存储的是无效值，清理它
     if (storedUserInfo === "undefined" || storedUserInfo === "null") {
       console.log("🧹 清理localStorage中的无效userInfo");
       LocalStorage.remove("userInfo");
     }
-    
+
     return {
       token: LocalStorage.getItem("token") || null,
       refreshToken: LocalStorage.getItem("refreshToken") || null,
@@ -35,6 +45,7 @@ export const useAuthStore = defineStore("auth", {
       menus: storedMenus || [], // 从本地存储恢复菜单数据
       routesLoaded: false, // 标记动态路由是否已加载
       isInitializing: false, // 标记是否正在初始化路由
+      redirectUrl: LocalStorage.getItem("redirectUrl") || null, // 登录后重定向的URL
     };
   },
 
@@ -56,7 +67,7 @@ export const useAuthStore = defineStore("auth", {
         const response = await authApi.login(loginData);
         console.log("📥 登录API响应:", response);
         console.log("📥 登录响应数据结构:", response.data);
-        
+
         const { accessToken, refreshToken, userInfo } = response.data.data;
         console.log("📝 登录解构后的数据:");
         console.log("  - accessToken:", accessToken);
@@ -65,7 +76,7 @@ export const useAuthStore = defineStore("auth", {
 
         this.token = accessToken;
         this.refreshToken = refreshToken;
-        
+
         // 保存token到本地存储
         LocalStorage.set("token", accessToken);
         LocalStorage.set("refreshToken", refreshToken);
@@ -83,7 +94,7 @@ export const useAuthStore = defineStore("auth", {
         // 获取用户菜单
         console.log("🔄 获取用户菜单...");
         await this.getUserMenus();
-        
+
         console.log("✅ 登录完成，最终userInfo:", this.userInfo);
 
         return response.data;
@@ -114,6 +125,7 @@ export const useAuthStore = defineStore("auth", {
       this.menus = [];
       this.routesLoaded = false;
       this.isInitializing = false;
+      // 注意：不清除 redirectUrl，保留用于登录后重定向
 
       LocalStorage.remove("token");
       LocalStorage.remove("refreshToken");
@@ -121,6 +133,35 @@ export const useAuthStore = defineStore("auth", {
       LocalStorage.remove("permissions");
       LocalStorage.remove("roles");
       LocalStorage.remove("userMenus");
+      // 注意：不清除 redirectUrl localStorage
+
+      // 清除组件映射缓存
+      try {
+        clearAllComponents();
+        console.log("🧹 已清除组件映射缓存");
+      } catch (error) {
+        console.warn("⚠️ 清除组件映射缓存失败:", error);
+      }
+    },
+
+    // 设置重定向URL
+    setRedirectUrl(url) {
+      this.redirectUrl = url;
+      LocalStorage.set("redirectUrl", url);
+    },
+
+    // 获取并清除重定向URL
+    getAndClearRedirectUrl() {
+      const url = this.redirectUrl;
+      const localUrl = LocalStorage.getItem("redirectUrl");
+      console.log("🔍 获取重定向URL:", { storeUrl: url, localUrl: localUrl });
+
+      this.redirectUrl = null;
+      LocalStorage.remove("redirectUrl");
+
+      const finalUrl = url || localUrl;
+      console.log("🎯 最终重定向URL:", finalUrl);
+      return finalUrl;
     },
 
     // 获取用户信息
@@ -130,7 +171,7 @@ export const useAuthStore = defineStore("auth", {
         const response = await authApi.getUserInfo();
         console.log("📥 getUserInfo API响应:", response);
         console.log("📥 响应数据结构:", response.data);
-        
+
         const { userInfo, permissions, roles } = response.data.data;
         console.log("📝 解构后的数据:");
         console.log("  - userInfo:", userInfo);
@@ -140,27 +181,27 @@ export const useAuthStore = defineStore("auth", {
         this.userInfo = userInfo;
         this.permissions = permissions || [];
         this.roles = roles || [];
-        
+
         // 保存到本地存储
         console.log("💾 保存到localStorage:");
         console.log("  - userInfo:", userInfo);
-        
+
         // 只有当userInfo不是undefined时才保存
         if (userInfo !== undefined && userInfo !== null) {
           LocalStorage.set("userInfo", userInfo);
         } else {
           console.warn("⚠️ userInfo是undefined或null，不保存到localStorage");
         }
-        
+
         LocalStorage.set("permissions", permissions || []);
         LocalStorage.set("roles", roles || []);
-        
+
         // 验证保存结果
         console.log("✅ localStorage验证:");
         console.log("  - userInfo:", LocalStorage.getItem("userInfo"));
         console.log("  - permissions:", LocalStorage.getItem("permissions"));
         console.log("  - roles:", LocalStorage.getItem("roles"));
-        
+
         // 不在这里设置menus，专门用getUserMenus获取
 
         return response.data;
@@ -204,26 +245,34 @@ export const useAuthStore = defineStore("auth", {
 
     // Helper function to recursively extract permissions from menu tree
     extractPermissionsFromMenus(menus) {
-      const permissions = new Set()
-      
+      const permissions = new Set();
+
       const traverse = (menuItems) => {
-        if (!menuItems || !Array.isArray(menuItems)) return
-        
-        menuItems.forEach(menu => {
+        if (!menuItems || !Array.isArray(menuItems)) return;
+
+        menuItems.forEach((menu) => {
           // Extract permission if it exists and is not empty
-          if (menu.permission && typeof menu.permission === 'string' && menu.permission.trim()) {
-            permissions.add(menu.permission.trim())
+          if (
+            menu.permission &&
+            typeof menu.permission === "string" &&
+            menu.permission.trim()
+          ) {
+            permissions.add(menu.permission.trim());
           }
-          
+
           // Recursively process children
-          if (menu.children && Array.isArray(menu.children) && menu.children.length > 0) {
-            traverse(menu.children)
+          if (
+            menu.children &&
+            Array.isArray(menu.children) &&
+            menu.children.length > 0
+          ) {
+            traverse(menu.children);
           }
-        })
-      }
-      
-      traverse(menus)
-      return Array.from(permissions)
+        });
+      };
+
+      traverse(menus);
+      return Array.from(permissions);
     },
 
     // 获取用户动态菜单（用于侧边栏显示）
@@ -235,28 +284,33 @@ export const useAuthStore = defineStore("auth", {
 
         if (response.data && response.data.code === 200) {
           this.menus = response.data.data || [];
-          
+
           // Extract permissions from menu tree
           const menuPermissions = this.extractPermissionsFromMenus(this.menus);
           console.log("🔑 从菜单树中提取的权限:", menuPermissions);
-          
+
           // Merge with existing permissions from getUserInfo()
           const existingPermissions = this.permissions || [];
-          const allPermissions = [...new Set([...existingPermissions, ...menuPermissions])];
-          
+          const allPermissions = [
+            ...new Set([...existingPermissions, ...menuPermissions]),
+          ];
+
           // Update permissions array
           this.permissions = allPermissions;
           console.log("✅ 合并后的所有权限:", this.permissions);
-          console.log("🔍 检查system:menu:delete权限:", this.permissions.includes('system:menu:delete'));
-          
+          console.log(
+            "🔍 检查system:menu:delete权限:",
+            this.permissions.includes("system:menu:delete")
+          );
+
           // Persist to localStorage
           LocalStorage.set("userMenus", this.menus);
           LocalStorage.set("permissions", this.permissions);
-          
+
           console.log("✅ 用户菜单数据已更新，菜单数量:", this.menus.length);
           console.log("📋 菜单详情:", this.menus);
           console.log("🔑 权限总数:", this.permissions.length);
-          
+
           return this.menus;
         } else {
           console.warn("⚠️ 获取用户菜单失败，响应数据异常:", response.data);
