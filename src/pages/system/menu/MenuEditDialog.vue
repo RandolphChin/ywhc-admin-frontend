@@ -1,128 +1,231 @@
 <template>
-  <q-dialog v-model="visible" persistent>
-    <q-card style="min-width: 500px">
-      <q-card-section>
-        <div class="text-h6">{{ isEdit ? '编辑菜单' : '添加菜单' }}</div>
+  <q-dialog v-model="visible" persistent class="edit-dialog">
+    <q-card class="dialog-card" style="min-width: 800px; max-width: 1200px; max-height: 90vh">
+      <!-- Header -->
+      <q-card-section class="dialog-header">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center">
+            <div class="text-h6">{{ isEdit ? '编辑菜单' : '添加菜单' }}</div>
+          </div>
+          <div class="flex items-center q-gutter-sm">
+            <q-btn 
+              flat 
+              round 
+              icon="close" 
+              color="grey-7"
+              @click="handleClose"
+            >
+              <q-tooltip>关闭</q-tooltip>
+            </q-btn>
+          </div>
+        </div>
       </q-card-section>
 
-      <q-card-section class="q-pt-none">
+      <q-separator />
+
+      <q-card-section class="dialog-content">
+        <div class="edit-form">
         <q-form @submit="handleSubmit" class="q-gutter-md">
-          <q-select
-            v-model="formData.parentId"
-            :options="parentMenuOptions"
-            label="父级菜单"
-            outlined
-            dense
-            emit-value
-            map-options
-            clearable
-          />
-
-          <q-select
-            v-model="formData.type"
-            :options="typeOptions"
-            label="菜单类型"
-            outlined
-            dense
-            emit-value
-            map-options
-            @update:model-value="onTypeChange"
-          />
-
-          <q-input
-            v-model="formData.title"
-            label="菜单标题"
-            :rules="[val => !!val || '请输入菜单标题']"
-            outlined
-            dense
-          />
-
-          <q-input
-            v-model="formData.name"
-            label="菜单名称"
-            outlined
-            dense
-          />
-
-          <q-input
-            v-if="formData.type !== 3"
-            v-model="formData.path"
-            label="路由路径"
-            outlined
-            dense
-          />
-
-          <q-input
-            v-if="formData.type === 2"
-            v-model="formData.component"
-            label="组件路径"
-            outlined
-            dense
-          />
-
-          <q-input
-            v-if="formData.type === 3"
-            v-model="formData.permission"
-            label="权限标识"
-            outlined
-            dense
-          />
-
-          <q-input
-            v-model="formData.icon"
-            label="菜单图标"
-            outlined
-            dense
-          />
-
-          <q-input
-            v-model.number="formData.sort"
-            label="排序"
-            type="number"
-            outlined
-            dense
-          />
-
-          <div class="row q-gutter-md">
-            <q-select
-              v-model="formData.status"
-              :options="statusOptions"
-              label="状态"
-              outlined
-              dense
-              emit-value
-              map-options
-              class="col"
-            />
-
-            <q-select
-              v-if="formData.type !== 3"
-              v-model="formData.visible"
-              :options="visibleOptions"
-              label="显示状态"
-              outlined
-              dense
-              emit-value
-              map-options
-              class="col"
-            />
-          </div>
-
-          <q-input
-            v-model="formData.remark"
-            label="备注"
-            type="textarea"
-            outlined
-            dense
-            rows="3"
-          />
-
-          <div class="row justify-end q-gutter-sm">
-            <q-btn flat label="取消" @click="handleClose" />
-            <q-btn type="submit" color="primary" label="确定" />
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">父级菜单：</span>
+                <q-select
+                  v-model="formData.parentId"
+                  :options="parentMenuOptions"
+                  placeholder="父级菜单"
+                  outlined
+                  dense
+                  emit-value
+                  map-options
+                  clearable
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">菜单类型：</span>
+                <q-select
+                  v-model="formData.type"
+                  :options="typeOptions"
+                  placeholder="菜单类型"
+                  outlined
+                  dense
+                  emit-value
+                  map-options
+                  @update:model-value="onTypeChange"
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">菜单标题：</span>
+                <q-input
+                  v-model="formData.title"
+                  placeholder="菜单标题"
+                  :rules="[val => !!val || '请输入菜单标题']"
+                  outlined
+                  dense
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">菜单名称：</span>
+                <q-input
+                  v-model="formData.name"
+                  placeholder="菜单名称"
+                  :rules="[val => !!val || '请输入菜单名称']"
+                  outlined
+                  dense
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div v-if="formData.type !== 3" class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">路由路径：</span>
+                <q-input
+                  v-model="formData.path"
+                  placeholder="路由路径"
+                  :rules="[val => !!val || '请输入路由路径']"
+                  outlined
+                  dense
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div v-if="formData.type === 2" class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">组件路径：</span>
+                <q-input
+                  v-model="formData.component"
+                  placeholder="组件路径"
+                  :rules="[val => !!val || '请输入组件路径']"
+                  outlined
+                  dense
+                  class="field-input"
+                />
+              </div>
+            </div>  
+            <div v-if="formData.type === 3" class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">权限标识：</span>
+                <q-input
+                  v-model="formData.permission"
+                  placeholder="权限标识"
+                  :rules="[val => !!val || '请输入权限标识']"
+                  outlined
+                  dense
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">菜单图标：</span>
+                <q-input
+                  v-model="formData.icon"
+                  placeholder="菜单图标"
+                  :rules="[val => !!val || '请输入菜单图标']"
+                  outlined
+                  dense
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">排序：</span>
+                <q-input
+                  v-model.number="formData.sort"
+                  placeholder="排序"
+                  type="number"
+                  outlined
+                  dense
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">状态：</span>
+                <q-select
+                  v-model="formData.status"
+                  :options="statusOptions"
+                  placeholder="状态"
+                  outlined
+                  dense
+                  emit-value
+                  map-options
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="edit-field-inline">
+                <span class="field-label">显示状态：</span>
+                <q-select
+                  v-model="formData.visible"
+                  :options="visibleOptions"
+                  placeholder="显示状态"
+                  outlined
+                  dense
+                  emit-value
+                  map-options
+                  class="field-input"
+                />
+              </div>
+            </div>
+            <div class="col-12">
+              <div class="edit-field-block">
+                <div class="field-label q-mb-xs">备注：</div>
+                <q-input
+                  v-model="formData.remark"
+                  placeholder="备注"
+                  type="textarea"
+                  outlined
+                  dense
+                  rows="3"
+                  class="field-input"
+                />
+              </div>
+            </div>
+    
           </div>
         </q-form>
+      </div>
       </q-card-section>
+
+      <q-separator />
+          <!-- Footer Actions -->
+      <q-card-actions class="dialog-footer q-pa-md bg-grey-1">
+        <div class="flex items-center justify-end full-width">
+          <div class="q-gutter-sm">
+            <q-btn 
+              flat 
+              label="取消" 
+              color="grey-7"
+              @click="handleClose" 
+              :disable="submitting"
+              class="q-px-lg"
+            />
+            <q-btn 
+              v-if="!isReadonly"
+              color="primary" 
+              label="保存" 
+              @click="handleSubmit"
+              :loading="submitting"
+              :disable="submitting"
+              class="q-px-lg"
+            />
+          </div>
+        </div>
+      </q-card-actions>
+
     </q-card>
   </q-dialog>
 </template>
@@ -146,6 +249,10 @@ const props = defineProps({
   parentMenuOptions: {
     type: Array,
     default: () => []
+  },
+  isReadonly: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -155,6 +262,8 @@ const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
+
+const submitting = ref(false)
 
 const formData = ref({
   id: null,
