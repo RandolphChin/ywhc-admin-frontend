@@ -1,31 +1,26 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="text-h4 q-mb-md">角色管理</div>
-
+  <q-page>
     <!-- 搜索和操作栏 -->
-    <q-card class="q-mb-md">
+    <q-card>
       <q-card-section>
-        <div class="row q-gutter-md items-end">
-          <div class="col-12 col-sm-6 col-md-3">
-            <q-input
-              v-model="queryForm.name"
+        <div class="row q-gutter-sm items-center">
+          <q-input
+              v-model="queryForm.roleName"
               label="角色名称"
               outlined
               dense
               clearable
+              style="width: 160px;"
             />
-          </div>
-          <div class="col-12 col-sm-6 col-md-3">
-            <q-input
-              v-model="queryForm.code"
+          <q-input
+              v-model="queryForm.roleKey"
               label="角色编码"
               outlined
               dense
               clearable
+              style="width: 160px;"
             />
-          </div>
-          <div class="col-12 col-sm-6 col-md-2">
-            <q-select
+          <q-select
               v-model="queryForm.status"
               :options="statusOptions"
               label="状态"
@@ -34,15 +29,11 @@
               clearable
               emit-value
               map-options
+              style="width: 160px;"
             />
-          </div>
-          <div class="col-12 col-sm-6 col-md-2">
-            <q-btn color="primary" icon="search" label="搜索" @click="loadRoles" />
-          </div>
-          <div class="col-12 col-sm-6 col-md-2">
-            <q-btn color="secondary" icon="refresh" label="重置" @click="resetQuery" />
-          </div>
-        </div>
+          <q-btn color="primary" icon="search" label="搜索" @click="loadRoles" />
+          <q-btn color="secondary" icon="refresh" label="重置" @click="resetQuery" />
+       </div>
       </q-card-section>
     </q-card>
 
@@ -101,7 +92,7 @@
                   <q-btn
                     flat
                     dense
-                    color="negative"
+                    color="primary"
                     icon="delete"
                     @click="deleteRole(props.row)"
                     v-permission="'system:role:delete'"
@@ -109,6 +100,13 @@
                     <q-tooltip>删除</q-tooltip>
                   </q-btn>
                 </q-td>
+              </template>
+              <template v-slot:bottom>
+                <DataTablePagination
+                  :pagination="pagination"
+                  @rows-per-page-change="onRowsPerPageChange"
+                  @page-change="onPageChange"
+                />
               </template>
             </q-table>
           </q-card-section>
@@ -136,7 +134,7 @@
               />
             </div>
 
-            <div v-if="selectedRole" class="permission-tree-container">
+            <div v-if="selectedRole && roles.length > 0" class="permission-tree-container">
               <q-tree
                 :nodes="menuTree"
                 node-key="id"
@@ -173,6 +171,8 @@ import { ref, onMounted } from 'vue'
 import { roleApi, menuApi } from 'src/api'
 import { useQuasar } from 'quasar'
 import RoleEditDialog from './RoleEditDialog.vue'
+import DataTablePagination from 'src/components/DataTablePagination.vue'
+import { formatTime } from 'src/utils/index'
 
 defineOptions({
   name: 'RolePage'
@@ -190,15 +190,15 @@ const selectedRole = ref(null)
 const expandedNodes = ref([])
 
 const queryForm = ref({
-  name: '',
-  code: '',
+  roleName: '',
+  roleKey: '',
   status: null
 })
 
 const roleForm = ref({
   id: null,
-  name: '',
-  code: '',
+  roleName: '',
+  roleKey: '',
   status: 1,
   remark: ''
 })
@@ -213,23 +213,16 @@ const pagination = ref({
 
 const columns = [
   {
-    name: 'id',
-    label: 'ID',
-    field: 'id',
-    align: 'left',
-    sortable: true
-  },
-  {
-    name: 'name',
+    name: 'roleName',
     label: '角色名称',
-    field: 'name',
+    field: 'roleName',
     align: 'left',
     sortable: true
   },
   {
-    name: 'code',
+    name: 'roleKey',
     label: '角色编码',
-    field: 'code',
+    field: 'roleKey',
     align: 'left',
     sortable: true
   },
@@ -250,7 +243,7 @@ const columns = [
     label: '创建时间',
     field: 'createTime',
     align: 'center',
-    format: (val) => new Date(val).toLocaleString()
+    format: (val) => formatTime(val, 'YYYY-MM-DD HH:mm:ss')
   },
   {
     name: 'actions',
@@ -336,6 +329,17 @@ const resetQuery = () => {
     status: null
   }
   loadRoles()
+}
+
+const onRowsPerPageChange = (newRowsPerPage) => {
+  pagination.value.rowsPerPage = newRowsPerPage
+  pagination.value.page = 1 // Reset to first page when changing rows per page
+  loadRoles()
+}
+
+const onPageChange = (newPage) => {
+  pagination.value.page = newPage
+  onRequest({ pagination: pagination.value })
 }
 
 const showRoleDialog = (role = null) => {
@@ -458,24 +462,5 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.role-table {
-  .q-table__top {
-    padding: 0;
-  }
-}
 
-.permission-tree-container {
-  max-height: calc(100vh - 350px);
-  overflow-y: auto;
-}
-
-.permission-tree {
-  .q-tree__node-header {
-    padding: 4px 8px;
-  }
-}
-
-.full-height {
-  height: 100%;
-}
 </style>

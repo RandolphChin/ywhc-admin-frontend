@@ -332,6 +332,8 @@ const handleAddChild = async (row) => {
   currentDept.value = {
     parentId: row.id,
     parentName: row.deptName,
+    deptType: row.deptType,
+    status: row.status,
   };
   editDialog.value = true;
 };
