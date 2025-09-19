@@ -1,27 +1,29 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="text-h4 q-mb-md">菜单管理</div>
-
-    <!-- 操作栏 -->
-    <q-card class="q-mb-md">
+  <q-page>
+    <!-- 检索条件 -->
+    <q-card>
       <q-card-section>
-        <div class="row justify-between items-center">
-          <div class="text-h6">菜单列表</div>
-          <div class="q-gutter-sm">
-            <q-btn
-              color="primary"
-              icon="add"
-              label="添加菜单"
-              @click="showMenuDialog()"
-              v-permission="'system:menu:add'"
+        <div class="row items-center q-gutter-sm">
+            <q-input
+              v-model="queryMenuName"
+              dense
+              outlined
+              clearable
+              label="菜单名称"
+              placeholder="输入菜单名称"
+              @keyup.enter="onSearch"
             />
-            <q-btn
-              color="secondary"
-              icon="refresh"
-              label="刷新"
-              @click="loadMenus"
-            />
-          </div>
+            <q-btn color="primary" icon="search" label="检索" @click="onSearch" />
+            <q-btn color="warning" icon="restart_alt" label="重置" @click="onReset" />
+        </div>
+        <div class="row q-mt-xs q-gutter-sm">
+          <q-btn
+            color="primary"
+            icon="add"
+            label="添加菜单"
+            @click="showMenuDialog()"
+            v-permission="'system:menu:add'"
+          />
         </div>
       </q-card-section>
     </q-card>
@@ -34,11 +36,12 @@
           :columns="columns"
           row-key="id"
           :loading="loading"
+          hide-pagination
           :pagination="{ rowsPerPage: 0 }"
           flat
           bordered
         >
-          <template v-slot:body-cell-title="props">
+          <template v-slot:body-cell-menuName="props">
             <q-td :props="props">
               <div class="row items-center no-wrap" :style="{ paddingLeft: (props.row.level * 20) + 'px' }">
                 <q-btn
@@ -56,16 +59,16 @@
                   :name="props.row.icon"
                   class="q-mr-sm"
                 />
-                <span>{{ props.row.title }}</span>
+                <span>{{ props.row.menuName }}</span>
               </div>
             </q-td>
           </template>
 
-          <template v-slot:body-cell-type="props">
+          <template v-slot:body-cell-menuType="props">
             <q-td :props="props">
               <q-badge
-                :color="getTypeColor(props.row.type)"
-                :label="getTypeLabel(props.row.type)"
+                :color="getTypeColor(props.row.menuType)"
+                :label="getTypeLabel(props.row.menuType)"
               />
             </q-td>
           </template>
@@ -79,11 +82,11 @@
             </q-td>
           </template>
 
-          <template v-slot:body-cell-visible="props">
+          <template v-slot:body-cell-isVisible="props">
             <q-td :props="props">
               <q-badge
-                :color="props.row.visible === 1 ? 'positive' : 'negative'"
-                :label="props.row.visible === 1 ? '显示' : '隐藏'"
+                :color="props.row.isVisible === 1 ? 'positive' : 'negative'"
+                :label="props.row.isVisible === 1 ? '显示' : '隐藏'"
               />
             </q-td>
           </template>
@@ -113,7 +116,7 @@
               <q-btn
                 flat
                 dense
-                color="negative"
+                color="primary"
                 icon="delete"
                 @click="deleteMenu(props.row)"
                 v-permission="'system:menu:delete'"
@@ -156,34 +159,35 @@ const menus = ref([])
 const flatMenus = ref([])
 const expandedRows = ref(new Set())
 const parentMenuOptions = ref([])
+const queryMenuName = ref('')
 
 const menuForm = ref({
   id: null,
   parentId: null,
-  type: 1,
-  title: '',
+  menuType: 0,
+  menuName: '',
   name: '',
   path: '',
   component: '',
   permission: '',
   icon: '',
-  sort: 0,
+  sortOrder: 0,
   status: 1,
-  visible: 1,
+  isVisible: 1,
   remark: ''
 })
 
 const columns = [
   {
-    name: 'title',
+    name: 'menuName',
     label: '菜单名称',
-    field: 'title',
+    field: 'menuName',
     align: 'left'
   },
   {
-    name: 'type',
+    name: 'menuType',
     label: '类型',
-    field: 'type',
+    field: 'menuType',
     align: 'center'
   },
   {
@@ -205,9 +209,9 @@ const columns = [
     align: 'left'
   },
   {
-    name: 'sort',
+    name: 'sortOrder',
     label: '排序',
-    field: 'sort',
+    field: 'sortOrder',
     align: 'center'
   },
   {
@@ -217,9 +221,9 @@ const columns = [
     align: 'center'
   },
   {
-    name: 'visible',
+    name: 'isVisible',
     label: '显示',
-    field: 'visible',
+    field: 'isVisible',
     align: 'center'
   },
   {
@@ -230,14 +234,14 @@ const columns = [
   }
 ]
 
-const getTypeColor = (type) => {
-  const colors = { 1: 'primary', 2: 'secondary', 3: 'accent' }
-  return colors[type] || 'grey'
+const getTypeColor = (menuType) => {
+  const colors = { 0: 'primary', 1: 'secondary', 2: 'accent' }
+  return colors[menuType] || 'grey'
 }
 
-const getTypeLabel = (type) => {
-  const labels = { 1: '目录', 2: '菜单', 3: '按钮' }
-  return labels[type] || '未知'
+const getTypeLabel = (menuType) => {
+  const labels = { 0: '目录', 1: '菜单', 2: '按钮' }
+  return labels[menuType] || '未知'
 }
 
 const loadMenus = async () => {
@@ -249,7 +253,16 @@ const loadMenus = async () => {
     
     // 转换数据格式并构建平铺结构
     const transformedMenus = transformMenuData(response.data.data)
-    flatMenus.value = buildFlatMenus(transformedMenus)
+    if (queryMenuName.value && queryMenuName.value.trim() !== '') {
+      // 有检索关键字时，过滤并展开相关节点
+      const filtered = filterMenuTreeByMenuName(transformedMenus, queryMenuName.value.trim())
+      const ids = collectIds(filtered)
+      expandedRows.value = new Set(ids)
+      flatMenus.value = buildFlatMenus(filtered)
+    } else {
+      // 无检索关键字，显示完整树
+      flatMenus.value = buildFlatMenus(transformedMenus)
+    }
     
     // 构建父级菜单选项
     buildParentMenuOptions(transformedMenus)
@@ -264,15 +277,15 @@ const transformMenuData = (menuList) => {
   return menuList.map(menu => ({
     id: menu.id,
     parentId: menu.parentId,
-    title: menu.menuName,
-    type: menu.menuType,
+    menuName: menu.menuName,
+    menuType: menu.menuType,
     path: menu.path,
     component: menu.component,
     permission: menu.permission,
     icon: menu.icon,
-    sort: menu.sortOrder,
+    sortOrder: menu.sortOrder,
     status: menu.status,
-    visible: menu.isVisible,
+    isVisible: menu.isVisible,
     remark: menu.remark,
     children: menu.children ? transformMenuData(menu.children) : [],
     hasChildren: menu.hasChildren || (menu.children && menu.children.length > 0)
@@ -302,6 +315,65 @@ const toggleExpand = (menuId) => {
   }
   
   // 重新构建平铺菜单列表
+  let baseTree = transformMenuData(menus.value)
+  if (queryMenuName.value && queryMenuName.value.trim() !== '') {
+    baseTree = filterMenuTreeByMenuName(baseTree, queryMenuName.value.trim())
+  }
+  flatMenus.value = buildFlatMenus(baseTree)
+}
+
+// 根据菜单名称过滤菜单树，保留匹配节点及其所有父级
+const filterMenuTreeByMenuName = (menuList, keyword) => {
+  const kw = keyword.toLowerCase()
+  const result = []
+  menuList.forEach(menu => {
+    const childrenFiltered = menu.children ? filterMenuTreeByMenuName(menu.children, keyword) : []
+    const selfMatch = (menu.menuName || '').toLowerCase().includes(kw)
+    if (selfMatch || (childrenFiltered && childrenFiltered.length > 0)) {
+      result.push({
+        ...menu,
+        children: childrenFiltered,
+        hasChildren: childrenFiltered.length > 0
+      })
+    }
+  })
+  return result
+}
+
+// 收集树中所有节点 id
+const collectIds = (menuList) => {
+  const ids = []
+  const walk = (list) => {
+    list.forEach(item => {
+      ids.push(item.id)
+      if (item.children && item.children.length > 0) {
+        walk(item.children)
+      }
+    })
+  }
+  walk(menuList)
+  return ids
+}
+
+// 执行检索
+const onSearch = () => {
+  const transformedMenus = transformMenuData(menus.value)
+  if (queryMenuName.value && queryMenuName.value.trim() !== '') {
+    const filtered = filterMenuTreeByMenuName(transformedMenus, queryMenuName.value.trim())
+    const ids = collectIds(filtered)
+    expandedRows.value = new Set(ids)
+    flatMenus.value = buildFlatMenus(filtered)
+  } else {
+    // 关键字为空则恢复完整列表
+    expandedRows.value = new Set()
+    flatMenus.value = buildFlatMenus(transformedMenus)
+  }
+}
+
+// 重置检索
+const onReset = () => {
+  queryMenuName.value = ''
+  expandedRows.value = new Set()
   const transformedMenus = transformMenuData(menus.value)
   flatMenus.value = buildFlatMenus(transformedMenus)
 }
@@ -310,9 +382,9 @@ const buildParentMenuOptions = (menuList, level = 0) => {
   const options = []
   
   menuList.forEach(menu => {
-    if (menu.type !== 3) { // 按钮不能作为父级菜单
+    if (menu.menuType !== 2) { // 按钮不能作为父级菜单
       options.push({
-        label: '　'.repeat(level) + menu.title,
+        label: '　'.repeat(level) + menu.menuName,
         value: menu.id
       })
       
@@ -325,7 +397,7 @@ const buildParentMenuOptions = (menuList, level = 0) => {
   if (level === 0) {
     // 只在顶层调用时设置 parentMenuOptions
     parentMenuOptions.value = [
-      { label: '顶级菜单', value: null },
+      { label: '顶级菜单', value: '0' },
       ...options
     ]
   }
@@ -341,16 +413,16 @@ const showMenuDialog = (menu = null, parent = null) => {
     menuForm.value = {
       id: null,
       parentId: parent?.id || null,
-      type: 1,
-      title: '',
+      menuType: 0,
+      menuName: '',
       name: '',
       path: '',
       component: '',
       permission: '',
       icon: '',
-      sort: 0,
+      sortOrder: 0,
       status: 1,
-      visible: 1,
+      isVisible: 1,
       remark: ''
     }
   }
@@ -360,7 +432,7 @@ const showMenuDialog = (menu = null, parent = null) => {
 const submitMenu = async (formData) => {
   try {
     if (isEdit.value) {
-      await menuApi.update(formData.id, formData)
+      await menuApi.update(formData)
       $q.notify({
         type: 'positive',
         message: '菜单更新成功'
@@ -386,7 +458,7 @@ const submitMenu = async (formData) => {
 const deleteMenu = (menu) => {
   $q.dialog({
     title: '确认删除',
-    message: `确定要删除菜单 "${menu.title}" 吗？`,
+    message: `确定要删除菜单 "${menu.menuName}" 吗？`,
     cancel: true,
     persistent: true
   }).onOk(async () => {

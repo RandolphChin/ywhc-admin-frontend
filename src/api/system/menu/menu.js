@@ -21,7 +21,7 @@ export const menuApi = {
   create: (data) => api.post("/system/menu", data),
 
   // 更新菜单
-  update: (id, data) => api.put(`/system/menu/${id}`, data),
+  update: (data) => api.put('/system/menu', data),
 
   // 删除菜单
   delete: (id) => api.delete(`/system/menu/${id}`),

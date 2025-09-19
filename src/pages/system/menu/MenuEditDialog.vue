@@ -47,7 +47,7 @@
               <div class="edit-field-inline">
                 <span class="field-label">菜单类型：</span>
                 <q-select
-                  v-model="formData.type"
+                  v-model="formData.menuType"
                   :options="typeOptions"
                   placeholder="菜单类型"
                   outlined
@@ -63,7 +63,7 @@
               <div class="edit-field-inline">
                 <span class="field-label">菜单标题：</span>
                 <q-input
-                  v-model="formData.title"
+                  v-model="formData.menuName"
                   placeholder="菜单标题"
                   :rules="[val => !!val || '请输入菜单标题']"
                   outlined
@@ -72,20 +72,7 @@
                 />
               </div>
             </div>
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">菜单名称：</span>
-                <q-input
-                  v-model="formData.name"
-                  placeholder="菜单名称"
-                  :rules="[val => !!val || '请输入菜单名称']"
-                  outlined
-                  dense
-                  class="field-input"
-                />
-              </div>
-            </div>
-            <div v-if="formData.type !== 3" class="col-12 col-md-6">
+            <div v-if="formData.menuType !== 2" class="col-12 col-md-6">
               <div class="edit-field-inline">
                 <span class="field-label">路由路径：</span>
                 <q-input
@@ -98,7 +85,7 @@
                 />
               </div>
             </div>
-            <div v-if="formData.type === 2" class="col-12 col-md-6">
+            <div v-if="formData.menuType === 1" class="col-12 col-md-6">
               <div class="edit-field-inline">
                 <span class="field-label">组件路径：</span>
                 <q-input
@@ -111,7 +98,7 @@
                 />
               </div>
             </div>  
-            <div v-if="formData.type === 3" class="col-12 col-md-6">
+            <div class="col-12 col-md-6">
               <div class="edit-field-inline">
                 <span class="field-label">权限标识：</span>
                 <q-input
@@ -141,7 +128,7 @@
               <div class="edit-field-inline">
                 <span class="field-label">排序：</span>
                 <q-input
-                  v-model.number="formData.sort"
+                  v-model.number="formData.sortOrder"
                   placeholder="排序"
                   type="number"
                   outlined
@@ -169,7 +156,7 @@
               <div class="edit-field-inline">
                 <span class="field-label">显示状态：</span>
                 <q-select
-                  v-model="formData.visible"
+                  v-model="formData.isVisible"
                   :options="visibleOptions"
                   placeholder="显示状态"
                   outlined
@@ -268,23 +255,22 @@ const submitting = ref(false)
 const formData = ref({
   id: null,
   parentId: null,
-  type: 1,
-  title: '',
-  name: '',
+  menuType: 0,
+  menuName: '',
   path: '',
   component: '',
   permission: '',
   icon: '',
-  sort: 0,
+  sortOrder: 0,
   status: 1,
-  visible: 1,
+  isVisible: 1,
   remark: ''
 })
 
 const typeOptions = [
-  { label: '目录', value: 1 },
-  { label: '菜单', value: 2 },
-  { label: '按钮', value: 3 }
+  { label: '目录', value: 0 },
+  { label: '菜单', value: 1 },
+  { label: '按钮', value: 2 }
 ]
 
 const statusOptions = [
@@ -303,12 +289,12 @@ watch(() => props.menuData, (newData) => {
   }
 }, { deep: true, immediate: true })
 
-const onTypeChange = (type) => {
+const onTypeChange = (menuType) => {
   // 根据类型清空相关字段
-  if (type === 3) { // 按钮
+  if (menuType === 2) { // 按钮
     formData.value.path = ''
     formData.value.component = ''
-    formData.value.visible = 1
+    formData.value.isVisible = 1
   } else {
     formData.value.permission = ''
   }
