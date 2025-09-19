@@ -29,7 +29,7 @@
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-6">
               <div class="edit-field-inline">
-                <span class="field-label">父级菜单：</span>
+                <span class="field-label required">父级菜单：</span>
                 <q-select
                   v-model="formData.parentId"
                   :options="parentMenuOptions"
@@ -38,6 +38,7 @@
                   dense
                   emit-value
                   map-options
+                  :rules="[rules.required('父级菜单')]"
                   clearable
                   class="field-input"
                 />
@@ -61,11 +62,11 @@
             </div>
             <div class="col-12 col-md-6">
               <div class="edit-field-inline">
-                <span class="field-label">菜单标题：</span>
+                <span class="field-label required">菜单标题：</span>
                 <q-input
                   v-model="formData.menuName"
                   placeholder="菜单标题"
-                  :rules="[val => !!val || '请输入菜单标题']"
+                  :rules="[rules.required('菜单标题')]"
                   outlined
                   dense
                   class="field-input"
@@ -74,11 +75,11 @@
             </div>
             <div v-if="formData.menuType !== 2" class="col-12 col-md-6">
               <div class="edit-field-inline">
-                <span class="field-label">路由路径：</span>
+                <span class="field-label required">路由路径：</span>
                 <q-input
                   v-model="formData.path"
                   placeholder="路由路径"
-                  :rules="[val => !!val || '请输入路由路径']"
+                  :rules="[rules.required('路由路径')]"
                   outlined
                   dense
                   class="field-input"
@@ -87,11 +88,11 @@
             </div>
             <div v-if="formData.menuType === 1" class="col-12 col-md-6">
               <div class="edit-field-inline">
-                <span class="field-label">组件路径：</span>
+                <span class="field-label required">组件路径：</span>
                 <q-input
                   v-model="formData.component"
                   placeholder="组件路径"
-                  :rules="[val => !!val || '请输入组件路径']"
+                  :rules="[rules.required('组件路径')]"
                   outlined
                   dense
                   class="field-input"
@@ -100,11 +101,11 @@
             </div>  
             <div class="col-12 col-md-6">
               <div class="edit-field-inline">
-                <span class="field-label">权限标识：</span>
+                <span class="field-label required">权限标识：</span>
                 <q-input
                   v-model="formData.permission"
                   placeholder="权限标识"
-                  :rules="[val => !!val || '请输入权限标识']"
+                  :rules="[rules.required('权限标识')]"
                   outlined
                   dense
                   class="field-input"
@@ -117,7 +118,6 @@
                 <q-input
                   v-model="formData.icon"
                   placeholder="菜单图标"
-                  :rules="[val => !!val || '请输入菜单图标']"
                   outlined
                   dense
                   class="field-input"
@@ -126,11 +126,12 @@
             </div>
             <div class="col-12 col-md-6">
               <div class="edit-field-inline">
-                <span class="field-label">排序：</span>
+                <span class="field-label required">排序：</span>
                 <q-input
                   v-model.number="formData.sortOrder"
                   placeholder="排序"
                   type="number"
+                  :rules="[rules.required('排序'), rules.sortOrder]"
                   outlined
                   dense
                   class="field-input"
@@ -185,7 +186,7 @@
           </div>
         </q-form>
       </div>
-      </q-card-section>
+    </q-card-section>
 
       <q-separator />
           <!-- Footer Actions -->
@@ -266,6 +267,12 @@ const formData = ref({
   isVisible: 1,
   remark: ''
 })
+
+const rules = {
+  required: (fieldName) => (val) => !!val || `${fieldName}不能为空`,
+  sortOrder: (val) =>
+    /^(0|[1-9]\d*)$/.test(val) || '排序不能小于0',
+};
 
 const typeOptions = [
   { label: '目录', value: 0 },

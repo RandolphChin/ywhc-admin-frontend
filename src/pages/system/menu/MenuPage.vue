@@ -251,21 +251,11 @@ const loadMenus = async () => {
     const response = await menuApi.getTree()
     menus.value = response.data.data
     
-    // 转换数据格式并构建平铺结构
-    const transformedMenus = transformMenuData(response.data.data)
-    if (queryMenuName.value && queryMenuName.value.trim() !== '') {
-      // 有检索关键字时，过滤并展开相关节点
-      const filtered = filterMenuTreeByMenuName(transformedMenus, queryMenuName.value.trim())
-      const ids = collectIds(filtered)
-      expandedRows.value = new Set(ids)
-      flatMenus.value = buildFlatMenus(filtered)
-    } else {
-      // 无检索关键字，显示完整树
-      flatMenus.value = buildFlatMenus(transformedMenus)
-    }
+    // 构建菜单显示结构
+    buildMenuDisplay(menus.value)
     
     // 构建父级菜单选项
-    buildParentMenuOptions(transformedMenus)
+    buildParentMenuOptions(menus.value)
   } catch (error) {
     console.error('加载菜单列表失败:', error)
   } finally {
@@ -273,23 +263,20 @@ const loadMenus = async () => {
   }
 }
 
-const transformMenuData = (menuList) => {
-  return menuList.map(menu => ({
-    id: menu.id,
-    parentId: menu.parentId,
-    menuName: menu.menuName,
-    menuType: menu.menuType,
-    path: menu.path,
-    component: menu.component,
-    permission: menu.permission,
-    icon: menu.icon,
-    sortOrder: menu.sortOrder,
-    status: menu.status,
-    isVisible: menu.isVisible,
-    remark: menu.remark,
-    children: menu.children ? transformMenuData(menu.children) : [],
-    hasChildren: menu.hasChildren || (menu.children && menu.children.length > 0)
-  }))
+// 构建菜单显示结构的通用方法
+const buildMenuDisplay = (menuData) => {
+  const keyword = queryMenuName.value?.trim()
+  
+  if (keyword) {
+    // 有检索关键字时，过滤并展开相关节点
+    const filtered = filterMenuTreeByMenuName(menuData, keyword)
+    const ids = collectIds(filtered)
+    expandedRows.value = new Set(ids)
+    flatMenus.value = buildFlatMenus(filtered)
+  } else {
+    // 无检索关键字，显示完整树
+    flatMenus.value = buildFlatMenus(menuData)
+  }
 }
 
 const buildFlatMenus = (menuList, level = 0) => {
@@ -315,11 +302,7 @@ const toggleExpand = (menuId) => {
   }
   
   // 重新构建平铺菜单列表
-  let baseTree = transformMenuData(menus.value)
-  if (queryMenuName.value && queryMenuName.value.trim() !== '') {
-    baseTree = filterMenuTreeByMenuName(baseTree, queryMenuName.value.trim())
-  }
-  flatMenus.value = buildFlatMenus(baseTree)
+  buildMenuDisplay(menus.value)
 }
 
 // 根据菜单名称过滤菜单树，保留匹配节点及其所有父级
@@ -357,25 +340,14 @@ const collectIds = (menuList) => {
 
 // 执行检索
 const onSearch = () => {
-  const transformedMenus = transformMenuData(menus.value)
-  if (queryMenuName.value && queryMenuName.value.trim() !== '') {
-    const filtered = filterMenuTreeByMenuName(transformedMenus, queryMenuName.value.trim())
-    const ids = collectIds(filtered)
-    expandedRows.value = new Set(ids)
-    flatMenus.value = buildFlatMenus(filtered)
-  } else {
-    // 关键字为空则恢复完整列表
-    expandedRows.value = new Set()
-    flatMenus.value = buildFlatMenus(transformedMenus)
-  }
+  buildMenuDisplay(menus.value)
 }
 
 // 重置检索
 const onReset = () => {
   queryMenuName.value = ''
   expandedRows.value = new Set()
-  const transformedMenus = transformMenuData(menus.value)
-  flatMenus.value = buildFlatMenus(transformedMenus)
+  buildMenuDisplay(menus.value)
 }
 
 const buildParentMenuOptions = (menuList, level = 0) => {

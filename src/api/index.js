@@ -8,6 +8,7 @@ export { roleApi } from "./system/role/role";
 export { menuApi } from "./system/menu/menu";
 export { logApi } from "./system/log/log";
 export { dictApi } from "./dict";
+export { deptApi } from "./system/dept/dept";
 
 // 监控管理模块
 export { onlineUserApi } from "./monitor/online/online";

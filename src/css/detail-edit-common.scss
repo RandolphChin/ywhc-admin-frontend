@@ -90,6 +90,7 @@
 
 /* ===== 编辑表单样式 ===== */
 .edit-form {
+  margin-left: 12px;
   .q-input {
     .q-field__control {
       border-radius: 6px;
@@ -132,6 +133,21 @@
     padding-top: 10px; /* 这个值对应 q-field__control 的内边距 */
     height: 40px;
     box-sizing: border-box;
+    position: relative;
+    
+    /* 必填项星号样式 */
+    &.required {
+      &::before {
+        content: '*';
+        color: #f56565; /* 红色星号 */
+        font-weight: bold;
+        margin-right: 4px;
+        position: absolute;
+        left: -8px;
+        top: 10px;
+        line-height: 1.2;
+      }
+    }
   }
 
   .field-input {
