@@ -273,7 +273,10 @@ export const getUserRoutes = async (usePersistedMenus = false) => {
     // 确保组件映射已加载
     if (!componentMappingLoaded) {
       console.log("📦 组件映射未加载，正在加载...");
-      await loadComponentMappingFromAPI();
+      const loadResult = await loadComponentMappingFromAPI();
+      if (!loadResult.success) {
+        console.warn("⚠️ 组件映射加载失败，但继续处理路由");
+      }
     }
 
     console.log("📋 菜单数据:", menuData);
@@ -346,6 +349,13 @@ export const addDynamicRoutes = (router, routes) => {
 export const initDynamicRoutes = async (router, usePersistedMenus = true) => {
   try {
     console.log("🔧 初始化动态路由系统...");
+    
+    // 输出当前组件映射状态
+    console.log("📊 组件映射状态:", {
+      loaded: componentMappingLoaded,
+      count: componentMap.size,
+      components: Array.from(componentMap.keys())
+    });
 
     const routes = await getUserRoutes(usePersistedMenus);
 
@@ -357,6 +367,15 @@ export const initDynamicRoutes = async (router, usePersistedMenus = true) => {
     addDynamicRoutes(router, routes);
 
     console.log("🎉 动态路由初始化完成!");
+    
+    // 输出最终的路由状态
+    const allRoutes = router.getRoutes();
+    console.log("📜 最终路由状态:", {
+      total: allRoutes.length,
+      dynamic: routes.length,
+      routeNames: allRoutes.map(r => r.name).filter(Boolean)
+    });
+    
     return true;
   } catch (error) {
     console.error("❌ 动态路由初始化失败:", error);
@@ -480,40 +499,49 @@ export const loadComponentMappingFromAPI = async () => {
             const moduleName = pathParts[pathParts.length - 1]; // 获取最后一部分，如 "user"
             const capitalizedModule =
               moduleName.charAt(0).toUpperCase() + moduleName.slice(1); // "User"
-            const fullModulePath = `../pages/${componentPath}/${capitalizedModule}Page.vue`;
+            
+            // 尝试多种路径格式
+            const possiblePaths = [
+              `../pages/${componentPath}/${capitalizedModule}Page.vue`,
+              `../pages/${componentPath}Page.vue`,
+              `../pages/${componentPath}.vue`,
+            ];
 
-            console.log(`🔗 构建的完整模块路径: ${fullModulePath}`);
+            console.log(`🔗 尝试的模块路径:`, possiblePaths);
 
             // 使用预加载的模块进行动态导入
-            if (modules[fullModulePath]) {
-              console.log(`✅ 找到预加载模块: ${fullModulePath}`);
-              return modules[fullModulePath]();
-            } else {
-              // 尝试找到匹配的模块
-              const matchedPath = Object.keys(modules).find(
-                (path) =>
-                  path.includes(componentPath) && path.includes("Page.vue")
+            for (const fullModulePath of possiblePaths) {
+              if (modules[fullModulePath]) {
+                console.log(`✅ 找到预加载模块: ${fullModulePath}`);
+                return modules[fullModulePath]();
+              }
+            }
+
+            // 尝试找到匹配的模块
+            const matchedPath = Object.keys(modules).find(
+              (path) =>
+                path.includes(componentPath) && path.includes("Page.vue")
+            );
+
+            if (matchedPath) {
+              console.log(
+                `✅ 找到匹配模块: ${componentPath} -> ${matchedPath}`
               );
+              return modules[matchedPath]();
+            } else {
+              console.error(`❌ 未找到组件模块: ${componentPath}`);
+              console.log(`📋 期望路径:`, possiblePaths);
+              console.log(`📋 可用模块列表:`, Object.keys(modules).filter(path => path.includes(componentPath)));
 
-              if (matchedPath) {
-                console.log(
-                  `✅ 找到匹配模块: ${componentPath} -> ${matchedPath}`
-                );
-                return modules[matchedPath]();
+              // 返回错误页面
+              const errorPagePath = "../pages/ErrorNotFound.vue";
+              if (modules[errorPagePath]) {
+                console.log(`⚠️ 使用错误页面替代: ${componentPath}`);
+                return modules[errorPagePath]();
               } else {
-                console.error(`❌ 未找到组件模块: ${componentPath}`);
-                console.log(`📋 期望路径: ${fullModulePath}`);
-                console.log(`📋 可用模块列表:`, Object.keys(modules));
-
-                // 返回错误页面
-                const errorPagePath = "../pages/ErrorNotFound.vue";
-                if (modules[errorPagePath]) {
-                  return modules[errorPagePath]();
-                } else {
-                  throw new Error(
-                    `组件加载失败且错误页面不存在: ${componentPath}`
-                  );
-                }
+                throw new Error(
+                  `组件加载失败且错误页面不存在: ${componentPath}`
+                );
               }
             }
           };
@@ -543,7 +571,6 @@ export const loadComponentMappingFromAPI = async () => {
 
     // 如果API失败，设置一些基本的映射作为回退
     console.log("🔄 使用回退组件映射...");
-    console.log("🔄 使用回退组件映射...");
     setFallbackComponentMapping();
 
     return { success: false, error: error.message };
@@ -560,6 +587,10 @@ const setFallbackComponentMapping = () => {
     "system/role": "system/role",
     "system/menu": "system/menu",
     "system/log": "system/log",
+    "system/dept": "system/dept",
+    "system/dict": "system/dict",
+    "monitor/online": "monitor/online",
+    "test/log": "test/log",
   };
 
   Object.entries(fallbackMappings).forEach(([key, componentPath]) => {

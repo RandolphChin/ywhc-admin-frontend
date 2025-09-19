@@ -52,10 +52,16 @@ export default route(function ({ store /*, ssrContext */ }) {
         console.log("🔄 检测到持久化菜单数据，预初始化动态路由...");
         authStore.isInitializing = true;
         
+        // 延迟一小段时间确保组件映射已加载
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
         const routeSuccess = await initDynamicRoutes(Router, true);
         if (routeSuccess) {
           authStore.routesLoaded = true;
           console.log("✅ 基于持久化数据的动态路由初始化完成");
+          
+          // 延迟一小段时间确保路由已注册
+          await new Promise(resolve => setTimeout(resolve, 50));
           
           // 如果目标路由现在存在，直接导航
           try {
@@ -186,18 +192,34 @@ export default route(function ({ store /*, ssrContext */ }) {
         if (!targetRoute.matched || targetRoute.matched.length === 0) {
           console.log(`⚠️ 路由不存在，尝试重新初始化: ${to.path}`);
           
+          // 重置路由加载状态，强制重新初始化
+          authStore.routesLoaded = false;
+          authStore.isInitializing = true;
+          
           // 强制重新获取菜单并初始化路由
           await authStore.getUserMenus();
           const routeSuccess = await initDynamicRoutes(Router, false);
           
           if (routeSuccess) {
+            authStore.routesLoaded = true;
             console.log("✅ 重新初始化路由成功，继续导航");
-            next();
-            return;
+            
+            // 再次检查路由是否存在
+            const retryRoute = Router.resolve(to.path);
+            if (retryRoute && retryRoute.matched && retryRoute.matched.length > 0) {
+              authStore.isInitializing = false;
+              next();
+              return;
+            } else {
+              console.warn(`⚠️ 重新初始化后路由仍不存在: ${to.path}`);
+            }
           }
+          
+          authStore.isInitializing = false;
         }
       } catch (error) {
         console.error("❌ 最终路由检查失败:", error);
+        authStore.isInitializing = false;
       }
     }
 
