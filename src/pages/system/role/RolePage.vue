@@ -388,7 +388,7 @@ const submitRole = async (formData) => {
 const deleteRole = (role) => {
   $q.dialog({
     title: '确认删除',
-    message: `确定要删除角色 "${role.name}" 吗？`,
+    message: `确定要删除角色 "${role.roleName}" 吗？`,
     cancel: true,
     persistent: true
   }).onOk(async () => {

@@ -25,7 +25,7 @@
 
       <q-card-section class="dialog-content">
         <div class="edit-form">
-        <q-form @submit="handleSubmit" class="q-gutter-md">
+        <q-form ref="formRef" @submit="handleSubmit" class="q-gutter-md">
           <div class="row q-col-gutter-md">
             <div class="col-12 col-md-6">
               <div class="edit-field-inline">
@@ -307,8 +307,14 @@ const onTypeChange = (menuType) => {
   }
 }
 
+const formRef = ref(null)
+
 const handleSubmit = () => {
-  emit('submit', formData.value)
+  formRef.value.validate().then((success) => {
+    if (success) {
+      emit('submit', formData.value)
+    }
+  })
 }
 
 const handleClose = () => {

@@ -12,7 +12,7 @@ export const userApi = {
   create: (data) => api.post('/system/user', data),
   
   // 更新用户
-  update: (id, data) => api.put(`/system/user/${id}`, data),
+  update: (data) => api.put('/system/user', data),
   
   // 删除用户
   delete: (id) => api.delete(`/system/user/${id}`),

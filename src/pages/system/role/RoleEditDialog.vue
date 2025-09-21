@@ -6,23 +6,31 @@
       </q-card-section>
 
       <q-card-section class="q-pt-none">
-        <q-form @submit="handleSubmit" class="q-gutter-md">
+        <q-form ref="formRef" @submit="handleSubmit" class="q-gutter-md">
           <q-input
-            v-model="formData.name"
+            v-model="formData.roleName"
             label="角色名称"
-            :rules="[val => !!val || '请输入角色名称']"
+            :rules="[rules.required('角色名称')]"
             outlined
             dense
-          />
+          >
+            <template v-slot:before>
+              <span class="text-red">*</span>
+            </template>
+          </q-input>
 
           <q-input
-            v-model="formData.code"
+            v-model="formData.roleKey"
             label="角色编码"
-            :rules="[val => !!val || '请输入角色编码']"
+            :rules="[rules.required('角色编码')]"
             outlined
             dense
             :readonly="isEdit"
-          />
+          >
+            <template v-slot:before>
+              <span class="text-red">*</span>
+            </template>
+          </q-input>
 
           <q-select
             v-model="formData.status"
@@ -80,11 +88,15 @@ const visible = computed({
 
 const formData = ref({
   id: null,
-  name: '',
-  code: '',
+  roleName: '',
+  roleKey: '',
   status: 1,
   remark: ''
 })
+
+const rules = {
+  required: (fieldName) => (val) => !!val || `${fieldName}不能为空`,
+};
 
 const statusOptions = [
   { label: '正常', value: 1 },
@@ -97,8 +109,14 @@ watch(() => props.roleData, (newData) => {
   }
 }, { deep: true, immediate: true })
 
+const formRef = ref(null)
+
 const handleSubmit = () => {
-  emit('submit', formData.value)
+  formRef.value.validate().then((success) => {
+    if (success) {
+      emit('submit', formData.value)
+    }
+  })
 }
 
 const handleClose = () => {
