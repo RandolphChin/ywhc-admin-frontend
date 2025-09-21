@@ -432,6 +432,38 @@ const selectRole = async (role) => {
   }
 }
 
+// 收集所有需要的菜单ID，包括选中节点的所有父级节点
+const collectAllMenuIds = (checkedIds) => {
+  const allIds = new Set()
+  
+  // 递归查找节点及其所有父级节点
+  const findNodeAndParents = (nodes, targetId, parents = []) => {
+    for (const node of nodes) {
+      const currentPath = [...parents, node.id]
+      
+      if (node.id === targetId) {
+        // 找到目标节点，将整个路径添加到结果中
+        currentPath.forEach(id => allIds.add(id))
+        return true
+      }
+      
+      if (node.children && node.children.length > 0) {
+        if (findNodeAndParents(node.children, targetId, currentPath)) {
+          return true
+        }
+      }
+    }
+    return false
+  }
+  
+  // 为每个选中的节点查找其完整路径
+  checkedIds.forEach(checkedId => {
+    findNodeAndParents(menuTree.value, checkedId)
+  })
+  
+  return Array.from(allIds)
+}
+
 const submitPermission = async () => {
   if (!selectedRole.value) {
     $q.notify({
@@ -442,7 +474,10 @@ const submitPermission = async () => {
   }
   
   try {
-    await roleApi.assignMenus(selectedRole.value.id, checkedMenus.value)
+    // 收集所有需要的菜单ID，包括选中节点的所有父级节点
+    const allMenuIds = collectAllMenuIds(checkedMenus.value)
+    
+    await roleApi.assignMenus(selectedRole.value.id, allMenuIds)
     $q.notify({
       type: 'positive',
       message: '权限分配成功'
