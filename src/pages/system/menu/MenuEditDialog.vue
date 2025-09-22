@@ -115,11 +115,8 @@
             <div class="col-12 col-md-6">
               <div class="edit-field-inline">
                 <span class="field-label">菜单图标：</span>
-                <q-input
+                <IconSelector
                   v-model="formData.icon"
-                  placeholder="菜单图标"
-                  outlined
-                  dense
                   class="field-input"
                 />
               </div>
@@ -220,6 +217,7 @@
 
 <script setup>
 import { computed, watch, ref } from 'vue'
+import IconSelector from '@/components/IconSelector.vue'
 
 const props = defineProps({
   modelValue: {
