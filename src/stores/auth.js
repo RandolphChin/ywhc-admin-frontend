@@ -7,19 +7,10 @@ export const useAuthStore = defineStore("auth", {
   state: () => {
     console.log("🏪 初始化Auth Store状态...");
     const storedUserInfo = LocalStorage.getItem("userInfo");
-    const storedPermissions = LocalStorage.getItem("permissions");
-    const storedRoles = LocalStorage.getItem("roles");
-    const storedMenus = LocalStorage.getItem("userMenus");
 
     console.log("📦 从localStorage读取的数据:");
     console.log("  - userInfo:", storedUserInfo, typeof storedUserInfo);
-    console.log(
-      "  - permissions:",
-      storedPermissions,
-      typeof storedPermissions
-    );
-    console.log("  - roles:", storedRoles, typeof storedRoles);
-    console.log("  - menus:", storedMenus, typeof storedMenus);
+    console.log("  - 权限数据将通过API实时获取，不从localStorage恢复");
 
     // 处理userInfo，如果是字符串"undefined"或null，则设为null
     const validUserInfo =
@@ -40,9 +31,9 @@ export const useAuthStore = defineStore("auth", {
       token: LocalStorage.getItem("token") || null,
       refreshToken: LocalStorage.getItem("refreshToken") || null,
       userInfo: validUserInfo, // 从本地存储恢复用户信息
-      permissions: storedPermissions || [],
-      roles: storedRoles || [],
-      menus: storedMenus || [], // 从本地存储恢复菜单数据
+      permissions: [], // 不从localStorage恢复，始终为空数组
+      roles: [], // 不从localStorage恢复，始终为空数组
+      menus: [], // 不从localStorage恢复，始终为空数组
       routesLoaded: false, // 标记动态路由是否已加载
       isInitializing: false, // 标记是否正在初始化路由
       redirectUrl: LocalStorage.getItem("redirectUrl") || null, // 登录后重定向的URL
@@ -130,9 +121,7 @@ export const useAuthStore = defineStore("auth", {
       LocalStorage.remove("token");
       LocalStorage.remove("refreshToken");
       LocalStorage.remove("userInfo");
-      LocalStorage.remove("permissions");
-      LocalStorage.remove("roles");
-      LocalStorage.remove("userMenus");
+      // 权限相关数据本来就不持久化，无需清除
       // 注意：不清除 redirectUrl localStorage
 
       // 清除组件映射缓存
@@ -182,9 +171,10 @@ export const useAuthStore = defineStore("auth", {
         this.permissions = permissions || [];
         this.roles = roles || [];
 
-        // 保存到本地存储
+        // 保存到本地存储（仅保存userInfo，权限数据不持久化）
         console.log("💾 保存到localStorage:");
         console.log("  - userInfo:", userInfo);
+        console.log("  - permissions和roles不保存到localStorage，确保每次都获取最新数据");
 
         // 只有当userInfo不是undefined时才保存
         if (userInfo !== undefined && userInfo !== null) {
@@ -193,14 +183,9 @@ export const useAuthStore = defineStore("auth", {
           console.warn("⚠️ userInfo是undefined或null，不保存到localStorage");
         }
 
-        LocalStorage.set("permissions", permissions || []);
-        LocalStorage.set("roles", roles || []);
-
         // 验证保存结果
         console.log("✅ localStorage验证:");
         console.log("  - userInfo:", LocalStorage.getItem("userInfo"));
-        console.log("  - permissions:", LocalStorage.getItem("permissions"));
-        console.log("  - roles:", LocalStorage.getItem("roles"));
 
         // 不在这里设置menus，专门用getUserMenus获取
 
@@ -303,25 +288,21 @@ export const useAuthStore = defineStore("auth", {
             this.permissions.includes("system:menu:delete")
           );
 
-          // Persist to localStorage
-          LocalStorage.set("userMenus", this.menus);
-          LocalStorage.set("permissions", this.permissions);
-
+          // 不持久化菜单和权限数据到localStorage，确保每次都获取最新数据
           console.log("✅ 用户菜单数据已更新，菜单数量:", this.menus.length);
           console.log("📋 菜单详情:", this.menus);
           console.log("🔑 权限总数:", this.permissions.length);
+          console.log("💡 菜单和权限数据不保存到localStorage，确保实时更新");
 
           return this.menus;
         } else {
           console.warn("⚠️ 获取用户菜单失败，响应数据异常:", response.data);
           this.menus = [];
-          LocalStorage.remove("userMenus");
           return [];
         }
       } catch (error) {
         console.error("❌ 获取用户菜单失败:", error);
         this.menus = [];
-        LocalStorage.remove("userMenus");
         return [];
       }
     },
