@@ -50,6 +50,15 @@
               </q-input>
             </div>
 
+            <!-- 滑块验证码 -->
+            <div class="input-group captcha-group">
+              <SlideCaptcha
+                @success="onCaptchaSuccess"
+                @error="onCaptchaError"
+                @refresh="onCaptchaRefresh"
+              />
+            </div>
+<!-- 
             <div class="row items-center justify-between q-mt-md" >
               <q-checkbox
                 v-model="loginForm.rememberMe"
@@ -58,7 +67,8 @@
                 class="remember-me"
               />
             </div>
-            <div class="input-group" style="margin-top: 2px;">
+             -->
+            <div class="input-group" style="margin-top: 0px;">
             <q-btn
               type="submit"
               class="login-btn full-width"
@@ -81,9 +91,14 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import { useQuasar } from 'quasar'
 import { initDynamicRoutes } from 'src/router/dynamicRoutes'
+import SlideCaptcha from 'src/components/SlideCaptcha.vue'
 
 export default defineComponent({
   name: 'LoginPage',
+  
+  components: {
+    SlideCaptcha
+  },
 
   setup() {
     const $q = useQuasar()
@@ -96,12 +111,31 @@ export default defineComponent({
       password: 'admin123',
       rememberMe: false
     })
+    
+    // 验证码相关
+    const captchaVerified = ref(false)
+    const captchaToken = ref('')
 
     const handleLogin = async () => {
+      // 检查验证码是否通过
+      if (!captchaVerified.value) {
+        $q.notify({
+          type: 'warning',
+          message: '请先完成滑块验证',
+          position: 'top-right'
+        })
+        return
+      }
+      
       loading.value = true
       
       try {
-        await authStore.login(loginForm.value)
+        // 将验证码token添加到登录请求中
+        const loginData = {
+          ...loginForm.value,
+          captchaToken: captchaToken.value
+        }
+        await authStore.login(loginData)
         
         $q.notify({
           type: 'positive',
@@ -147,11 +181,39 @@ export default defineComponent({
         loading.value = false
       }
     }
+    
+    // 验证码成功回调
+    const onCaptchaSuccess = (data) => {
+      captchaVerified.value = true
+      captchaToken.value = data.token
+      $q.notify({
+        type: 'positive',
+        message: '验证码验证成功',
+        position: 'top-right'
+      })
+    }
+    
+    // 验证码失败回调
+    const onCaptchaError = (message) => {
+      captchaVerified.value = false
+      captchaToken.value = ''
+      console.warn('验证码验证失败:', message)
+    }
+    
+    // 验证码刷新回调
+    const onCaptchaRefresh = () => {
+      captchaVerified.value = false
+      captchaToken.value = ''
+    }
 
     return {
       loading,
       loginForm,
-      handleLogin
+      captchaVerified,
+      handleLogin,
+      onCaptchaSuccess,
+      onCaptchaError,
+      onCaptchaRefresh
     }
   }
 })
@@ -321,6 +383,14 @@ export default defineComponent({
 
 .input-group {
   margin-bottom: 20px;
+}
+
+.captcha-group {
+  margin-bottom: 24px;
+  
+  :deep(.slide-captcha-container) {
+    max-width: 100%;
+  }
 }
 
 // 现代化输入框
