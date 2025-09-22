@@ -2,34 +2,17 @@
   <q-layout view="lHh Lpr lFf">
     <q-header elevated class="modern-header">
       <q-toolbar class="modern-toolbar">
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-          @click="toggleLeftDrawer"
-          color="dark"
-        />
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" color="dark" />
 
-        <!-- 面包屑导航 -->
+        <!-- 面包屑导航 icon="dashboard"  :icon="breadcrumb.icon"  -->
         <q-breadcrumbs class="q-ml-md modern-breadcrumbs">
-          <q-breadcrumbs-el
-            icon="dashboard"
-            label="Dashboard"
-            class="breadcrumb-item"
-          />
-          <q-breadcrumbs-el
-            v-for="(breadcrumb, index) in breadcrumbs"
-            :key="index"
-            :label="breadcrumb.label"
-            :icon="breadcrumb.icon"
-            class="breadcrumb-item"
-          />
+          <q-breadcrumbs-el label="Dashboard" class="breadcrumb-item" />
+          <q-breadcrumbs-el v-for="(breadcrumb, index) in breadcrumbs" :key="index" :label="breadcrumb.label"
+            class="breadcrumb-item" />
         </q-breadcrumbs>
 
         <q-space />
-<!-- 
+        <!-- 
         <q-toolbar-title class="system-title-header">
           <div class="title-content">
             <span class="title-text">YWHC 后台管理系统</span>
@@ -39,24 +22,11 @@
 -->
         <div class="q-gutter-sm row items-center no-wrap">
           <!-- 全屏切换 -->
-          <q-btn
-            flat
-            dense
-            round
-            :icon="$q.fullscreen.isActive ? 'fullscreen_exit' : 'fullscreen'"
-            @click="$q.fullscreen.toggle()"
-            color="dark"
-          />
+          <q-btn flat dense round :icon="$q.fullscreen.isActive ? 'fullscreen_exit' : 'fullscreen'"
+            @click="$q.fullscreen.toggle()" color="dark" />
 
           <!-- 用户菜单 -->
-          <q-btn-dropdown
-            flat
-            dense
-            no-caps
-            :label="userInfo?.username || '用户'"
-            icon="account_circle"
-            color="dark"
-          >
+          <q-btn-dropdown flat dense no-caps :label="userInfo?.username || '用户'" icon="account_circle" color="dark">
             <q-list>
               <q-item clickable v-close-popup @click="goToProfile">
                 <q-item-section avatar>
@@ -87,36 +57,15 @@
 
       <!-- 标签页区域 -->
       <div class="tabs-container">
-        <q-tabs
-          v-model="activeTab"
-          no-caps
-          dense
-          class="modern-tabs hide-arrows"
-          active-color="primary"
-          indicator-color="primary"
-          align="left"
-        >
-          <q-tab
-            v-for="tab in openTabs"
-            :key="tab.path"
-            :name="tab.path"
-            @click="switchTab(tab.path)"
-            @contextmenu.prevent="showContextMenu($event, tab)"
-            class="modern-tab-item"
-          >
+        <q-tabs v-model="activeTab" no-caps dense class="modern-tabs hide-arrows" active-color="primary"
+          indicator-color="primary" align="left">
+          <q-tab v-for="tab in openTabs" :key="tab.path" :name="tab.path" @click="switchTab(tab.path)"
+            @contextmenu.prevent="showContextMenu($event, tab)" class="modern-tab-item">
             <div class="tab-content">
-              <q-icon :name="tab.icon || 'description'" class="tab-icon" />
+            <!--   <q-icon :name="tab.icon || 'description'" class="tab-icon" /> -->
               <span class="tab-label">{{ tab.title }}</span>
-              <q-btn
-                v-if="tab.path !== '/dashboard'"
-                flat
-                dense
-                round
-                size="xs"
-                icon="close"
-                class="tab-close-btn"
-                @click.stop="closeTab(tab.path)"
-              />
+              <q-btn v-if="tab.path !== '/dashboard'" flat dense round size="xs" icon="close" class="tab-close-btn"
+                @click.stop="closeTab(tab.path)" />
             </div>
           </q-tab>
         </q-tabs>
@@ -124,18 +73,14 @@
     </q-header>
 
     <!-- 右键菜单 -->
-    <q-menu v-model="contextMenuVisible" context-menu>
+    <q-menu v-model="contextMenuVisible" :target="contextMenuTarget" anchor="bottom left" self="top left"
+      :offset="[0, 5]">
       <q-list dense style="min-width: 80px">
         <q-item clickable v-close-popup @click="refreshTab">
           <q-item-section>刷新</q-item-section>
         </q-item>
 
-        <q-item
-          v-if="contextTab?.path !== '/dashboard'"
-          clickable
-          v-close-popup
-          @click="closeTab(contextTab?.path)"
-        >
+        <q-item v-if="contextTab?.path !== '/dashboard'" clickable v-close-popup @click="closeTab(contextTab?.path)">
           <q-item-section>关闭</q-item-section>
         </q-item>
 
@@ -149,12 +94,7 @@
       </q-list>
     </q-menu>
 
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      class="modern-drawer"
-      style="background: #1a1d29 !important"
-    >
+    <q-drawer v-model="leftDrawerOpen" show-if-above class="modern-drawer" style="background: #1a1d29 !important">
       <div class="drawer-header" style="background: #0f1419 !important">
         <div class="logo-container">
           <q-icon name="admin_panel_settings" class="logo-icon" />
@@ -167,19 +107,10 @@
         </div>
       </div>
 
-      <q-list
-        class="navigation-menu"
-        style="background: transparent !important"
-      >
+      <q-list class="navigation-menu" style="background: transparent !important">
         <!-- 仪表盘 - 保留静态菜单 -->
-        <q-item
-          clickable
-          v-ripple
-          :active="$route.path === '/dashboard'"
-          @click="navigateTo('/dashboard')"
-          class="menu-item"
-          :class="{ 'menu-item--active': $route.path === '/dashboard' }"
-        >
+        <q-item clickable v-ripple :active="$route.path === '/dashboard'" @click="navigateTo('/dashboard')"
+          class="menu-item" :class="{ 'menu-item--active': $route.path === '/dashboard' }">
           <q-item-section avatar>
             <q-icon name="dashboard" class="menu-icon" />
           </q-item-section>
@@ -191,16 +122,9 @@
 
         <!-- 动态菜单 -->
         <template v-for="menu in menuList" :key="menu.id">
-          <q-expansion-item
-            v-if="menu.children && menu.children.length > 0"
-            :icon="menu.icon"
-            :label="menu.menuName"
-            :model-value="isMenuExpanded(menu)"
-            @update:model-value="(val) => onMenuToggle(menu, val)"
-            class="menu-group"
-            header-class="menu-group-header"
-            expand-icon="keyboard_arrow_down"
-          >
+          <q-expansion-item v-if="menu.children && menu.children.length > 0" :icon="menu.icon" :label="menu.menuName"
+            :model-value="isMenuExpanded(menu)" @update:model-value="(val) => onMenuToggle(menu, val)"
+            class="menu-group" header-class="menu-group-header" expand-icon="keyboard_arrow_down">
             <template v-slot:header>
               <q-item-section avatar>
                 <q-icon :name="menu.icon" class="menu-icon" />
@@ -210,16 +134,9 @@
               </q-item-section>
             </template>
 
-            <q-item
-              v-for="child in menu.children"
-              :key="child.id"
-              clickable
-              v-ripple
-              :active="$route.path === child.path"
-              @click="navigateTo(child.path)"
-              class="menu-item menu-item--sub"
-              :class="{ 'menu-item--active': $route.path === child.path }"
-            >
+            <q-item v-for="child in menu.children" :key="child.id" clickable v-ripple
+              :active="$route.path === child.path" @click="navigateTo(child.path)" class="menu-item menu-item--sub"
+              :class="{ 'menu-item--active': $route.path === child.path }">
               <q-item-section avatar>
                 <q-icon :name="child.icon" class="menu-icon" />
               </q-item-section>
@@ -230,15 +147,8 @@
             </q-item>
           </q-expansion-item>
 
-          <q-item
-            v-else
-            clickable
-            v-ripple
-            :active="$route.path === menu.path"
-            @click="navigateTo(menu.path)"
-            class="menu-item"
-            :class="{ 'menu-item--active': $route.path === menu.path }"
-          >
+          <q-item v-else clickable v-ripple :active="$route.path === menu.path" @click="navigateTo(menu.path)"
+            class="menu-item" :class="{ 'menu-item--active': $route.path === menu.path }">
             <q-item-section avatar>
               <q-icon :name="menu.icon" class="menu-icon" />
             </q-item-section>
@@ -264,39 +174,19 @@
 
         <q-card-section class="q-pt-none">
           <q-form @submit="submitPasswordChange" class="q-gutter-md">
-            <q-input
-              v-model="passwordForm.oldPassword"
-              type="password"
-              label="原密码"
-              :rules="[(val) => !!val || '请输入原密码']"
-              outlined
-              dense
-            />
+            <q-input v-model="passwordForm.oldPassword" type="password" label="原密码"
+              :rules="[(val) => !!val || '请输入原密码']" outlined dense />
 
-            <q-input
-              v-model="passwordForm.newPassword"
-              type="password"
-              label="新密码"
-              :rules="[
-                (val) => !!val || '请输入新密码',
-                (val) => val.length >= 6 || '密码长度至少6位',
-              ]"
-              outlined
-              dense
-            />
+            <q-input v-model="passwordForm.newPassword" type="password" label="新密码" :rules="[
+              (val) => !!val || '请输入新密码',
+              (val) => val.length >= 6 || '密码长度至少6位',
+            ]" outlined dense />
 
-            <q-input
-              v-model="passwordForm.confirmPassword"
-              type="password"
-              label="确认密码"
-              :rules="[
-                (val) => !!val || '请确认密码',
-                (val) =>
-                  val === passwordForm.newPassword || '两次密码输入不一致',
-              ]"
-              outlined
-              dense
-            />
+            <q-input v-model="passwordForm.confirmPassword" type="password" label="确认密码" :rules="[
+              (val) => !!val || '请确认密码',
+              (val) =>
+                val === passwordForm.newPassword || '两次密码输入不一致',
+            ]" outlined dense />
 
             <div class="row justify-end q-gutter-sm">
               <q-btn flat label="取消" @click="passwordDialog = false" />
@@ -349,6 +239,7 @@ export default defineComponent({
     // 右键菜单
     const contextMenuVisible = ref(false);
     const contextTab = ref(null);
+    const contextMenuTarget = ref(null);
 
     // 面包屑导航
     const breadcrumbs = ref([]);
@@ -563,7 +454,9 @@ export default defineComponent({
     };
 
     const showContextMenu = (event, tab) => {
+      event.preventDefault();
       contextTab.value = tab;
+      contextMenuTarget.value = event.target;
       contextMenuVisible.value = true;
     };
 
@@ -678,13 +571,13 @@ export default defineComponent({
           } else {
             console.log("📝 MainLayout - 用户信息已存在，跳过获取");
           }
-          
+
           // 如果没有菜单数据，获取菜单
           if (!authStore.menus?.length) {
             console.log("📋 MainLayout - 获取用户菜单");
             await authStore.getUserMenus();
           }
-          
+
           console.log("✅ MainLayout - 用户数据加载完成");
           console.log("✅ MainLayout - 最终userInfo:", authStore.userInfo);
         } else {
@@ -714,6 +607,7 @@ export default defineComponent({
       activeTab,
       contextMenuVisible,
       contextTab,
+      contextMenuTarget,
       breadcrumbs,
       // 方法
       toggleLeftDrawer,
@@ -1040,7 +934,7 @@ export default defineComponent({
     &--sub {
       margin-left: 40px;
       margin-right: 16px;
-      
+
       border-radius: 0 10px 10px 0;
       padding-left: 8px;
 
