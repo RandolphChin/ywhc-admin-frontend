@@ -692,7 +692,7 @@ export default defineComponent({
 
   :deep(.q-breadcrumbs__separator) {
     color: #999 !important;
-    margin: 0 8px;
+    /* margin: 0 8px; */
   }
 
   .breadcrumb-item:hover {
