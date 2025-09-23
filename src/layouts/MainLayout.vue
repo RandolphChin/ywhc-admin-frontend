@@ -34,14 +34,14 @@
                 </q-item-section>
                 <q-item-section>个人中心</q-item-section>
               </q-item>
-
+<!-- 
               <q-item clickable v-close-popup @click="changePassword">
                 <q-item-section avatar>
                   <q-icon name="lock" />
                 </q-item-section>
                 <q-item-section>修改密码</q-item-section>
               </q-item>
-
+ -->
               <q-separator />
 
               <q-item clickable v-close-popup @click="logout">
