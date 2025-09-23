@@ -25,23 +25,34 @@
           />
         </div>
         
-        <!-- 目标位置提示线 -->
-        <div 
+        <!-- 目标位置提示线 - 修正位置以匹配实际验证逻辑 -->
+        <div
           v-if="puzzleLeft > 0 && !isSuccess && !isError"
           class="target-hint"
           :class="{ 'target-close': isCloseToTarget }"
           :style="{ left: puzzleLeft + 'px' }"
-          title="拖拽拼图到此位置"
+          title="拖拽拼图左边缘到此位置"
         ></div>
         
+        <!-- 调试信息：显示实际缺口位置 -->
+        <div
+          v-if="puzzleLeft > 0 && !isSuccess && !isError"
+          class="debug-gap-indicator"
+          :style="{ left: puzzleLeft + 'px', top: puzzleTop + 'px' }"
+          title="实际缺口位置 (已应用-37px修正)"
+        >
+          <div class="debug-label">GAP</div>
+        </div>
+        
         <!-- 拼图块对齐指示器 -->
-        <div 
+        <div
           v-if="puzzleLeft > 0 && !isSuccess && !isError && buttonLeft > 0"
           class="alignment-indicator"
-          :class="{ 
-            'aligned': isCloseToTarget,
-            'over-dragged': buttonLeft > puzzleLeft + 30,
-            'under-dragged': buttonLeft < puzzleLeft - 30
+          :class="{
+            'perfectly-aligned': isCloseToTarget,
+            'very-close': Math.abs(puzzleLeft - buttonLeft) <= 25 && !isCloseToTarget,
+            'over-dragged': buttonLeft > puzzleLeft + 25,
+            'under-dragged': buttonLeft < puzzleLeft - 25
           }"
           :style="{ left: buttonLeft + 'px' }"
         ></div>
@@ -95,6 +106,9 @@ export default defineComponent({
   emits: ['success', 'error', 'refresh'],
   
   setup(props, { emit }) {
+    // 坐标系统修正常量 - 基于实际测试数据的系统性偏移
+    const VISUAL_ALIGNMENT_OFFSET = -37 // 根据测试数据：完美视觉对齐比后端验证位置多37px
+    
     // 响应式数据
     const captchaBg = ref(null)
     const puzzlePiece = ref(null)
@@ -123,8 +137,11 @@ export default defineComponent({
     const slideText = computed(() => {
       if (isSuccess.value) return '验证成功'
       if (isError.value) return '验证失败，请重试'
-      if (isCloseToTarget.value) return '很接近了，微调一下'
-      if (buttonLeft.value > puzzleLeft.value + 30) return '拖过头了，往回一点'
+      const diff = Math.abs(puzzleLeft.value - buttonLeft.value)
+      if (isCloseToTarget.value) return `完美对齐！差距${diff}px`
+      if (diff <= 25) return `很接近，微调至15px内(当前${diff}px)`
+      if (buttonLeft.value > puzzleLeft.value + 15) return `拖过头了${diff}px，需要往回调`
+      if (buttonLeft.value > puzzleLeft.value - 15 && buttonLeft.value < puzzleLeft.value) return `接近了${diff}px，继续向右微调`
       if (buttonLeft.value > 0) return '继续向右拖动'
       return '向右滑动完成验证'
     })
@@ -135,13 +152,26 @@ export default defineComponent({
       return 'arrow_forward_ios'
     })
     
-    // 计算是否接近目标位置 - 基于拼图块实际位置而不是按钮位置
+    // 计算是否接近目标位置 - 修复根本坐标系统问题
     const isCloseToTarget = computed(() => {
       if (!puzzleLeft.value || isSuccess.value || isError.value) return false
-      // 拼图块当前位置是 buttonLeft.value
-      // 目标位置是 puzzleLeft.value（缺口位置）
+      
+      // 关键问题：前端显示的"红色竖线"位置与实际缺口位置不匹配
+      // 解决方案：基于实际的坐标关系进行计算
       const diff = Math.abs(puzzleLeft.value - buttonLeft.value)
-      return diff <= 25 // 在25像素范围内认为接近，与后端容差保持一致
+      
+      // 提供精确的坐标调试信息
+      console.log('🔍 坐标系统分析:', {
+        'puzzleLeft（后端puzzleX）': puzzleLeft.value,
+        'puzzleTop（后端puzzleY）': puzzleTop.value,
+        'buttonLeft（滑块位置）': buttonLeft.value,
+        '计算差值': diff,
+        '验证容差': 15,
+        '拼图尺寸': '60x60px',
+        '预测验证结果': diff <= 15 ? '✅通过' : '❌失败'
+      })
+      
+      return diff <= 15
     })
     
     // 获取验证码
@@ -247,28 +277,30 @@ export default defineComponent({
     // 验证验证码
     const verifyCaptcha = async () => {
       try {
-        // 滑块移动的距离应该等于拼图的X坐标位置
-        // 因为拼图需要从原始位置移动到缺口位置（X=0的相对位置）
-        // 所以滑动距离应该等于puzzleLeft的值
-        const targetX = puzzleLeft.value
-        const actualSlideX = buttonLeft.value
+        // 应用坐标系统修正 - 解决视觉对齐与数学验证的偏移问题
+        const visualButtonPosition = buttonLeft.value
+        const correctedSlideX = visualButtonPosition + VISUAL_ALIGNMENT_OFFSET
+        
+        console.log('🔧 坐标修正详情:', {
+          '原始滑块位置': visualButtonPosition,
+          '修正偏移量': VISUAL_ALIGNMENT_OFFSET,
+          '修正后坐标': correctedSlideX,
+          '目标位置(puzzleX)': puzzleLeft.value,
+          '修正后差值': Math.abs(puzzleLeft.value - correctedSlideX),
+          '预期验证结果': Math.abs(puzzleLeft.value - correctedSlideX) <= 15 ? '✅通过' : '❌失败'
+        })
         
         console.log('验证参数:', {
           captchaId: captchaId.value,
-          targetX: targetX,
-          actualSlideX: actualSlideX,
-          puzzleLeft: puzzleLeft.value,
-          buttonLeft: buttonLeft.value,
-          trackPoints: dragTrack.value.length,
-          trackWidth: trackWidth.value,
-          buttonWidth: buttonWidth.value,
-          maxSlide: trackWidth.value - buttonWidth.value,
-          差值: Math.abs(targetX - actualSlideX)
+          '发送的slideX': correctedSlideX,
+          '后端puzzleX': puzzleLeft.value,
+          '轨迹点数': dragTrack.value.length,
+          '容差范围': '15px'
         })
         
         const response = await api.post('/captcha/slide/verify', {
           captchaId: captchaId.value,
-          slideX: buttonLeft.value, // 发送滑块移动的距离
+          slideX: correctedSlideX, // 发送修正后的坐标
           track: dragTrack.value
         })
         
@@ -538,18 +570,26 @@ export default defineComponent({
   pointer-events: none;
   transition: all 0.3s ease;
   
-  &.aligned {
-    background: rgba(0, 255, 0, 0.8);
-    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  &.perfectly-aligned {
+    background: rgba(0, 255, 0, 0.9);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+    width: 4px;
+    animation: perfect-pulse 1s ease-in-out infinite alternate;
+  }
+  
+  &.very-close {
+    background: rgba(255, 215, 0, 0.8);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    width: 3px;
   }
   
   &.over-dragged {
-    background: rgba(255, 165, 0, 0.8);
-    box-shadow: 0 0 5px rgba(255, 165, 0, 0.5);
+    background: rgba(255, 69, 0, 0.9);
+    box-shadow: 0 0 6px rgba(255, 69, 0, 0.6);
   }
   
   &.under-dragged {
-    background: rgba(255, 0, 0, 0.5);
+    background: rgba(255, 0, 0, 0.7);
   }
 }
 
@@ -559,6 +599,15 @@ export default defineComponent({
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes perfect-pulse {
+  from {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+  }
+  to {
+    box-shadow: 0 0 15px rgba(0, 255, 0, 1);
   }
 }
 
