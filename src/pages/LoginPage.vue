@@ -58,6 +58,18 @@
                 @refresh="onCaptchaRefresh"
               />
             </div>
+
+            <!-- 加密状态提示 -->
+            <div class="encryption-status" v-if="encryptionEnabled">
+              <q-icon 
+                :name="publicKeyLoaded ? 'lock' : 'lock_open'" 
+                :color="publicKeyLoaded ? 'positive' : 'warning'"
+                size="xs"
+              />
+              <span class="status-text">
+                {{ publicKeyLoaded ? '密码传输已加密' : '正在加载加密密钥...' }}
+              </span>
+            </div>
 <!-- 
             <div class="row items-center justify-between q-mt-md" >
               <q-checkbox
@@ -86,12 +98,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import { useQuasar } from 'quasar'
 import { initDynamicRoutes } from 'src/router/dynamicRoutes'
 import SlideCaptcha from 'src/components/SlideCaptcha.vue'
+import cryptoUtil from 'src/utils/crypto'
+import { authApi } from 'src/api/auth'
 
 const $q = useQuasar()
 const router = useRouter()
@@ -108,6 +122,10 @@ const loginForm = ref({
 const captchaVerified = ref(false)
 const captchaToken = ref('')
 
+// 加密相关
+const publicKeyLoaded = ref(false)
+const encryptionEnabled = ref(true) // 是否启用加密
+
 const handleLogin = async () => {
   // 检查验证码是否通过
   if (!captchaVerified.value) {
@@ -122,11 +140,35 @@ const handleLogin = async () => {
   loading.value = true
   
   try {
-    // 将验证码token添加到登录请求中
-    const loginData = {
+    // 准备登录数据
+    let loginData = {
       ...loginForm.value,
-      captchaToken: captchaToken.value
+      captchaToken: captchaToken.value,
+      encrypted: false
     }
+
+    // 如果启用加密且公钥已加载，则加密密码
+    if (encryptionEnabled.value && publicKeyLoaded.value && cryptoUtil.hasPublicKey()) {
+      try {
+        const encryptedPassword = cryptoUtil.encryptPassword(loginForm.value.password)
+        loginData = {
+          ...loginData,
+          password: encryptedPassword,
+          encrypted: true
+        }
+        console.log('🔐 密码加密成功')
+      } catch (error) {
+        console.warn('密码加密失败，使用明文传输:', error.message)
+        $q.notify({
+          type: 'warning',
+          message: '密码加密失败，将使用明文传输',
+          position: 'top-right'
+        })
+      }
+    } else {
+      console.warn('🔓 使用明文密码传输')
+    }
+
     await authStore.login(loginData)
     
     $q.notify({
@@ -197,6 +239,41 @@ const onCaptchaRefresh = () => {
   captchaVerified.value = false
   captchaToken.value = ''
 }
+
+// 获取RSA公钥
+const loadPublicKey = async () => {
+  if (!encryptionEnabled.value) {
+    return
+  }
+
+  try {
+    console.log('🔑 正在获取RSA公钥...')
+    const response = await authApi.getPublicKey()
+    if (response.data.data && response.data.data.publicKey) {
+      const publicKeyPem = cryptoUtil.formatPublicKey(response.data.data.publicKey)
+      cryptoUtil.setPublicKey(publicKeyPem)
+      publicKeyLoaded.value = true
+      console.log('✅ RSA公钥加载成功')
+    } else {
+      throw new Error('公钥数据格式错误')
+    }
+  } catch (error) {
+    console.error('❌ 获取RSA公钥失败:', error)
+    publicKeyLoaded.value = false
+    encryptionEnabled.value = false
+    
+    $q.notify({
+      type: 'warning',
+      message: '获取加密公钥失败，将使用明文传输',
+      position: 'top-right'
+    })
+  }
+}
+
+// 页面加载时获取公钥
+onMounted(() => {
+  loadPublicKey()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -456,6 +533,25 @@ const onCaptchaRefresh = () => {
   
   :deep(.q-btn__content) {
     color: white;
+  }
+}
+
+// 加密状态提示
+.encryption-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: rgba(247, 250, 252, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  
+  .status-text {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
   }
 }
 
