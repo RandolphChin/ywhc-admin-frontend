@@ -171,6 +171,18 @@
                 dense
               />
 
+              <!-- 加密状态提示 -->
+              <div class="encryption-status" v-if="encryptionEnabled">
+                <q-icon 
+                  :name="publicKeyLoaded ? 'lock' : 'lock_open'" 
+                  :color="publicKeyLoaded ? 'positive' : 'warning'"
+                  size="xs"
+                />
+                <span class="status-text">
+                  {{ publicKeyLoaded ? '密码传输已加密' : '正在加载加密密钥...' }}
+                </span>
+              </div>
+
               <div class="row justify-end q-gutter-sm">
                 <q-btn
                   type="submit"
@@ -193,12 +205,18 @@ import { useAuthStore } from 'src/stores/auth'
 import { api } from 'src/boot/axios'
 import { useQuasar } from 'quasar'
 import { formatTime } from 'src/utils/index'
+import cryptoUtil from 'src/utils/crypto'
+import { authApi } from 'src/api/auth'
 
 const $q = useQuasar()
 const authStore = useAuthStore()
 
 const updating = ref(false)
 const changingPassword = ref(false)
+
+// 加密相关
+const publicKeyLoaded = ref(false)
+const encryptionEnabled = ref(true) // 是否启用加密
 
 const profileForm = ref({
   nickname: '',
@@ -266,10 +284,37 @@ const changePassword = async () => {
   changingPassword.value = true
   
   try {
-    await authStore.changePassword({
+    // 准备密码修改数据
+    let changePasswordData = {
       oldPassword: passwordForm.value.oldPassword,
-      newPassword: passwordForm.value.newPassword
-    })
+      newPassword: passwordForm.value.newPassword,
+      encrypted: false
+    }
+
+    // 如果启用加密且公钥已加载，则加密密码
+    if (encryptionEnabled.value && publicKeyLoaded.value && cryptoUtil.hasPublicKey()) {
+      try {
+        const encryptedOldPassword = cryptoUtil.encryptPassword(passwordForm.value.oldPassword)
+        const encryptedNewPassword = cryptoUtil.encryptPassword(passwordForm.value.newPassword)
+        
+        changePasswordData = {
+          oldPassword: encryptedOldPassword,
+          newPassword: encryptedNewPassword,
+          encrypted: true
+        }
+        console.log('🔐 密码加密成功')
+      } catch (error) {
+        console.warn('密码加密失败，使用明文传输:', error.message)
+        $q.notify({
+          type: 'warning',
+          message: '密码加密失败，将使用明文传输'
+        })
+      }
+    } else {
+      console.warn('🔓 使用明文密码传输')
+    }
+
+    await authStore.changePassword(changePasswordData)
     
     $q.notify({
       type: 'positive',
@@ -292,7 +337,58 @@ const changePassword = async () => {
   }
 }
 
+// 获取RSA公钥
+const loadPublicKey = async () => {
+  if (!encryptionEnabled.value) {
+    return
+  }
+
+  try {
+    console.log('🔑 正在获取RSA公钥...')
+    const response = await authApi.getPublicKey()
+    if (response.data.data && response.data.data.publicKey) {
+      const publicKeyPem = cryptoUtil.formatPublicKey(response.data.data.publicKey)
+      cryptoUtil.setPublicKey(publicKeyPem)
+      publicKeyLoaded.value = true
+      console.log('✅ RSA公钥加载成功')
+    } else {
+      throw new Error('公钥数据格式错误')
+    }
+  } catch (error) {
+    console.error('❌ 获取RSA公钥失败:', error)
+    publicKeyLoaded.value = false
+    encryptionEnabled.value = false
+    
+    $q.notify({
+      type: 'warning',
+      message: '获取加密公钥失败，将使用明文传输'
+    })
+  }
+}
+
 onMounted(() => {
   loadUserInfo()
+  loadPublicKey()
 })
 </script>
+
+<style lang="scss" scoped>
+// 加密状态提示
+.encryption-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: rgba(247, 250, 252, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  
+  .status-text {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+}
+</style>
