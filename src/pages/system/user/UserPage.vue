@@ -548,7 +548,7 @@ const batchResetPassword = () => {
     try {
       // 批量重置密码
       const promises = selectedUsers.value.map(user => 
-        userApi.resetPassword(user.id, 'admin123')
+        userApi.resetPassword(user.id)
       )
       
       await Promise.all(promises)

@@ -18,7 +18,7 @@ export const userApi = {
   delete: (id) => api.delete(`/system/user/${id}`),
   
   // 重置密码
-  resetPassword: (id, newPassword = '123456') => api.put(`/system/user/${id}/reset-password?newPassword=${newPassword}`),
+  resetPassword: (id) => api.put(`/system/user/${id}/reset-password`),
   
   // 更新用户状态
   updateStatus: (id, status) => api.put(`/system/user/${id}/status`, { status }),

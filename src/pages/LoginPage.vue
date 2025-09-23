@@ -60,6 +60,7 @@
             </div>
 
             <!-- 加密状态提示 -->
+             <!-- 
             <div class="encryption-status" v-if="encryptionEnabled">
               <q-icon 
                 :name="publicKeyLoaded ? 'lock' : 'lock_open'" 
@@ -70,6 +71,7 @@
                 {{ publicKeyLoaded ? '密码传输已加密' : '正在加载加密密钥...' }}
               </span>
             </div>
+ -->
 <!-- 
             <div class="row items-center justify-between q-mt-md" >
               <q-checkbox
@@ -357,7 +359,7 @@ const onCaptchaRefresh = () => {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   text-align: center;
-  padding: 30px 20px 25px;
+  // padding: 30px 20px 25px;
 }
 
 .login-title {
@@ -377,7 +379,7 @@ const onCaptchaRefresh = () => {
 
 // 表单区域
 .login-form-section {
-  padding: 40px 30px;
+  // padding: 40px 30px;
 }
 
 .input-group {
