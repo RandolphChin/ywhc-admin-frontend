@@ -161,6 +161,7 @@
                 color="primary"
                 icon="edit"
                 @click="showLogEdit(props.row)"
+                v-permission="'system:log:edit'"
               >
                 <q-tooltip>编辑</q-tooltip>
               </q-btn>

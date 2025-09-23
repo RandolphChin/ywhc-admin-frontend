@@ -70,12 +70,23 @@
                 @click="showUserDialog()"
                 v-permission="'system:user:add'"
               />
+              <q-btn
+                color="warning"
+                icon="lock_reset"
+                label="重置密码"
+                :disable="selectedUsers.length === 0"
+                @click="batchResetPassword"
+                v-permission="'system:user:resetPwd'"
+              />
             </div>
             <div class="row justify-between items-center q-mt-xs">
               <div class="text-h6">
                 用户列表
                 <span v-if="selectedDeptName" class="text-caption text-grey-6">
                   ({{ selectedDeptName }})
+                </span>
+                <span v-if="selectedUsers.length > 0" class="text-caption text-primary q-ml-sm">
+                  已选择 {{ selectedUsers.length }} 个用户
                 </span>
               </div>
             </div>
@@ -88,6 +99,9 @@
               :pagination="pagination"
               @request="onRequest"
               binary-state-sort
+              selection="multiple"
+              :selected="selectedUsers"
+              @update:selected="onSelectionChange"
             >
           <template v-slot:body-cell-avatar="props">
             <q-td :props="props">
@@ -187,6 +201,7 @@ const deptTreeNodes = ref([])
 const selectedDeptId = ref(null)
 const selectedDeptName = ref('')
 const expandedDepts = ref([])
+const selectedUsers = ref([])
 
 const queryForm = ref({
   username: '',
@@ -301,6 +316,9 @@ const loadUsers = async (props) => {
     pagination.value.rowsPerPage = rowsPerPage
     pagination.value.sortBy = sortBy
     pagination.value.descending = descending
+    
+    // 清空选择
+    selectedUsers.value = []
   } catch (error) {
     console.error('加载用户列表失败:', error)
   } finally {
@@ -490,15 +508,63 @@ const resetPassword = (user) => {
     persistent: true
   }).onOk(async () => {
     try {
-      await userApi.resetPassword(user.id)
+      await userApi.resetPassword(user.id, 'admin123')
       $q.notify({
         type: 'positive',
-        message: '密码重置成功，新密码为：123456'
+        message: '密码重置成功，新密码为：admin123'
       })
     } catch (error) {
       $q.notify({
         type: 'negative',
         message: error.response?.data?.message || '重置失败'
+      })
+    }
+  })
+}
+
+// 选择变化处理
+const onSelectionChange = (selected) => {
+  selectedUsers.value = selected
+}
+
+// 批量重置密码
+const batchResetPassword = () => {
+  if (selectedUsers.value.length === 0) {
+    $q.notify({
+      type: 'warning',
+      message: '请先选择要重置密码的用户'
+    })
+    return
+  }
+
+  const userNames = selectedUsers.value.map(user => user.nickname).join('、')
+  
+  $q.dialog({
+    title: '确认批量重置',
+    message: `确定要重置以下用户的密码吗？\n${userNames}\n\n新密码将设置为：admin123`,
+    cancel: true,
+    persistent: true
+  }).onOk(async () => {
+    try {
+      // 批量重置密码
+      const promises = selectedUsers.value.map(user => 
+        userApi.resetPassword(user.id, 'admin123')
+      )
+      
+      await Promise.all(promises)
+      
+      $q.notify({
+        type: 'positive',
+        message: `成功重置 ${selectedUsers.value.length} 个用户的密码，新密码为：admin123`
+      })
+      
+      // 清空选择
+      selectedUsers.value = []
+      
+    } catch (error) {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || '批量重置失败'
       })
     }
   })

@@ -1,7 +1,5 @@
 <template>
-  <q-page class="q-pa-md">
-    <div class="text-h4 q-mb-md">个人中心</div>
-
+  <q-page>
     <div class="row q-gutter-md">
       <!-- 个人信息卡片 -->
       <div class="col-12 col-md-4">
@@ -33,7 +31,7 @@
                     <q-icon name="phone" />
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label>{{ userInfo?.phone || '未设置' }}</q-item-label>
+                    <q-item-label>{{ userInfo?.mobile || '未设置' }}</q-item-label>
                   </q-item-section>
                 </q-item>
                 
@@ -51,7 +49,7 @@
                     <q-icon name="access_time" />
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label>{{ formatTime(userInfo?.createTime) }}</q-item-label>
+                    <q-item-label>{{ formatTime(userInfo?.createTime, 'YYYY-MM-DD HH:mm:ss') }}</q-item-label>
                     <q-item-label caption>注册时间</q-item-label>
                   </q-item-section>
                 </q-item>
@@ -93,7 +91,7 @@
               <div class="row q-gutter-md">
                 <div class="col-12 col-sm-6">
                   <q-input
-                    v-model="profileForm.phone"
+                    v-model="profileForm.mobile"
                     label="手机号"
                     outlined
                     dense
@@ -189,134 +187,112 @@
   </q-page>
 </template>
 
-<script>
-import { defineComponent, ref, computed, onMounted } from 'vue'
+<script setup>
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from 'src/stores/auth'
 import { api } from 'src/boot/axios'
 import { useQuasar } from 'quasar'
+import { formatTime } from 'src/utils/index'
 
-export default defineComponent({
-  name: 'ProfilePage',
+const $q = useQuasar()
+const authStore = useAuthStore()
 
-  setup() {
-    const $q = useQuasar()
-    const authStore = useAuthStore()
+const updating = ref(false)
+const changingPassword = ref(false)
 
-    const updating = ref(false)
-    const changingPassword = ref(false)
+const profileForm = ref({
+  nickname: '',
+  email: '',
+  mobile: '',
+  gender: 0,
+  remark: ''
+})
 
-    const profileForm = ref({
-      nickname: '',
-      email: '',
-      phone: '',
-      gender: 0,
-      remark: ''
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const userInfo = computed(() => authStore.userInfo)
+
+const genderOptions = [
+  { label: '未知', value: 0 },
+  { label: '男', value: 1 },
+  { label: '女', value: 2 }
+]
+
+const getGenderText = (gender) => {
+  const genderMap = { 0: '未知', 1: '男', 2: '女' }
+  return genderMap[gender] || '未知'
+}
+
+const loadUserInfo = () => {
+  if (userInfo.value) {
+    profileForm.value = {
+      nickname: userInfo.value.nickname || '',
+      email: userInfo.value.email || '',
+      mobile: userInfo.value.mobile || '',
+      gender: userInfo.value.gender || 0,
+      remark: userInfo.value.remark || ''
+    }
+  }
+}
+
+const updateProfile = async () => {
+  updating.value = true
+  
+  try {
+    await api.put('/auth/profile', profileForm.value)
+    
+    // 更新本地用户信息
+    await authStore.getUserInfo()
+    
+    $q.notify({
+      type: 'positive',
+      message: '个人信息更新成功'
     })
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.message || '更新失败'
+    })
+  } finally {
+    updating.value = false
+  }
+}
 
-    const passwordForm = ref({
+const changePassword = async () => {
+  changingPassword.value = true
+  
+  try {
+    await authStore.changePassword({
+      oldPassword: passwordForm.value.oldPassword,
+      newPassword: passwordForm.value.newPassword
+    })
+    
+    $q.notify({
+      type: 'positive',
+      message: '密码修改成功'
+    })
+    
+    // 清空表单
+    passwordForm.value = {
       oldPassword: '',
       newPassword: '',
       confirmPassword: ''
+    }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.message || '密码修改失败'
     })
-
-    const userInfo = computed(() => authStore.userInfo)
-
-    const genderOptions = [
-      { label: '未知', value: 0 },
-      { label: '男', value: 1 },
-      { label: '女', value: 2 }
-    ]
-
-    const getGenderText = (gender) => {
-      const genderMap = { 0: '未知', 1: '男', 2: '女' }
-      return genderMap[gender] || '未知'
-    }
-
-    const formatTime = (time) => {
-      return time ? new Date(time).toLocaleString() : '未知'
-    }
-
-    const loadUserInfo = () => {
-      if (userInfo.value) {
-        profileForm.value = {
-          nickname: userInfo.value.nickname || '',
-          email: userInfo.value.email || '',
-          phone: userInfo.value.phone || '',
-          gender: userInfo.value.gender || 0,
-          remark: userInfo.value.remark || ''
-        }
-      }
-    }
-
-    const updateProfile = async () => {
-      updating.value = true
-      
-      try {
-        await api.put('/auth/profile', profileForm.value)
-        
-        // 更新本地用户信息
-        await authStore.getUserInfo()
-        
-        $q.notify({
-          type: 'positive',
-          message: '个人信息更新成功'
-        })
-      } catch (error) {
-        $q.notify({
-          type: 'negative',
-          message: error.response?.data?.message || '更新失败'
-        })
-      } finally {
-        updating.value = false
-      }
-    }
-
-    const changePassword = async () => {
-      changingPassword.value = true
-      
-      try {
-        await authStore.changePassword({
-          oldPassword: passwordForm.value.oldPassword,
-          newPassword: passwordForm.value.newPassword
-        })
-        
-        $q.notify({
-          type: 'positive',
-          message: '密码修改成功'
-        })
-        
-        // 清空表单
-        passwordForm.value = {
-          oldPassword: '',
-          newPassword: '',
-          confirmPassword: ''
-        }
-      } catch (error) {
-        $q.notify({
-          type: 'negative',
-          message: error.response?.data?.message || '密码修改失败'
-        })
-      } finally {
-        changingPassword.value = false
-      }
-    }
-
-    onMounted(() => {
-      loadUserInfo()
-    })
-
-    return {
-      updating,
-      changingPassword,
-      profileForm,
-      passwordForm,
-      userInfo,
-      genderOptions,
-      getGenderText,
-      formatTime,
-      updateProfile,
-      changePassword
-    }
+  } finally {
+    changingPassword.value = false
   }
+}
+
+onMounted(() => {
+  loadUserInfo()
 })
 </script>

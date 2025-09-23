@@ -161,7 +161,31 @@ export const useAuthStore = defineStore("auth", {
         console.log("📥 getUserInfo API响应:", response);
         console.log("📥 响应数据结构:", response.data);
 
-        const { userInfo, permissions, roles } = response.data.data;
+        // 后端返回的是UserInfoVO对象，直接包含用户信息字段
+        const responseData = response.data.data;
+        console.log("🔍 检查实际数据结构的所有键:", Object.keys(responseData));
+        console.log("🔍 完整的响应数据:", responseData);
+        
+        // 从UserInfoVO中提取数据
+        const { roles, permissions, menus, ...userBasicInfo } = responseData;
+        
+        // 构建用户基本信息对象（不包含roles, permissions, menus）
+        const userInfo = {
+          userId: responseData.userId,
+          username: responseData.username,
+          nickname: responseData.nickname,
+          avatar: responseData.avatar,
+          email: responseData.email,
+          mobile: responseData.mobile,
+          gender: responseData.gender,
+          lastLoginTime: responseData.lastLoginTime,
+          lastLoginIp: responseData.lastLoginIp,
+          createTime: responseData.createTime,
+          deptId: responseData.deptId,
+          deptName: responseData.deptName,
+          roles: responseData.roles
+        };
+        
         console.log("📝 解构后的数据:");
         console.log("  - userInfo:", userInfo);
         console.log("  - permissions:", permissions);
