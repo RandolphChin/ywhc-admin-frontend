@@ -85,138 +85,118 @@
   </div>
 </template>
 
-<script>
-import { defineComponent, ref } from 'vue'
+<script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from 'src/stores/auth'
 import { useQuasar } from 'quasar'
 import { initDynamicRoutes } from 'src/router/dynamicRoutes'
 import SlideCaptcha from 'src/components/SlideCaptcha.vue'
 
-export default defineComponent({
-  name: 'LoginPage',
+const $q = useQuasar()
+const router = useRouter()
+const authStore = useAuthStore()
+
+const loading = ref(false)
+const loginForm = ref({
+  username: 'admin',
+  password: 'admin123',
+  rememberMe: false
+})
+
+// 验证码相关
+const captchaVerified = ref(false)
+const captchaToken = ref('')
+
+const handleLogin = async () => {
+  // 检查验证码是否通过
+  if (!captchaVerified.value) {
+    $q.notify({
+      type: 'warning',
+      message: '请先完成滑块验证',
+      position: 'top-right'
+    })
+    return
+  }
   
-  components: {
-    SlideCaptcha
-  },
-
-  setup() {
-    const $q = useQuasar()
-    const router = useRouter()
-    const authStore = useAuthStore()
-
-    const loading = ref(false)
-    const loginForm = ref({
-      username: 'admin',
-      password: 'admin123',
-      rememberMe: false
+  loading.value = true
+  
+  try {
+    // 将验证码token添加到登录请求中
+    const loginData = {
+      ...loginForm.value,
+      captchaToken: captchaToken.value
+    }
+    await authStore.login(loginData)
+    
+    $q.notify({
+      type: 'positive',
+      message: '登录成功',
+      position: 'top-right'
     })
     
-    // 验证码相关
-    const captchaVerified = ref(false)
-    const captchaToken = ref('')
-
-    const handleLogin = async () => {
-      // 检查验证码是否通过
-      if (!captchaVerified.value) {
-        $q.notify({
-          type: 'warning',
-          message: '请先完成滑块验证',
-          position: 'top-right'
-        })
-        return
-      }
-      
-      loading.value = true
-      
+    // 获取重定向URL，如果存在则跳转到原页面，否则跳转到首页
+    const redirectUrl = authStore.getAndClearRedirectUrl()
+    console.log('🔄 登录成功，重定向URL:', redirectUrl)
+    
+    if (redirectUrl) {
+      console.log('🎯 准备跳转到重定向URL:', redirectUrl)
       try {
-        // 将验证码token添加到登录请求中
-        const loginData = {
-          ...loginForm.value,
-          captchaToken: captchaToken.value
-        }
-        await authStore.login(loginData)
-        
-        $q.notify({
-          type: 'positive',
-          message: '登录成功',
-          position: 'top-right'
-        })
-        
-        // 获取重定向URL，如果存在则跳转到原页面，否则跳转到首页
-        const redirectUrl = authStore.getAndClearRedirectUrl()
-        console.log('🔄 登录成功，重定向URL:', redirectUrl)
-        
-        if (redirectUrl) {
-          console.log('🎯 准备跳转到重定向URL:', redirectUrl)
-          try {
-            // 手动初始化动态路由
-            console.log('🛣️ 手动初始化动态路由...')
-            const routeSuccess = await initDynamicRoutes(router, false)
-            if (routeSuccess) {
-              authStore.routesLoaded = true
-              console.log('✅ 动态路由初始化完成，准备跳转')
-              // 现在可以安全地跳转到目标路由
-              router.push(redirectUrl).catch(err => {
-                console.warn('重定向失败，跳转到首页:', err)
-                router.push('/')
-              })
-            } else {
-              router.push('/')
-            }
-          } catch (error) {
-            console.error('动态路由初始化出错:', error)
+        // 手动初始化动态路由
+        console.log('🛣️ 手动初始化动态路由...')
+        const routeSuccess = await initDynamicRoutes(router, false)
+        if (routeSuccess) {
+          authStore.routesLoaded = true
+          console.log('✅ 动态路由初始化完成，准备跳转')
+          // 现在可以安全地跳转到目标路由
+          router.push(redirectUrl).catch(err => {
+            console.warn('重定向失败，跳转到首页:', err)
             router.push('/')
-          }
+          })
         } else {
           router.push('/')
         }
       } catch (error) {
-        $q.notify({
-          type: 'negative',
-          message: error.response?.data?.message || '登录失败',
-          position: 'top-right'
-        })
-      } finally {
-        loading.value = false
+        console.error('动态路由初始化出错:', error)
+        router.push('/')
       }
+    } else {
+      router.push('/')
     }
-    
-    // 验证码成功回调
-    const onCaptchaSuccess = (data) => {
-      captchaVerified.value = true
-      captchaToken.value = data.token
-      $q.notify({
-        type: 'positive',
-        message: '验证码验证成功',
-        position: 'top-right'
-      })
-    }
-    
-    // 验证码失败回调
-    const onCaptchaError = (message) => {
-      captchaVerified.value = false
-      captchaToken.value = ''
-      console.warn('验证码验证失败:', message)
-    }
-    
-    // 验证码刷新回调
-    const onCaptchaRefresh = () => {
-      captchaVerified.value = false
-      captchaToken.value = ''
-    }
-
-    return {
-      loading,
-      loginForm,
-      captchaVerified,
-      handleLogin,
-      onCaptchaSuccess,
-      onCaptchaError,
-      onCaptchaRefresh
-    }
+  } catch (error) {
+    $q.notify({
+      type: 'negative',
+      message: error.response?.data?.message || '登录失败',
+      position: 'top-right'
+    })
+  } finally {
+    loading.value = false
   }
-})
+}
+
+// 验证码成功回调
+const onCaptchaSuccess = (data) => {
+  captchaVerified.value = true
+  captchaToken.value = data.token
+  $q.notify({
+    type: 'positive',
+    message: '验证码验证成功',
+    position: 'top-right'
+  })
+}
+
+// 验证码失败回调
+const onCaptchaError = (message) => {
+  captchaVerified.value = false
+  captchaToken.value = ''
+  console.warn('验证码验证失败:', message)
+}
+
+// 验证码刷新回调
+const onCaptchaRefresh = () => {
+  captchaVerified.value = false
+  captchaToken.value = ''
+}
 </script>
 
 <style lang="scss" scoped>

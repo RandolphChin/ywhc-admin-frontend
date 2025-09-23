@@ -202,13 +202,6 @@ api.interceptors.response.use(
                 }
               }
             } else {
-              // 显示认证失败提示
-              Notify.create({
-                type: 'negative',
-                message: 'Token已失效，请重新登录',
-                position: 'top-right'
-              })
-
               // 保存当前路由并跳转到登录页
               const currentRoute = routerInstance?.currentRoute.value.fullPath
               if (currentRoute && currentRoute !== '/login' && currentRoute !== '/') {

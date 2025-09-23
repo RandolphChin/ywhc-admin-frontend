@@ -74,7 +74,7 @@
 
     <!-- 右键菜单 -->
     <q-menu v-model="contextMenuVisible" :target="contextMenuTarget" anchor="bottom left" self="top left"
-      :offset="[0, 5]">
+      :offset="[0, 5]" v-if="contextMenuTarget">
       <q-list dense style="min-width: 80px">
         <q-item clickable v-close-popup @click="refreshTab">
           <q-item-section>刷新</q-item-section>
@@ -199,436 +199,398 @@
   </q-layout>
 </template>
 
-<script>
-import { defineComponent, ref, computed, onMounted, watch } from "vue";
+<script setup>
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "src/stores/auth";
 import { useQuasar } from "quasar";
 import { resetDynamicRoutes } from "src/router/dynamicRoutes";
 
-export default defineComponent({
-  name: "MainLayout",
+const $q = useQuasar();
+const router = useRouter();
+const route = useRoute();
+const authStore = useAuthStore();
 
-  setup() {
-    const $q = useQuasar();
-    const router = useRouter();
-    const route = useRoute();
-    const authStore = useAuthStore();
+const leftDrawerOpen = ref(false);
+const passwordDialog = ref(false);
+const passwordForm = ref({
+  oldPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+});
 
-    const leftDrawerOpen = ref(false);
-    const passwordDialog = ref(false);
-    const passwordForm = ref({
-      oldPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+// 菜单展开状态管理
+const expandedMenus = ref(new Set());
 
-    // 菜单展开状态管理
-    const expandedMenus = ref(new Set());
-
-    // 标签页管理
-    const openTabs = ref([
-      {
-        path: "/dashboard",
-        title: "Dashboard",
-        icon: "dashboard",
-      },
-    ]);
-    const activeTab = ref("/dashboard");
-
-    // 右键菜单
-    const contextMenuVisible = ref(false);
-    const contextTab = ref(null);
-    const contextMenuTarget = ref(null);
-
-    // 面包屑导航
-    const breadcrumbs = ref([]);
-
-    // 计算属性
-    const userInfo = computed(() => authStore.userInfo);
-    const menuList = computed(() => authStore.menus || []);
-
-    // 初始化菜单展开状态
-    const initExpandedMenus = (menus) => {
-      if (!menus || menus.length === 0) return;
-
-      const currentPath = route.path;
-      menus.forEach((menu) => {
-        if (menu.children && menu.children.length > 0) {
-          // 检查当前路由是否在这个菜单的子菜单中
-          const hasActiveChild = menu.children.some((child) =>
-            currentPath.startsWith(child.path)
-          );
-          if (hasActiveChild) {
-            expandedMenus.value.add(menu.id);
-          }
-        }
-      });
-    };
-
-    // 更新菜单展开状态
-    const updateExpandedMenus = (currentPath) => {
-      const menus = authStore.menus || [];
-      menus.forEach((menu) => {
-        if (menu.children && menu.children.length > 0) {
-          const hasActiveChild = menu.children.some((child) =>
-            currentPath.startsWith(child.path)
-          );
-          if (hasActiveChild) {
-            expandedMenus.value.add(menu.id);
-          }
-        }
-      });
-    };
-
-    // 检查菜单是否激活
-    const isMenuActive = (menu) => {
-      if (menu.children && menu.children.length > 0) {
-        return menu.children.some((child) => route.path.startsWith(child.path));
-      }
-      return route.path === menu.path;
-    };
-
-    // 检查菜单是否应该展开
-    const isMenuExpanded = (menu) => {
-      return expandedMenus.value.has(menu.id);
-    };
-
-    // 处理菜单展开/折叠事件
-    const onMenuToggle = (menu, expanded) => {
-      if (expanded) {
-        expandedMenus.value.add(menu.id);
-      } else {
-        expandedMenus.value.delete(menu.id);
-      }
-    };
-
-    // 更新面包屑导航
-    const updateBreadcrumbs = (currentPath) => {
-      breadcrumbs.value = [];
-
-      if (currentPath === "/dashboard") return;
-
-      const findBreadcrumbPath = (menus, targetPath, path = []) => {
-        for (const menu of menus) {
-          const currentPath = [
-            ...path,
-            { label: menu.menuName, icon: menu.icon, to: { path: menu.path } },
-          ];
-
-          if (menu.path === targetPath) {
-            return currentPath;
-          }
-
-          if (menu.children) {
-            const found = findBreadcrumbPath(
-              menu.children,
-              targetPath,
-              currentPath
-            );
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-
-      const breadcrumbPath = findBreadcrumbPath(
-        authStore.menus || [],
-        currentPath
-      );
-      if (breadcrumbPath) {
-        breadcrumbs.value = breadcrumbPath;
-      }
-    };
-
-    // 标签页管理方法
-    const addTab = (path) => {
-      // 如果标签页已存在，直接切换
-      const existingTab = openTabs.value.find((tab) => tab.path === path);
-      if (existingTab) {
-        activeTab.value = path;
-        return;
-      }
-
-      // 根据路径获取页面信息
-      const pageInfo = getPageInfo(path);
-      if (pageInfo) {
-        openTabs.value.push({
-          path: path,
-          title: pageInfo.title,
-          icon: pageInfo.icon,
-        });
-        activeTab.value = path;
-      }
-    };
-
-    const getPageInfo = (path) => {
-      // 从菜单中查找页面信息
-      const findInMenus = (menus, targetPath) => {
-        for (const menu of menus) {
-          if (menu.path === targetPath) {
-            return { title: menu.menuName, icon: menu.icon };
-          }
-          if (menu.children) {
-            const found = findInMenus(menu.children, targetPath);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-
-      const menuInfo = findInMenus(authStore.menus || [], path);
-      if (menuInfo) return menuInfo;
-
-      // 默认页面信息
-      const defaultPages = {
-        "/dashboard": { title: "Dashboard", icon: "dashboard" },
-        "/profile": { title: "个人中心", icon: "person" },
-      };
-
-      return defaultPages[path] || { title: "未知页面", icon: "help" };
-    };
-
-    // 监听菜单数据变化
-    watch(
-      () => authStore.menus,
-      (newMenus) => {
-        console.log("📋 MainLayout - 菜单数据已更新:", newMenus);
-        console.log("📋 MainLayout - 菜单数组长度:", newMenus?.length || 0);
-        if (newMenus?.length > 0) {
-          console.log("📋 MainLayout - 第一个菜单项:", newMenus[0]);
-          // 初始化展开状态，如果当前路由在某个菜单下，自动展开该菜单
-          initExpandedMenus(newMenus);
-        }
-      },
-      { immediate: true }
-    );
-
-    // 监听路由变化，更新菜单展开状态、面包屑和标签页
-    watch(
-      () => route.path,
-      (newPath) => {
-        console.log("🚦 路由变化:", newPath);
-        updateExpandedMenus(newPath);
-        updateBreadcrumbs(newPath);
-
-        // 更新活动标签页
-        activeTab.value = newPath;
-
-        // 如果是通过直接访问URL进入的页面，确保标签页存在
-        if (!openTabs.value.find((tab) => tab.path === newPath)) {
-          addTab(newPath);
-        }
-      },
-      { immediate: true }
-    );
-
-    // 方法
-    const toggleLeftDrawer = () => {
-      leftDrawerOpen.value = !leftDrawerOpen.value;
-    };
-
-    const navigateTo = (path) => {
-      addTab(path);
-      router.push(path);
-    };
-
-    const switchTab = (path) => {
-      activeTab.value = path;
-      router.push(path);
-    };
-
-    const closeTab = (path) => {
-      if (path === "/dashboard") return; // Dashboard 不可关闭
-
-      const index = openTabs.value.findIndex((tab) => tab.path === path);
-      if (index === -1) return;
-
-      openTabs.value.splice(index, 1);
-
-      // 如果关闭的是当前活动标签页，切换到其他标签页
-      if (activeTab.value === path) {
-        const newActiveTab = openTabs.value[Math.max(0, index - 1)];
-        switchTab(newActiveTab.path);
-      }
-    };
-
-    const showContextMenu = (event, tab) => {
-      event.preventDefault();
-      contextTab.value = tab;
-      contextMenuTarget.value = event.target;
-      contextMenuVisible.value = true;
-    };
-
-    const refreshTab = () => {
-      if (contextTab.value) {
-        // 强制刷新当前页面
-        const currentPath = contextTab.value.path;
-        router.replace("/").then(() => {
-          router.replace(currentPath);
-        });
-      }
-    };
-
-    const closeOtherTabs = () => {
-      if (!contextTab.value) return;
-
-      const keepTab = contextTab.value;
-      openTabs.value = openTabs.value.filter(
-        (tab) => tab.path === "/dashboard" || tab.path === keepTab.path
-      );
-
-      if (
-        activeTab.value !== keepTab.path &&
-        activeTab.value !== "/dashboard"
-      ) {
-        switchTab(keepTab.path);
-      }
-    };
-
-    const closeAllTabs = () => {
-      openTabs.value = openTabs.value.filter(
-        (tab) => tab.path === "/dashboard"
-      );
-      if (activeTab.value !== "/dashboard") {
-        switchTab("/dashboard");
-      }
-    };
-
-    const goToProfile = () => {
-      router.push("/profile");
-    };
-
-    const changePassword = () => {
-      passwordDialog.value = true;
-      passwordForm.value = {
-        oldPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      };
-    };
-
-    const submitPasswordChange = async () => {
-      try {
-        await authStore.changePassword({
-          oldPassword: passwordForm.value.oldPassword,
-          newPassword: passwordForm.value.newPassword,
-        });
-
-        $q.notify({
-          type: "positive",
-          message: "密码修改成功",
-        });
-
-        passwordDialog.value = false;
-      } catch (error) {
-        $q.notify({
-          type: "negative",
-          message: error.message || "密码修改失败",
-        });
-      }
-    };
-
-    const logout = async () => {
-      $q.dialog({
-        title: "确认",
-        message: "确定要退出登录吗？",
-        cancel: true,
-        persistent: true,
-      }).onOk(async () => {
-        try {
-          await authStore.logout();
-          // 清除动态路由
-          resetDynamicRoutes(router);
-          router.push("/login");
-        } catch (error) {
-          console.error("退出登录失败:", error);
-          // 清除动态路由
-          resetDynamicRoutes(router);
-          router.push("/login");
-        }
-      });
-    };
-
-    const loadUserData = async () => {
-      try {
-        console.log("🔄 MainLayout - 开始加载用户数据");
-        console.log("🔄 MainLayout - 当前token:", !!authStore.token);
-        console.log(
-          "🔄 MainLayout - 当前用户信息:", authStore.userInfo
-        );
-        console.log(
-          "🔄 MainLayout - 当前菜单数量:",
-          authStore.menus?.length || 0
-        );
-
-        if (authStore.token) {
-          // 如果没有用户信息，先获取用户信息
-          if (!authStore.userInfo) {
-            console.log("📝 MainLayout - 用户信息为空，开始获取用户信息");
-            await authStore.getUserInfo();
-            console.log("📝 MainLayout - 获取用户信息完成，当前userInfo:", authStore.userInfo);
-          } else {
-            console.log("📝 MainLayout - 用户信息已存在，跳过获取");
-          }
-
-          // 如果没有菜单数据，获取菜单
-          if (!authStore.menus?.length) {
-            console.log("📋 MainLayout - 获取用户菜单");
-            await authStore.getUserMenus();
-          }
-
-          console.log("✅ MainLayout - 用户数据加载完成");
-          console.log("✅ MainLayout - 最终userInfo:", authStore.userInfo);
-        } else {
-          console.log("ℹ️ MainLayout - 跳过数据加载，无token");
-        }
-      } catch (error) {
-        console.error("❌ MainLayout - 加载用户数据失败:", error);
-      }
-    };
-
-    onMounted(() => {
-      console.log("🚀 MainLayout - 组件已挂载");
-      console.log("🚀 MainLayout - 用户信息:", userInfo.value);
-      console.log("🚀 MainLayout - 菜单列表:", menuList.value);
-      loadUserData();
-    });
-
-    return {
-      leftDrawerOpen,
-      passwordDialog,
-      passwordForm,
-      userInfo,
-      menuList,
-      expandedMenus,
-      // 标签页相关
-      openTabs,
-      activeTab,
-      contextMenuVisible,
-      contextTab,
-      contextMenuTarget,
-      breadcrumbs,
-      // 方法
-      toggleLeftDrawer,
-      navigateTo,
-      goToProfile,
-      changePassword,
-      submitPasswordChange,
-      logout,
-      isMenuActive,
-      isMenuExpanded,
-      onMenuToggle,
-      // 标签页方法
-      addTab,
-      switchTab,
-      closeTab,
-      showContextMenu,
-      refreshTab,
-      closeOtherTabs,
-      closeAllTabs,
-    };
+// 标签页管理
+const openTabs = ref([
+  {
+    path: "/dashboard",
+    title: "Dashboard",
+    icon: "dashboard",
   },
+]);
+const activeTab = ref("/dashboard");
+
+// 右键菜单
+const contextMenuVisible = ref(false);
+const contextTab = ref(null);
+const contextMenuTarget = ref(null);
+
+// 面包屑导航
+const breadcrumbs = ref([]);
+
+// 计算属性
+const userInfo = computed(() => authStore.userInfo);
+const menuList = computed(() => authStore.menus || []);
+
+// 初始化菜单展开状态
+const initExpandedMenus = (menus) => {
+  if (!menus || menus.length === 0) return;
+
+  const currentPath = route.path;
+  menus.forEach((menu) => {
+    if (menu.children && menu.children.length > 0) {
+      // 检查当前路由是否在这个菜单的子菜单中
+      const hasActiveChild = menu.children.some((child) =>
+        currentPath.startsWith(child.path)
+      );
+      if (hasActiveChild) {
+        expandedMenus.value.add(menu.id);
+      }
+    }
+  });
+};
+
+// 更新菜单展开状态
+const updateExpandedMenus = (currentPath) => {
+  const menus = authStore.menus || [];
+  menus.forEach((menu) => {
+    if (menu.children && menu.children.length > 0) {
+      const hasActiveChild = menu.children.some((child) =>
+        currentPath.startsWith(child.path)
+      );
+      if (hasActiveChild) {
+        expandedMenus.value.add(menu.id);
+      }
+    }
+  });
+};
+
+// 检查菜单是否激活
+const isMenuActive = (menu) => {
+  if (menu.children && menu.children.length > 0) {
+    return menu.children.some((child) => route.path.startsWith(child.path));
+  }
+  return route.path === menu.path;
+};
+
+// 检查菜单是否应该展开
+const isMenuExpanded = (menu) => {
+  return expandedMenus.value.has(menu.id);
+};
+
+// 处理菜单展开/折叠事件
+const onMenuToggle = (menu, expanded) => {
+  if (expanded) {
+    expandedMenus.value.add(menu.id);
+  } else {
+    expandedMenus.value.delete(menu.id);
+  }
+};
+
+// 更新面包屑导航
+const updateBreadcrumbs = (currentPath) => {
+  breadcrumbs.value = [];
+
+  if (currentPath === "/dashboard") return;
+
+  const findBreadcrumbPath = (menus, targetPath, path = []) => {
+    for (const menu of menus) {
+      const currentPath = [
+        ...path,
+        { label: menu.menuName, icon: menu.icon, to: { path: menu.path } },
+      ];
+
+      if (menu.path === targetPath) {
+        return currentPath;
+      }
+
+      if (menu.children) {
+        const found = findBreadcrumbPath(
+          menu.children,
+          targetPath,
+          currentPath
+        );
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const breadcrumbPath = findBreadcrumbPath(
+    authStore.menus || [],
+    currentPath
+  );
+  if (breadcrumbPath) {
+    breadcrumbs.value = breadcrumbPath;
+  }
+};
+
+// 标签页管理方法
+const addTab = (path) => {
+  // 如果标签页已存在，直接切换
+  const existingTab = openTabs.value.find((tab) => tab.path === path);
+  if (existingTab) {
+    activeTab.value = path;
+    return;
+  }
+
+  // 根据路径获取页面信息
+  const pageInfo = getPageInfo(path);
+  if (pageInfo) {
+    openTabs.value.push({
+      path: path,
+      title: pageInfo.title,
+      icon: pageInfo.icon,
+    });
+    activeTab.value = path;
+  }
+};
+
+const getPageInfo = (path) => {
+  // 从菜单中查找页面信息
+  const findInMenus = (menus, targetPath) => {
+    for (const menu of menus) {
+      if (menu.path === targetPath) {
+        return { title: menu.menuName, icon: menu.icon };
+      }
+      if (menu.children) {
+        const found = findInMenus(menu.children, targetPath);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const menuInfo = findInMenus(authStore.menus || [], path);
+  if (menuInfo) return menuInfo;
+
+  // 默认页面信息
+  const defaultPages = {
+    "/dashboard": { title: "Dashboard", icon: "dashboard" },
+    "/profile": { title: "个人中心", icon: "person" },
+  };
+
+  return defaultPages[path] || { title: "未知页面", icon: "help" };
+};
+
+// 监听菜单数据变化
+watch(
+  () => authStore.menus,
+  (newMenus) => {
+    console.log("📋 MainLayout - 菜单数据已更新:", newMenus);
+    console.log("📋 MainLayout - 菜单数组长度:", newMenus?.length || 0);
+    if (newMenus?.length > 0) {
+      console.log("📋 MainLayout - 第一个菜单项:", newMenus[0]);
+      // 初始化展开状态，如果当前路由在某个菜单下，自动展开该菜单
+      initExpandedMenus(newMenus);
+    }
+  },
+  { immediate: true }
+);
+
+// 监听路由变化，更新菜单展开状态、面包屑和标签页
+watch(
+  () => route.path,
+  (newPath) => {
+    console.log("🚦 路由变化:", newPath);
+    updateExpandedMenus(newPath);
+    updateBreadcrumbs(newPath);
+
+    // 更新活动标签页
+    activeTab.value = newPath;
+
+    // 如果是通过直接访问URL进入的页面，确保标签页存在
+    if (!openTabs.value.find((tab) => tab.path === newPath)) {
+      addTab(newPath);
+    }
+  },
+  { immediate: true }
+);
+
+// 方法
+const toggleLeftDrawer = () => {
+  leftDrawerOpen.value = !leftDrawerOpen.value;
+};
+
+const navigateTo = (path) => {
+  addTab(path);
+  router.push(path);
+};
+
+const switchTab = (path) => {
+  activeTab.value = path;
+  router.push(path);
+};
+
+const closeTab = (path) => {
+  if (path === "/dashboard") return; // Dashboard 不可关闭
+
+  const index = openTabs.value.findIndex((tab) => tab.path === path);
+  if (index === -1) return;
+
+  openTabs.value.splice(index, 1);
+
+  // 如果关闭的是当前活动标签页，切换到其他标签页
+  if (activeTab.value === path) {
+    const newActiveTab = openTabs.value[Math.max(0, index - 1)];
+    switchTab(newActiveTab.path);
+  }
+};
+
+const showContextMenu = (event, tab) => {
+  event.preventDefault();
+  if (event.target) {
+    contextTab.value = tab;
+    contextMenuTarget.value = event.target;
+    contextMenuVisible.value = true;
+  }
+};
+
+const refreshTab = () => {
+  if (contextTab.value) {
+    // 强制刷新当前页面
+    const currentPath = contextTab.value.path;
+    router.replace("/").then(() => {
+      router.replace(currentPath);
+    });
+  }
+};
+
+const closeOtherTabs = () => {
+  if (!contextTab.value) return;
+
+  const keepTab = contextTab.value;
+  openTabs.value = openTabs.value.filter(
+    (tab) => tab.path === "/dashboard" || tab.path === keepTab.path
+  );
+
+  if (
+    activeTab.value !== keepTab.path &&
+    activeTab.value !== "/dashboard"
+  ) {
+    switchTab(keepTab.path);
+  }
+};
+
+const closeAllTabs = () => {
+  openTabs.value = openTabs.value.filter(
+    (tab) => tab.path === "/dashboard"
+  );
+  if (activeTab.value !== "/dashboard") {
+    switchTab("/dashboard");
+  }
+};
+
+const goToProfile = () => {
+  router.push("/profile");
+};
+
+const changePassword = () => {
+  passwordDialog.value = true;
+  passwordForm.value = {
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  };
+};
+
+const submitPasswordChange = async () => {
+  try {
+    await authStore.changePassword({
+      oldPassword: passwordForm.value.oldPassword,
+      newPassword: passwordForm.value.newPassword,
+    });
+
+    $q.notify({
+      type: "positive",
+      message: "密码修改成功",
+    });
+
+    passwordDialog.value = false;
+  } catch (error) {
+    $q.notify({
+      type: "negative",
+      message: error.message || "密码修改失败",
+    });
+  }
+};
+
+const logout = async () => {
+  $q.dialog({
+    title: "确认",
+    message: "确定要退出登录吗？",
+    cancel: true,
+    persistent: true,
+  }).onOk(async () => {
+    try {
+      await authStore.logout();
+      // 清除动态路由
+      resetDynamicRoutes(router);
+      router.push("/login");
+    } catch (error) {
+      console.error("退出登录失败:", error);
+      // 清除动态路由
+      resetDynamicRoutes(router);
+      router.push("/login");
+    }
+  });
+};
+
+const loadUserData = async () => {
+  try {
+    console.log("🔄 MainLayout - 开始加载用户数据");
+    console.log("🔄 MainLayout - 当前token:", !!authStore.token);
+    console.log(
+      "🔄 MainLayout - 当前用户信息:", authStore.userInfo
+    );
+    console.log(
+      "🔄 MainLayout - 当前菜单数量:",
+      authStore.menus?.length || 0
+    );
+
+    if (authStore.token) {
+      // 如果没有用户信息，先获取用户信息
+      if (!authStore.userInfo) {
+        console.log("📝 MainLayout - 用户信息为空，开始获取用户信息");
+        await authStore.getUserInfo();
+        console.log("📝 MainLayout - 获取用户信息完成，当前userInfo:", authStore.userInfo);
+      } else {
+        console.log("📝 MainLayout - 用户信息已存在，跳过获取");
+      }
+
+      // 如果没有菜单数据，获取菜单
+      if (!authStore.menus?.length) {
+        console.log("📋 MainLayout - 获取用户菜单");
+        await authStore.getUserMenus();
+      }
+
+      console.log("✅ MainLayout - 用户数据加载完成");
+      console.log("✅ MainLayout - 最终userInfo:", authStore.userInfo);
+    } else {
+      console.log("ℹ️ MainLayout - 跳过数据加载，无token");
+    }
+  } catch (error) {
+    console.error("❌ MainLayout - 加载用户数据失败:", error);
+  }
+};
+
+onMounted(() => {
+  console.log("🚀 MainLayout - 组件已挂载");
+  console.log("🚀 MainLayout - 用户信息:", userInfo.value);
+  console.log("🚀 MainLayout - 菜单列表:", menuList.value);
+  loadUserData();
 });
 </script>
 
