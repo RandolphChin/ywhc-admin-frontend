@@ -7,7 +7,7 @@
       <div class="shape shape-3"></div>
       <div class="shape shape-4"></div>
     </div>
-    
+
     <!-- 主要内容 -->
     <div class="login-content">
       <!-- 登录卡片 -->
@@ -22,13 +22,8 @@
         <q-card-section class="login-form-section">
           <q-form @submit="handleLogin" class="q-gutter-md">
             <div class="input-group">
-              <q-input
-                v-model="loginForm.username"
-                placeholder="用户名"
-                :rules="[val => !!val || '请输入用户名']"
-                outlined
-                class="modern-input"
-              >
+              <q-input v-model="loginForm.username" placeholder="用户名" :rules="[val => !!val || '请输入用户名']" outlined
+                class="modern-input">
                 <template v-slot:prepend>
                   <q-icon name="person" class="input-icon" />
                 </template>
@@ -36,31 +31,26 @@
             </div>
 
             <div class="input-group" style="margin-bottom: 2px;">
-              <q-input
-                v-model="loginForm.password"
-                type="password"
-                placeholder="密码"
-                :rules="[val => !!val || '请输入密码']"
-                outlined
-                class="modern-input"
-              >
+              <q-input v-model="loginForm.password" type="password" placeholder="密码" :rules="[val => !!val || '请输入密码']"
+                outlined class="modern-input">
                 <template v-slot:prepend>
                   <q-icon name="lock" class="input-icon" />
                 </template>
               </q-input>
             </div>
 
-            <!-- 滑块验证码 -->
+            <!-- 验证码按钮 -->
             <div class="input-group captcha-group">
-              <SlideCaptcha
-                @success="onCaptchaSuccess"
-                @error="onCaptchaError"
-                @refresh="onCaptchaRefresh"
-              />
+              <q-btn v-if="!captchaVerified" @click="showCaptchaDialog = true" class="captcha-btn full-width"
+                color="primary" label="点击按钮进行验证" icon="security" size="md" no-caps />
+              <div v-else class="captcha-success">
+                <q-icon name="check_circle" color="positive" size="sm" />
+                <span>验证码验证成功</span>
+              </div>
             </div>
 
             <!-- 加密状态提示 -->
-             <!-- 
+            <!-- 
             <div class="encryption-status" v-if="encryptionEnabled">
               <q-icon 
                 :name="publicKeyLoaded ? 'lock' : 'lock_open'" 
@@ -72,7 +62,7 @@
               </span>
             </div>
  -->
-<!-- 
+            <!-- 
             <div class="row items-center justify-between q-mt-md" >
               <q-checkbox
                 v-model="loginForm.rememberMe"
@@ -83,19 +73,26 @@
             </div>
              -->
             <div class="input-group" style="margin-top: 0px;">
-            <q-btn
-              type="submit"
-              class="login-btn full-width"
-              label="登录"
-              :loading="loading"
-              size="lg"
-              no-caps
-            />
+              <q-btn type="submit" class="login-btn full-width" label="登录" :loading="loading" size="lg" no-caps />
             </div>
           </q-form>
         </q-card-section>
       </q-card>
     </div>
+
+    <!-- 滑块验证码弹窗 -->
+    <q-dialog v-model="showCaptchaDialog" persistent>
+      <q-card class="captcha-dialog">
+        <q-card-section class="dialog-header">
+          <div class="text-h6">安全验证</div>
+          <q-btn flat round dense icon="close" @click="closeCaptchaDialog" />
+        </q-card-section>
+
+        <q-card-section class="dialog-content">
+          <SlideCaptcha @success="onCaptchaSuccess" @error="onCaptchaError" @refresh="onCaptchaRefresh" />
+        </q-card-section>
+      </q-card>
+    </q-dialog>
   </div>
 </template>
 
@@ -122,6 +119,7 @@ const loginForm = ref({
 // 验证码相关
 const captchaVerified = ref(false)
 const captchaToken = ref('')
+const showCaptchaDialog = ref(false)
 
 // 使用加密 composable
 const { encryptionEnabled, publicKeyLoaded } = useEncryption()
@@ -136,9 +134,9 @@ const handleLogin = async () => {
     })
     return
   }
-  
+
   loading.value = true
-  
+
   try {
     // 准备登录数据（加密逻辑已在 API 层处理）
     const loginData = {
@@ -147,17 +145,17 @@ const handleLogin = async () => {
     }
 
     await authStore.login(loginData)
-    
+
     $q.notify({
       type: 'positive',
       message: '登录成功',
       position: 'top-right'
     })
-    
+
     // 获取重定向URL，如果存在则跳转到原页面，否则跳转到首页
     const redirectUrl = authStore.getAndClearRedirectUrl()
     console.log('🔄 登录成功，重定向URL:', redirectUrl)
-    
+
     if (redirectUrl) {
       console.log('🎯 准备跳转到重定向URL:', redirectUrl)
       try {
@@ -197,11 +195,16 @@ const handleLogin = async () => {
 const onCaptchaSuccess = (data) => {
   captchaVerified.value = true
   captchaToken.value = data.token
-  $q.notify({
-    type: 'positive',
-    message: '验证码验证成功',
-    position: 'top-right'
-  })
+
+  // 延迟关闭弹窗，让用户看到成功状态
+  setTimeout(() => {
+    showCaptchaDialog.value = false
+    $q.notify({
+      type: 'positive',
+      message: '验证码验证成功',
+      position: 'top-right'
+    })
+  }, 1000)
 }
 
 // 验证码失败回调
@@ -215,6 +218,11 @@ const onCaptchaError = (message) => {
 const onCaptchaRefresh = () => {
   captchaVerified.value = false
   captchaToken.value = ''
+}
+
+// 关闭验证码弹窗
+const closeCaptchaDialog = () => {
+  showCaptchaDialog.value = false
 }
 
 
@@ -287,12 +295,16 @@ const onCaptchaRefresh = () => {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
+
   33% {
     transform: translateY(-30px) rotate(120deg);
   }
+
   66% {
     transform: translateY(30px) rotate(240deg);
   }
@@ -318,7 +330,7 @@ const onCaptchaRefresh = () => {
   font-size: 80px;
   margin-bottom: 20px;
   opacity: 0.9;
-  
+
   .q-icon {
     filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
   }
@@ -388,7 +400,7 @@ const onCaptchaRefresh = () => {
 
 .captcha-group {
   margin-bottom: 24px;
-  
+
   :deep(.slide-captcha-container) {
     max-width: 100%;
   }
@@ -401,24 +413,24 @@ const onCaptchaRefresh = () => {
     background: rgba(247, 250, 252, 0.8);
     border: 1px solid rgba(226, 232, 240, 0.8);
     transition: all 0.3s ease;
-    
+
     &:hover {
       border-color: #667eea;
       background: rgba(255, 255, 255, 0.9);
     }
   }
-  
+
   :deep(.q-field--focused .q-field__control) {
     border-color: #667eea;
     background: rgba(255, 255, 255, 0.95);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   }
-  
+
   :deep(.q-field__label) {
     color: #64748b;
     font-weight: 500;
   }
-  
+
   :deep(.q-field--focused .q-field__label) {
     color: #667eea;
   }
@@ -447,7 +459,7 @@ const onCaptchaRefresh = () => {
   font-size: 0.9rem;
   font-weight: 500;
   transition: color 0.3s ease;
-  
+
   &:hover {
     color: #5a67d8;
     text-decoration: underline;
@@ -465,16 +477,16 @@ const onCaptchaRefresh = () => {
   padding: 7px 0;
   transition: all 0.3s ease;
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-  
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
   }
-  
+
   &:active {
     transform: translateY(0);
   }
-  
+
   :deep(.q-btn__content) {
     color: white;
   }
@@ -491,12 +503,60 @@ const onCaptchaRefresh = () => {
   background: rgba(247, 250, 252, 0.8);
   border-radius: 8px;
   border: 1px solid rgba(226, 232, 240, 0.8);
-  
+
   .status-text {
     font-size: 0.85rem;
     color: #64748b;
     font-weight: 500;
   }
+}
+
+// 验证码按钮
+.captcha-btn {
+  border-radius: 12px;
+  font-weight: 500;
+  padding: 12px 0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+}
+
+.captcha-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(40, 167, 69, 0.1);
+  border: 2px solid rgba(40, 167, 69, 0.3);
+  border-radius: 12px;
+  color: #28a745;
+  font-weight: 500;
+}
+
+// 验证码弹窗
+.captcha-dialog {
+  min-width: 350px;
+  max-width: 400px;
+  width: 90vw;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.dialog-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.dialog-content {
+  padding: 20px;
 }
 
 // 响应式设计
@@ -505,15 +565,15 @@ const onCaptchaRefresh = () => {
     padding: 15px;
     max-width: 100%;
   }
-  
+
   .logo-icon {
     font-size: 60px;
   }
-  
+
   .system-title {
     font-size: 1.8rem;
   }
-  
+
   .login-form-section {
     padding: 30px 20px;
   }

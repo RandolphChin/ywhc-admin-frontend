@@ -14,4 +14,4 @@ export { deptApi } from "./system/dept/dept";
 export { onlineUserApi } from "./monitor/online/online";
 
 // 代码生成模块
-export { generatorApi } from "./generator/generator";
+export { generatorApi } from "./system/generator/generator";

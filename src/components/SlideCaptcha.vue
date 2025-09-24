@@ -24,8 +24,6 @@
             class="puzzle-image"
           />
         </div>
-        
-        
       </div>
       
       <!-- 滑动轨道 -->
@@ -74,13 +72,14 @@ import { api } from 'src/boot/axios'
 const emit = defineEmits(['success', 'error', 'refresh'])
 
 // 坐标系统修正常量 - 基于实际测试数据的系统性偏移
-const VISUAL_ALIGNMENT_OFFSET = -37 // 根据测试数据：完美视觉对齐比后端验证位置多37px
+const VISUAL_ALIGNMENT_OFFSET = 3 // 根据测试数据调整：143 + 40 = 183，所以偏移量应该是 +40，但考虑到视觉对齐，设为 +3
 
 // 响应式数据
 const captchaBg = ref(null)
 const puzzlePiece = ref(null)
 const slideTrack = ref(null)
 const slideButton = ref(null)
+
 
 const backgroundImage = ref('')
 const puzzleImage = ref('')
@@ -213,6 +212,8 @@ const stopDrag = async () => {
   await verifyCaptcha()
 }
 
+
+
 // 验证验证码
 const verifyCaptcha = async () => {
   try {
@@ -259,7 +260,7 @@ const refreshCaptcha = () => {
   emit('refresh')
 }
 
-// 组件挂载
+// 组件挂载时自动获取验证码
 onMounted(() => {
   getCaptcha()
 })
@@ -306,8 +307,8 @@ onUnmounted(() => {
 .puzzle-piece {
   position: absolute;
   z-index: 2;
-  width: 60px;
-  height: 60px;
+  width: 50px;
+  height: 50px;
   
   .puzzle-image {
     display: block;
@@ -431,6 +432,8 @@ onUnmounted(() => {
   }
 }
 
+
+
 // 响应式设计
 @media (max-width: 480px) {
   .slide-captcha-container {
@@ -449,5 +452,7 @@ onUnmounted(() => {
     width: 36px;
     height: 36px;
   }
+  
+
 }
 </style>
