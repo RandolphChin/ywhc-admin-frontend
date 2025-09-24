@@ -12,3 +12,6 @@ export { deptApi } from "./system/dept/dept";
 
 // 监控管理模块
 export { onlineUserApi } from "./monitor/online/online";
+
+// 代码生成模块
+export { generatorApi } from "./generator/generator";

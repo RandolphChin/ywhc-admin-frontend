@@ -115,6 +115,11 @@ api.interceptors.response.use(
     (response) => {
       Loading.hide()
       
+      // 如果是blob响应或者标记跳过拦截器，直接返回
+      if (response.config.responseType === 'blob' || response.config.skipInterceptor) {
+        return response
+      }
+      
       // 统一处理响应
       const { code, message } = response.data
       
