@@ -83,6 +83,7 @@
                   outlined
                   dense
                   class="field-input"
+                  hint="以/开头 + 父级菜单路由路径 + 模块名称 ，如: /system/menu"
                 />
               </div>
             </div>
@@ -96,6 +97,7 @@
                   outlined
                   dense
                   class="field-input"
+                  hint="相对于pages路径，没有/开头，如: system/menu 或者 system/menu/MenuPage.vue"
                 />
               </div>
             </div>  
@@ -109,6 +111,7 @@
                   outlined
                   dense
                   class="field-input"
+                  hint="父级模块+:子模块:操作，如: system:menu:list 和 system:menu:add"
                 />
               </div>
             </div>
