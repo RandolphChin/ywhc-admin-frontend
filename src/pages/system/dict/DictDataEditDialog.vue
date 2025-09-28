@@ -165,12 +165,30 @@ const onSubmit = () => {
     emit('submit', { ...formData.value })
     setTimeout(() => {
       loading.value = false
+      // 重置表单数据
+      formData.value = {
+        id: null,
+        dictSort: 0,
+        dictLabel: '',
+        dictValue: '',
+        dictType: props.dictType,
+        remark: ''
+      }
       dialogVisible.value = false
     }, 500)
   })
 }
 
 const onCancel = () => {
+  // 重置表单数据
+  formData.value = {
+    id: null,
+    dictSort: 0,
+    dictLabel: '',
+    dictValue: '',
+    dictType: props.dictType,
+    remark: ''
+  }
   dialogVisible.value = false
 }
 </script>

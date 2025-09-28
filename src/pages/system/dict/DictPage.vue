@@ -559,6 +559,8 @@ const handleDataSubmit = async (dataData) => {
         message: '字典数据创建成功'
       })
     }
+    // 重置当前数据，确保下次打开时是空白表单
+    currentDataData.value = null
     loadDictData()
   } catch (error) {
     $q.notify({

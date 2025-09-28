@@ -15,3 +15,7 @@ export { onlineUserApi } from "./monitor/online/online";
 
 // 代码生成模块
 export { generatorApi } from "./system/generator/generator";
+
+// 测试模块
+export { enterpriseApi } from "./test/enterprise/enterprise";
+

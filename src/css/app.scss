@@ -265,3 +265,35 @@ body {
   padding: 0px 2px;
 }
 // ***********************q-page样式 END**********************************
+
+// ***********************q-table 紧凑型 Checkbox 样式 BEGIN**********************************
+/*
+ * Quasar q-table 紧凑型 Checkbox 样式
+ * 使用方法：在 <q-table> 组件上添加 class="compact-checkbox-table"
+ */
+
+/* 第一部分：调整 Checkbox 列和其后一列的间距 */
+
+/* 1. 选中 Checkbox 列本身 (表头和表体)，大幅减少其内边距 */
+.compact-checkbox-table th.q-table--col-auto-width,
+.compact-checkbox-table td.q-table--col-auto-width {
+  /* 按需调整，这里只保留了左侧的一点边距 */
+  padding: 0 0px 0 0px !important;
+}
+
+/* 2. 选中紧跟在 Checkbox 列后面的那一列，减少其左侧内边距，使其向左靠拢 */
+.compact-checkbox-table th.q-table--col-auto-width + th,
+.compact-checkbox-table td.q-table--col-auto-width + td {
+  padding-left: 0px !important;
+}
+
+
+/* 第二部分：缩小 Checkbox 图标本身的尺寸 */
+
+/* 3. 选中 Checkbox 列中的 .q-checkbox__inner 元素 */
+.compact-checkbox-table .q-table--col-auto-width .q-checkbox .q-checkbox__inner {
+  width: 0.8em !important;
+  height: 0.8em !important;
+  min-width: 0.8em !important;
+}
+// ***********************q-table 紧凑型 Checkbox 样式 END**********************************
