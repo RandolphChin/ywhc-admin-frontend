@@ -61,32 +61,19 @@
               :include-all="false"
                style="width: 140px;"
             />
-            <q-input
-              v-model="dateRangeDisplay"
-              label="时间范围"
-              outlined
-              dense
-              clearable
-              style="width: 250px;"
-              class="cursor-pointer"
-              @clear="clearDateRange"
-              @click="$refs.datePopup.show()"
-            >
-              <template v-slot:append>
-                <q-icon name="event" class="cursor-pointer" />
-              </template>
-              <q-popup-proxy ref="datePopup" cover transition-show="scale" transition-hide="scale">
-                <q-date
-                  v-model="queryForm.dateRange"
-                  mask="YYYY-MM-DD"
-                  range
-                >
-                  <div class="row items-center justify-end">
-                    <q-btn v-close-popup label="关闭" color="primary" flat />
-                  </div>
-                </q-date>
-              </q-popup-proxy>
-            </q-input>
+            <q-input v-model="dateRangeDisplay" label="时间范围" outlined dense clearable readonly style="width: 250px;"
+            class="cursor-pointer" @clear="clearDateRange">
+            <template v-slot:append>
+              <q-icon name="event" class="cursor-pointer" />
+            </template>
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-date v-model="queryForm.dateRange" mask="YYYY-MM-DD" range>
+                <div class="row items-center justify-end">
+                  <q-btn v-close-popup label="关闭" color="primary" flat />
+                </div>
+              </q-date>
+            </q-popup-proxy>
+          </q-input>
                 <q-btn color="primary" icon="search" label="搜索" @click="loadLogs" />
                 <q-btn color="secondary" icon="refresh" label="重置" @click="resetQuery" />
                 <q-btn
@@ -108,7 +95,7 @@
           :columns="columns"
           row-key="id"
           :loading="loading"
-          :pagination="pagination"
+          v-model:pagination="pagination"
           @request="onRequest"
           binary-state-sort
           :rows-per-page-options="rowsPerPageOptions"
@@ -347,14 +334,14 @@ const statusOptions = computed(() => {
 const rowsPerPageOptions = [5, 10, 20, 50, 100]
 
 const dateRangeDisplay = computed(() => {
-  if (!queryForm.value.dateRange) return ''
-  if (queryForm.value.dateRange.from && queryForm.value.dateRange.to) {
-    return `${queryForm.value.dateRange.from} ~ ${queryForm.value.dateRange.to}`
-  }
-  if (queryForm.value.dateRange &&!queryForm.value.dateRange.from) {
-    return `${queryForm.value.dateRange} ~ ${queryForm.value.dateRange}`
-  }
-  return ''
+  const dateRange = queryForm.value.dateRange
+  if (!dateRange) return ''
+  
+  const isObject = typeof dateRange === 'object'
+  const startDate = isObject ? dateRange.from : dateRange
+  const endDate = isObject ? dateRange.to : dateRange
+  
+  return (startDate && endDate) ? `${startDate} ~ ${endDate}` : ''
 })
 
 const getMethodColor = (method) => {
@@ -403,16 +390,19 @@ const loadLogs = async (props) => {
       status: queryForm.value.status,
     }
 
-    // 日期范围查询方式2************可选链操作符 和 空值合并操作符****
+    // 日期范围查询处理
     const dateRange = queryForm.value.dateRange
     if (dateRange) {
-      const startDate = dateRange?.from ?? dateRange
-      const endDate = dateRange?.to ?? dateRange
+      const isObject = typeof dateRange === 'object'
+      const startDate = isObject ? dateRange.from : dateRange
+      const endDate = isObject ? dateRange.to : dateRange
       
-      params.createTimeBetween = [
-        `${startDate} 00:00:01`,
-        `${endDate} 23:59:59`
-      ]
+      if (startDate && endDate) {
+        params.createTimeBetween = [
+          `${startDate} 00:00:01`,
+          `${endDate} 23:59:59`
+        ]
+      }
     }
     
     const response = await logApi.getList(params)
@@ -504,7 +494,7 @@ const getStatusLabel = (status) => {
 }
 
 const clearDateRange = () => {
-  queryForm.value.dateRange = null
+  queryForm.value.dateRange = { from: '', to: '' }
 }
 
 const handleRefresh = () => {

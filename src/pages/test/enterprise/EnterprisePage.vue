@@ -4,50 +4,18 @@
     <q-card>
       <q-card-section>
         <div class="row q-gutter-sm items-center">
-          <q-input
-            v-model="queryForm.enterpriseName"
-            label="企业名称"
-            outlined
-            dense
-            clearable
-            style="width: 160px;"
-          />
-          <q-input
-            v-model="queryForm.enterpriseAddress"
-            label="企业地址"
-            outlined
-            dense
-            clearable
-            style="width: 160px;"
-          />
+          <q-input v-model="queryForm.enterpriseName" label="企业名称" outlined dense clearable style="width: 160px;" />
+          <q-input v-model="queryForm.enterpriseAddress" label="企业地址" outlined dense clearable style="width: 160px;" />
           <!-- 状态查询 方式2-->
-          <DictSelect
-              v-model="queryForm.status"
-              dict-type="enterprise_status"
-              label="企业状态"
-              :include-all="false"
-               style="width: 160px;"
-            />
-          <q-input
-            v-model="dateRangeDisplay"
-            label="时间范围"
-            outlined
-            dense
-            clearable
-            style="width: 250px;"
-            class="cursor-pointer"
-            @clear="clearDateRange"
-            @click="$refs.datePopup.show()"
-          >
+          <DictSelect v-model="queryForm.status" dict-type="enterprise_status" label="企业状态" :include-all="false"
+            style="width: 160px;" />
+          <q-input v-model="dateRangeDisplay" label="时间范围" outlined dense clearable readonly style="width: 250px;"
+            class="cursor-pointer" @clear="clearDateRange">
             <template v-slot:append>
               <q-icon name="event" class="cursor-pointer" />
             </template>
-            <q-popup-proxy ref="datePopup" cover transition-show="scale" transition-hide="scale">
-              <q-date
-                v-model="queryForm.dateRange"
-                mask="YYYY-MM-DD"
-                range
-              >
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-date v-model="queryForm.dateRange" mask="YYYY-MM-DD" range>
                 <div class="row items-center justify-end">
                   <q-btn v-close-popup label="关闭" color="primary" flat />
                 </div>
@@ -57,32 +25,13 @@
           <q-btn color="primary" outline icon="search" label="搜索" @click="loadEnterprises" />
           <q-btn color="grey-6" outline icon="refresh" label="重置" @click="resetQuery" />
         </div>
-        <div class="row q-mt-xs q-gutter-sm">  
-          <q-btn
-            color="primary"
-            outline
-            icon="add"
-            label="新增"
-            @click="showEnterpriseCreate"
-            v-permission="'test:enterprise:add'"
-          />
-          <q-btn
-            color="primary"
-            outline
-            icon="delete"
-            label="批量删除"
-            @click="batchDelete"
-            :disable="selectedRows.length === 0"
-            v-permission="'test:enterprise:remove'"
-          />
-          <q-btn
-            color="primary"
-            outline
-            icon="download"
-            label="导出"
-            @click="exportEnterprises"
-            v-permission="'test:enterprise:export'"
-          />
+        <div class="row q-mt-xs q-gutter-sm">
+          <q-btn color="primary" outline icon="add" label="新增" @click="showEnterpriseCreate"
+            v-permission="'test:enterprise:add'" />
+          <q-btn color="primary" outline icon="delete" label="批量删除" @click="batchDelete"
+            :disable="selectedRows.length === 0" v-permission="'test:enterprise:remove'" />
+          <q-btn color="primary" outline icon="download" label="导出" @click="exportEnterprises"
+            v-permission="'test:enterprise:export'" />
         </div>
       </q-card-section>
     </q-card>
@@ -90,89 +39,38 @@
     <!-- 测试企业表格 -->
     <q-card>
       <q-card-section>
-        <q-table
-          class="compact-checkbox-table"
-          :rows="enterprises"
-          :columns="columns"
-          row-key="id"
-          :loading="loading"
-          :pagination="pagination"
-          @request="onRequest"
-          binary-state-sort
-          :rows-per-page-options="rowsPerPageOptions"
-          :no-data-label="'暂无数据'"
-          :no-results-label="'未找到匹配的记录'"
-          :loading-label="'加载中...'"
-          :rows-per-page-label="'每页显示:'"
-          selection="multiple"
-          v-model:selected="selectedRows"
-        >
-          <template v-slot:body-cell-status="props">
-            <q-td :props="props">
-              <q-badge
-                :color="props.row.status == 1 ? 'positive' : 'negative'"
-                :label="props.row.status == 1 ? '正常' : '禁用'"
-              />
-            </q-td>
-          </template>
+        <q-table class="compact-checkbox-table" :rows="enterprises" :columns="columns" row-key="id" :loading="loading"
+        v-model:pagination="pagination" @request="onRequest" binary-state-sort
+          :no-data-label="'暂无数据'" :no-results-label="'未找到匹配的记录'" :loading-label="'加载中...'"
+          :rows-per-page-label="'每页显示:'" selection="multiple" v-model:selected="selectedRows">
 
           <template v-slot:body-cell-actions="props">
             <q-td :props="props">
-              <q-btn
-                flat
-                dense
-                size="sm"
-                color="primary"
-                icon="visibility"
-                @click="showEnterpriseDetail(props.row)"
-              >
+              <q-btn flat dense size="sm" color="primary" icon="visibility" @click="showEnterpriseDetail(props.row)">
                 <q-tooltip>查看详情</q-tooltip>
               </q-btn>
-              <q-btn
-                flat
-                dense
-                size="sm"
-                color="primary"
-                icon="edit"
-                @click="showEnterpriseEdit(props.row)"
-                v-permission="'test:enterprise:edit'"
-              >
+              <q-btn flat dense size="sm" color="primary" icon="edit" @click="showEnterpriseEdit(props.row)"
+                v-permission="'test:enterprise:edit'">
                 <q-tooltip>编辑</q-tooltip>
               </q-btn>
-              <q-btn
-                flat
-                dense
-                size="sm"
-                color="primary"
-                icon="delete"
-                @click="deleteEnterprise(props.row)"
-                v-permission="'test:enterprise:remove'"
-              >
+              <q-btn flat dense size="sm" color="primary" icon="delete" @click="deleteEnterprise(props.row)"
+                v-permission="'test:enterprise:remove'">
                 <q-tooltip>删除</q-tooltip>
               </q-btn>
             </q-td>
           </template>
 
           <template v-slot:bottom>
-            <DataTablePagination
-              :pagination="pagination"
-              :rows-per-page-options="rowsPerPageOptions"
-              @rows-per-page-change="onRowsPerPageChange"
-              @page-change="onPageChange"
-            />
+            <DataTablePagination :pagination="pagination"
+              @rows-per-page-change="onRowsPerPageChange" @page-change="onPageChange" />
           </template>
         </q-table>
       </q-card-section>
     </q-card>
 
     <!-- 测试企业对话框 -->
-    <EnterpriseEditDialog 
-      v-model="enterpriseDialog" 
-      :enterprise-data="currentEnterprise" 
-      :is-edit="dialogMode === 'edit'"
-      :is-readonly="dialogMode === 'view'"
-      @submit="handleSubmit"
-    />
+    <EnterpriseEditDialog v-model="enterpriseDialog" :enterprise-data="currentEnterprise"
+      :is-edit="dialogMode === 'edit'" :is-readonly="dialogMode === 'view'" :dict-data-map="dictDataMap" @submit="handleSubmit" />
   </q-page>
 </template>
 
@@ -234,25 +132,11 @@ const columns = [
     sortable: true
   },
   {
-    name: 'deptId',
-    label: '数据权限-当前用户所在部门',
-    field: 'deptId',
-    align: 'left',
-    sortable: true
-  },
-  {
     name: 'status',
-    label: '状态：0-禁用，1-正常',
+    label: '企业状态',
     field: 'status',
     align: 'left',
-    sortable: true
-  },
-  {
-    name: 'deleted',
-    label: '删除标志：0-正常，1-删除',
-    field: 'deleted',
-    align: 'left',
-    sortable: true
+    format: (val) => getStatusDescription(val)
   },
   {
     name: 'createTime',
@@ -268,21 +152,18 @@ const columns = [
     field: 'updateTime',
     align: 'left',
     format: (val) => formatTime(val, 'YYYY-MM-DD HH:mm:ss'),
-    sortable: true
   },
   {
-    name: 'createBy',
+    name: 'createByName',
     label: '创建者',
-    field: 'createBy',
+    field: 'createByName',
     align: 'left',
-    sortable: true
   },
   {
-    name: 'updateBy',
+    name: 'updateByName',
     label: '更新者',
-    field: 'updateBy',
+    field: 'updateByName',
     align: 'left',
-    sortable: true
   },
   {
     name: 'actions',
@@ -292,14 +173,16 @@ const columns = [
   }
 ]
 
-const rowsPerPageOptions = [5, 10, 20, 50, 100]
-
 const loadEnterprises = async (props) => {
   loading.value = true
-  
+
   try {
-    const { page, rowsPerPage, sortBy, descending } = props?.pagination || pagination.value
-    
+    // 确保正确获取分页和排序参数
+    const currentPagination = props?.pagination || pagination.value
+    const { page, rowsPerPage, sortBy, descending } = currentPagination
+
+    console.log('当前排序状态:', { sortBy, descending }) // 添加日志
+
     const params = {
       current: page,
       size: rowsPerPage,
@@ -307,12 +190,15 @@ const loadEnterprises = async (props) => {
       orderDirection: descending ? 'desc' : 'asc',
       ...queryForm.value
     }
-    
-        // 日期范围查询处理
-        const dateRange = queryForm.value.dateRange
-    if (dateRange && (dateRange.from || dateRange.to)) {
-      const startDate = dateRange.from || dateRange.to
-      const endDate = dateRange.to || dateRange.from
+
+    console.log('排序参数:', { sortBy, descending, orderDirection: descending ? 'desc' : 'asc' })
+
+    // 日期范围查询处理
+    const dateRange = queryForm.value.dateRange
+    if (dateRange) {
+      const isObject = typeof dateRange === 'object'
+      const startDate = isObject ? dateRange.from : dateRange
+      const endDate = isObject ? dateRange.to : dateRange
       
       if (startDate && endDate) {
         params.createTimeBetween = [
@@ -328,11 +214,22 @@ const loadEnterprises = async (props) => {
     const total = pageData.total || 0
 
     enterprises.value = records
+    /* 方式一
     pagination.value.rowsNumber = total
     pagination.value.page = page
     pagination.value.rowsPerPage = rowsPerPage
     pagination.value.sortBy = sortBy
     pagination.value.descending = descending
+ */
+    // 方式二
+    pagination.value = {
+      sortBy: sortBy,
+      descending: descending,
+      page: page,
+      rowsPerPage: rowsPerPage,
+      rowsNumber: total
+    }
+
   } catch (error) {
     console.error('加载测试企业列表失败:', error)
   } finally {
@@ -434,7 +331,7 @@ const batchDelete = () => {
 const exportEnterprises = async () => {
   try {
     const response = await enterpriseApi.export(queryForm.value)
-    
+
     // 从响应头中提取文件名
     let fileName = `测试企业_${new Date().getTime()}.xlsx` // 默认文件名
     const contentDisposition = response.headers['content-disposition']
@@ -444,7 +341,7 @@ const exportEnterprises = async () => {
         fileName = fileNameMatch[1].replace(/['"]/g, '') // 移除引号
       }
     }
-    
+
     const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -452,7 +349,7 @@ const exportEnterprises = async () => {
     link.download = fileName
     link.click()
     window.URL.revokeObjectURL(url)
-    
+
     $q.notify({
       type: 'positive',
       message: '测试企业导出成功'
@@ -494,31 +391,40 @@ const handleSubmit = async (enterpriseData) => {
   }
 }
 
+const datePopup = ref(null)
+
 const clearDateRange = () => {
   queryForm.value.dateRange = { from: '', to: '' }
 }
 
+const showDatePicker = () => {
+  if (datePopup.value) {
+    datePopup.value.show()
+  }
+}
+
 const dateRangeDisplay = computed(() => {
   const dateRange = queryForm.value.dateRange
-  if (!dateRange || (!dateRange.from && !dateRange.to)) return ''
+  if (!dateRange) return ''
   
-  if (dateRange.from && dateRange.to) {
-    return `${dateRange.from} ~ ${dateRange.to}`
-  }
+  const isObject = typeof dateRange === 'object'
+  const startDate = isObject ? dateRange.from : dateRange
+  const endDate = isObject ? dateRange.to : dateRange
   
-  // 单日期选择的情况
-  const singleDate = dateRange.from || dateRange.to
-  if (singleDate) {
-    return `${singleDate} ~ ${singleDate}`
-  }
-  
-  return ''
+  return (startDate && endDate) ? `${startDate} ~ ${endDate}` : ''
 })
+// 根据字典的key 获取字典值
+const getStatusDescription = (status) => {
+  if (!dictDataMap.enterprise_status?.value) {
+    return status
+  }
+  const item = dictDataMap.enterprise_status.value.find(item => item.dictValue == status)
+  return item ? item.dictLabel : status
+}
 
 onMounted(() => {
   loadEnterprises()
 })
 </script>
 
-<style lang="scss" scoped>
-</style>
+<style lang="scss" scoped></style>

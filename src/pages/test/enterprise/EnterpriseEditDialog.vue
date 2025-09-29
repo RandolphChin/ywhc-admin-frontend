@@ -59,27 +59,14 @@
                   />
                 </div>
               </div>
+              
               <div class="col-12 col-md-6">
                 <div class="edit-field-inline">
-                  <span class="field-label">数据权限-当前用户所在部门：</span>
-                  <q-input
-                    v-model.number="formData.deptId"
-                    placeholder="数据权限-当前用户所在部门"
-                    type="number"
-                    outlined
-                    dense
-                    :readonly="isReadonly"
-                    class="field-input"
-                  />
-                </div>
-              </div>
-              <div class="col-12 col-md-6">
-                <div class="edit-field-inline">
-                  <span class="field-label">状态：0-禁用，1-正常：</span>
+                  <span class="field-label">企业状态：</span>
                   <q-select
                     v-model="formData.status"
                     :options="statusOptions"
-                    placeholder="状态：0-禁用，1-正常"
+                    placeholder="请选择状态"
                     outlined
                     dense
                     emit-value
@@ -89,31 +76,30 @@
                   />
                 </div>
               </div>
+              
               <div class="col-12 col-md-6">
                 <div class="edit-field-inline">
-                  <span class="field-label">删除标志：0-正常，1-删除：</span>
+                  <span class="field-label">创建者：</span>
                   <q-input
-                    v-model.number="formData.deleted"
-                    placeholder="删除标志：0-正常，1-删除"
-                    type="number"
+                    v-model="formData.createByName"
+                    placeholder="创建者"
                     outlined
                     dense
-                    :readonly="isReadonly"
-                    class="field-input"
+                    readonly
+                    class="field-input readonly-field"
                   />
                 </div>
               </div>
               <div class="col-12 col-md-6">
                 <div class="edit-field-inline">
-                  <span class="field-label">创建者：</span>
+                  <span class="field-label">创建时间：</span>
                   <q-input
-                    v-model.number="formData.createBy"
-                    placeholder="创建者"
-                    type="number"
+                    v-model="formattedCreateTime"
+                    placeholder="创建时间"
                     outlined
                     dense
-                    :readonly="isReadonly"
-                    class="field-input"
+                    readonly
+                    class="field-input readonly-field"
                   />
                 </div>
               </div>
@@ -121,13 +107,25 @@
                 <div class="edit-field-inline">
                   <span class="field-label">更新者：</span>
                   <q-input
-                    v-model.number="formData.updateBy"
+                    v-model="formData.updateByName"
                     placeholder="更新者"
-                    type="number"
                     outlined
                     dense
-                    :readonly="isReadonly"
-                    class="field-input"
+                    readonly
+                    class="field-input readonly-field"
+                  />
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">更新时间：</span>
+                  <q-input
+                    v-model="formattedUpdateTime"
+                    placeholder="更新时间"
+                    outlined
+                    dense
+                    readonly
+                    class="field-input readonly-field"
                   />
                 </div>
               </div>
@@ -168,6 +166,7 @@
 
 <script setup>
 import { computed, watch, ref } from 'vue'
+import { formatTime } from 'src/utils/index'
 
 const props = defineProps({
   modelValue: {
@@ -185,6 +184,10 @@ const props = defineProps({
   isReadonly: {
     type: Boolean,
     default: false
+  },
+  dictDataMap: {
+    type: Object,
+    default: () => ({})
   }
 })
 
@@ -206,8 +209,8 @@ const formData = ref({
   deleted: null,
   createTime: null,
   updateTime: null,
-  createBy: null,
-  updateBy: null,
+  createByName: null,
+  updateByName: null,
 })
 
 const rules = {
@@ -215,10 +218,26 @@ const rules = {
   number: (val) => /^(0|[1-9]\d*)$/.test(val) || '请输入有效数字'
 }
 
-const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '禁用', value: 0 }
-]
+const statusOptions = computed(() => {
+  if (props.dictDataMap?.enterprise_status?.value) {
+    return props.dictDataMap.enterprise_status.value.map(item => ({
+      label: item.dictLabel,
+      value: Number(item.dictValue) // 将字符串转换为数值类型
+    }))
+  }
+  // 默认选项，当字典数据未加载时使用
+  return []
+})
+
+// 格式化创建时间
+const formattedCreateTime = computed(() => {
+  return formData.value.createTime ? formatTime(formData.value.createTime, 'YYYY-MM-DD HH:mm:ss') : ''
+})
+
+// 格式化更新时间
+const formattedUpdateTime = computed(() => {
+  return formData.value.updateTime ? formatTime(formData.value.updateTime, 'YYYY-MM-DD HH:mm:ss') : ''
+})
 
 watch(() => props.enterpriseData, (newData) => {
   if (newData) {

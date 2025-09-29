@@ -360,6 +360,43 @@
   }
 }
 
+/* ===== 只读字段样式 ===== */
+.readonly-field {
+  .q-field__control {
+    background-color: #f8f9fa !important;
+    border-color: #e9ecef !important;
+    
+    &:hover {
+      border-color: #e9ecef !important;
+    }
+  }
+  
+  .q-field__native {
+    color: #6c757d !important;
+    cursor: default !important;
+  }
+  
+  .q-field--outlined .q-field__control {
+    background-color: #f8f9fa !important;
+    
+    &:before {
+      border-color: #e9ecef !important;
+    }
+    
+    &:hover:before {
+      border-color: #e9ecef !important;
+    }
+  }
+  
+  .q-field--focused .q-field__control {
+    background-color: #f8f9fa !important;
+    
+    &:before {
+      border-color: #e9ecef !important;
+    }
+  }
+}
+
 /* ===== 工具类 ===== */
 .copy-btn {
   opacity: 0.6;
