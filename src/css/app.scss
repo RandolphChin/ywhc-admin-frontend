@@ -297,3 +297,24 @@ body {
   min-width: 0.8em !important;
 }
 // ***********************q-table 紧凑型 Checkbox 样式 END**********************************
+// ***********************q-table 排序箭头方向 BEGIN**********************************
+// 正常降序 样式<th class="text-right sortable sorted sort-desc" >
+// 正常升序样式<th class="text-right sortable sorted" >
+// 全局修正 Quasar Table 排序箭头方向，因为后端排序，导致排序箭头方向始终向上，但CSS是已正确的，UI箭头的视觉显示没有改变
+.q-table {
+  // 降序时箭头向下
+  th.sort-desc .q-table__sort-icon {
+    transform: rotate(180deg) !important;
+  }
+  
+  // 升序时箭头向上（非 sort-desc 状态）
+  th.sortable.sorted:not(.sort-desc) .q-table__sort-icon {
+    transform: rotate(0deg) !important;
+  }
+  
+  // 添加过渡动画让变化更流畅
+  th .q-table__sort-icon {
+    transition: transform 0.3s ease !important;
+  }
+}
+// ***********************q-table 排序箭头方向 END**********************************

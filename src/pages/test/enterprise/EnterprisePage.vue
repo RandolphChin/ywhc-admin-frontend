@@ -40,9 +40,8 @@
     <q-card>
       <q-card-section>
         <q-table class="compact-checkbox-table" :rows="enterprises" :columns="columns" row-key="id" :loading="loading"
-        v-model:pagination="pagination" @request="onRequest" binary-state-sort
-          :no-data-label="'暂无数据'" :no-results-label="'未找到匹配的记录'" :loading-label="'加载中...'"
-          :rows-per-page-label="'每页显示:'" selection="multiple" v-model:selected="selectedRows">
+        v-model:pagination="pagination" @request="onRequest" binary-state-sort :rows-per-page-options="[5, 10, 20, 50, 100]"
+           selection="multiple" v-model:selected="selectedRows">
 
           <template v-slot:body-cell-actions="props">
             <q-td :props="props">
@@ -60,9 +59,35 @@
             </q-td>
           </template>
 
-          <template v-slot:bottom>
-            <DataTablePagination :pagination="pagination"
-              @rows-per-page-change="onRowsPerPageChange" @page-change="onPageChange" />
+          <!-- 自定义分页显示 - 完全复制你的样式 -->
+          <template v-slot:bottom="scope">
+            <div class="row items-center justify-start full-width" v-if="scope.pagination.rowsNumber > 0">
+              <div class="q-mr-md">
+                共 {{ scope.pagination.rowsNumber }} 条记录
+              </div>
+              <div class="row items-center">
+                <div class="row items-center q-gutter-sm">
+                  <span>每页显示</span>
+                  <q-select
+                    :model-value="scope.pagination.rowsPerPage"
+                    :options="[5, 10, 20, 50, 100]"
+                    dense
+                    outlined
+                    class="ultra-compact-select"
+                    @update:model-value="(value) => scope.setPagination({ rowsPerPage: value, page: 1 })"
+                  />
+                  <span>条</span>
+                </div>
+                <q-pagination
+                  :model-value="scope.pagination.page"
+                  :max="scope.pagesNumber"
+                  @update:model-value="(value) => scope.setPagination({ page: value })"
+                  direction-links
+                  boundary-links
+                  :max-pages="5"
+                />
+              </div>
+            </div>
           </template>
         </q-table>
       </q-card-section>
@@ -78,7 +103,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { enterpriseApi } from 'src/api'
 import { useQuasar } from 'quasar'
-import DataTablePagination from 'src/components/DataTablePagination.vue'
+// import DataTablePagination from 'src/components/DataTablePagination.vue'
 import EnterpriseEditDialog from './EnterpriseEditDialog.vue'
 import { formatTime } from 'src/utils/index'
 // 字典表引入
@@ -214,21 +239,13 @@ const loadEnterprises = async (props) => {
     const total = pageData.total || 0
 
     enterprises.value = records
-    /* 方式一
+   
     pagination.value.rowsNumber = total
     pagination.value.page = page
     pagination.value.rowsPerPage = rowsPerPage
     pagination.value.sortBy = sortBy
     pagination.value.descending = descending
- */
-    // 方式二
-    pagination.value = {
-      sortBy: sortBy,
-      descending: descending,
-      page: page,
-      rowsPerPage: rowsPerPage,
-      rowsNumber: total
-    }
+
 
   } catch (error) {
     console.error('加载测试企业列表失败:', error)
@@ -241,16 +258,6 @@ const onRequest = (props) => {
   loadEnterprises(props)
 }
 
-const onRowsPerPageChange = (newRowsPerPage) => {
-  pagination.value.rowsPerPage = newRowsPerPage
-  pagination.value.page = 1
-  loadEnterprises()
-}
-
-const onPageChange = (newPage) => {
-  pagination.value.page = newPage
-  onRequest({ pagination: pagination.value })
-}
 
 const resetQuery = () => {
   queryForm.value = {
@@ -427,4 +434,6 @@ onMounted(() => {
 })
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+
+</style>
