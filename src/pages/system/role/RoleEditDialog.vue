@@ -42,6 +42,16 @@
             map-options
           />
 
+          <q-select
+            v-model="formData.dataScope"
+            :options="dataScopeOptions"
+            label="数据权限范围"
+            outlined
+            dense
+            emit-value
+            map-options
+          />
+
           <q-input
             v-model="formData.remark"
             label="备注"
@@ -91,6 +101,7 @@ const formData = ref({
   roleName: '',
   roleKey: '',
   status: 1,
+  dataScope: 1,
   remark: ''
 })
 
@@ -101,6 +112,13 @@ const rules = {
 const statusOptions = [
   { label: '正常', value: 1 },
   { label: '禁用', value: 0 }
+]
+
+const dataScopeOptions = [
+  { label: '全部数据', value: 1 },
+  { label: '部门数据', value: 2 },
+  { label: '部门及以下数据', value: 3 },
+  { label: '仅本人数据', value: 4 }
 ]
 
 watch(() => props.roleData, (newData) => {

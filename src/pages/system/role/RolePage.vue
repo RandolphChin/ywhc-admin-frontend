@@ -77,6 +77,15 @@
                 </q-td>
               </template>
 
+              <template v-slot:body-cell-dataScope="props">
+                <q-td :props="props">
+                  <q-badge
+                    color="info"
+                    :label="getDataScopeLabel(props.row.dataScope)"
+                  />
+                </q-td>
+              </template>
+
               <template v-slot:body-cell-actions="props">
                 <q-td :props="props">
                   <q-btn
@@ -200,6 +209,7 @@ const roleForm = ref({
   roleName: '',
   roleKey: '',
   status: 1,
+  dataScope: 1,
   remark: ''
 })
 
@@ -233,6 +243,12 @@ const columns = [
     align: 'center'
   },
   {
+    name: 'dataScope',
+    label: '数据权限范围',
+    field: 'dataScope',
+    align: 'center'
+  },
+  {
     name: 'remark',
     label: '备注',
     field: 'remark',
@@ -257,6 +273,18 @@ const statusOptions = [
   { label: '正常', value: 1 },
   { label: '禁用', value: 0 }
 ]
+
+const dataScopeOptions = [
+  { label: '全部数据', value: 1 },
+  { label: '部门数据', value: 2 },
+  { label: '部门及以下数据', value: 3 },
+  { label: '仅本人数据', value: 4 }
+]
+
+const getDataScopeLabel = (dataScope) => {
+  const option = dataScopeOptions.find(opt => opt.value === dataScope)
+  return option ? option.label : '未知'
+}
 
 const loadRoles = async (props) => {
   loading.value = true
@@ -349,9 +377,10 @@ const showRoleDialog = (role = null) => {
   } else {
     roleForm.value = {
       id: null,
-      name: '',
-      code: '',
+      roleName: '',
+      roleKey: '',
       status: 1,
+      dataScope: 1,
       remark: ''
     }
   }

@@ -103,7 +103,7 @@ import { useAuthStore } from 'src/stores/auth'
 import { useQuasar } from 'quasar'
 import { initDynamicRoutes } from 'src/router/dynamicRoutes'
 import SlideCaptcha from 'src/components/SlideCaptcha.vue'
-import { useEncryption } from 'src/composables/useEncryption'
+import { useEncryption } from 'src/api/useEncryption'
 
 const $q = useQuasar()
 const router = useRouter()

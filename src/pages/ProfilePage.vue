@@ -206,7 +206,7 @@ import { api } from 'src/boot/axios'
 import { useQuasar } from 'quasar'
 import { formatTime } from 'src/utils/index'
 import { authApi } from 'src/api/auth'
-import { useEncryption } from 'src/composables/useEncryption'
+import { useEncryption } from 'src/api/useEncryption'
 
 const $q = useQuasar()
 const authStore = useAuthStore()
