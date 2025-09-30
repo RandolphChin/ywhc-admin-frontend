@@ -106,14 +106,14 @@ import { useQuasar } from 'quasar'
 // import DataTablePagination from 'src/components/DataTablePagination.vue'
 import EnterpriseEditDialog from './EnterpriseEditDialog.vue'
 import { formatTime } from 'src/utils/index'
-// 字典表引入
 import { createDictData } from 'src/utils/dict'
-// 方法2：使用 createDictData（响应式）
-const dictDataMap = createDictData(['enterprise_status'])
 import DictSelect from 'src/components/DictSelect.vue'
 
+// 方法2：使用 createDictData（响应式）
+const dictDataMap = createDictData(['enterprise_status'])
+
 defineOptions({
-  name: 'EnterprisePage'
+  name: 'TestEnterprisePage'
 })
 
 const $q = useQuasar()

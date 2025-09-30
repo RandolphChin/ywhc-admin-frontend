@@ -212,7 +212,7 @@ const dictDataMap = createDictData(['request_methods', 'response_status'])
 import DictSelect from 'src/components/DictSelect.vue'
 
 defineOptions({
-  name: 'LogPage'
+  name: 'SystemLogPage'
 })
 
 const $q = useQuasar()

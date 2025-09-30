@@ -187,7 +187,7 @@ import DataTablePagination from 'src/components/DataTablePagination.vue'
 import { formatTime } from 'src/utils/index'
 
 defineOptions({
-  name: 'UserPage'
+  name: 'SystemUserPage'
 })
 
 const $q = useQuasar()

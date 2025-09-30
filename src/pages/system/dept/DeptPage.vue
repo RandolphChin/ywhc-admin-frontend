@@ -119,7 +119,7 @@ import DeptEditDialog from "./DeptEditDialog.vue";
 import { formatTime } from 'src/utils/index'
 
 defineOptions({
-  name: 'DeptPage'
+  name: 'SystemDeptPage'
 })
 
 const $q = useQuasar();

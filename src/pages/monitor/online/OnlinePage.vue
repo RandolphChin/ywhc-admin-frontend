@@ -275,7 +275,7 @@ import { useQuasar } from "quasar";
 import OnlineUserDetailDialog from "./OnlineUserDetailDialog.vue";
 
 defineOptions({
-  name: "OnlinePage",
+  name: "MonitorOnlinePage",
 });
 
 const $q = useQuasar();

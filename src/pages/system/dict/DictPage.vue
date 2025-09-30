@@ -189,7 +189,7 @@ import DictTypeEditDialog from './DictTypeEditDialog.vue'
 import DictDataEditDialog from './DictDataEditDialog.vue'
 
 defineOptions({
-  name: 'DictPage'
+  name: 'SystemDictPage'
 })
 
 const $q = useQuasar()

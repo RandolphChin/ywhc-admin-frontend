@@ -147,7 +147,7 @@ import { useQuasar } from 'quasar'
 import MenuEditDialog from './MenuEditDialog.vue'
 
 defineOptions({
-  name: 'MenuPage'
+  name: 'SystemMenuPage'
 })
 
 const $q = useQuasar()
