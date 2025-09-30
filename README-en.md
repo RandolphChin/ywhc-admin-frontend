@@ -10,8 +10,8 @@ A modern enterprise-level frontend management system built with Vue 3 + Quasar F
 
 | Project | Description | Link |
 |---------|-------------|------|
-| 🖥️ **Backend Project** | Spring Boot Backend Service | [ywhc-admin-backend](https://github.com/your-org/ywhc-admin/tree/main/ywhc-admin-backend) |
-| 🌐 **Frontend Project** | Vue3 + Quasar Frontend Application | [ywhc-admin-frontend](https://github.com/your-org/ywhc-admin/tree/main/ywhc-admin-frontend) |
+| 🖥️ **Backend Project** | Spring Boot Backend Service | [ywhc-admin-backend](https://github.com/RandolphChin/ywhc-admin-backend.git) |
+| 🌐 **Frontend Project** | Vue3 + Quasar Frontend Application | [ywhc-admin-frontend](https://github.com/RandolphChin/ywhc-admin-frontend.git) |
 
 ## 📋 Features
 
