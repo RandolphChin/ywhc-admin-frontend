@@ -35,6 +35,7 @@
                   dense
                   :readonly="isEdit"
                   style="width: 100%;"
+                  class="field-input readonly-field"
                 />
               </div>
             </div>
@@ -162,7 +163,7 @@
               class="q-px-lg"
             />
             <q-btn 
-              v-if="!isReadonly"
+              v-if="isEdit"
               color="primary" 
               label="保存" 
               @click="handleSubmit"
@@ -191,10 +192,6 @@ const props = defineProps({
     default: () => ({})
   },
   isEdit: {
-    type: Boolean,
-    default: false
-  },
-  isReadonly: {
     type: Boolean,
     default: false
   },

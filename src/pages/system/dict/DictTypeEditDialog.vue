@@ -50,7 +50,6 @@
           label="确定" 
           color="primary" 
           @click="onSubmit"
-          :loading="loading"
         />
       </q-card-actions>
     </q-card>
@@ -77,7 +76,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'submit'])
 
-const loading = ref(false)
 const formRef = ref(null);
 
 const dialogVisible = computed({
@@ -123,15 +121,8 @@ const onSubmit = () => {
     if (!success) {
       return
     }
-    loading.value = true
-    
     // 提交数据
     emit('submit', { ...formData.value })
-    
-    setTimeout(() => {
-      loading.value = false
-      dialogVisible.value = false
-    }, 500)
   })
 }
 

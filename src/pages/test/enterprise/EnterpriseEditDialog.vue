@@ -145,7 +145,6 @@
               label="取消" 
               color="grey-7"
               @click="handleClose" 
-              :disable="submitting"
               class="q-px-lg"
             />
             <q-btn 
@@ -153,8 +152,6 @@
               color="primary" 
               label="保存" 
               @click="handleSubmit"
-              :loading="submitting"
-              :disable="submitting"
               class="q-px-lg"
             />
           </div>
@@ -198,7 +195,6 @@ const visible = computed({
   set: (value) => emit('update:modelValue', value)
 })
 
-const submitting = ref(false)
 
 const formData = ref({
   id: null,

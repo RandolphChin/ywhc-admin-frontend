@@ -48,7 +48,7 @@
               :columns="typeColumns"
               row-key="id"
               :loading="typeLoading"
-              :pagination="typePagination"
+              v-model:pagination="typePagination"
               @request="onTypeRequest"
               binary-state-sort
               @row-click="onRowClick"
@@ -115,7 +115,7 @@
                 :columns="dataColumns"
                 row-key="id"
                 :loading="dataLoading"
-                :pagination="dataPagination"
+                v-model:pagination="dataPagination"
                 @request="onDataRequest"
                 binary-state-sort
               >
@@ -499,6 +499,7 @@ const handleTypeSubmit = async (typeData) => {
         message: '字典类型创建成功'
       })
     }
+    typeEditDialog.value = false
     loadDictTypes()
   } catch (error) {
     $q.notify({
@@ -561,6 +562,7 @@ const handleDataSubmit = async (dataData) => {
     }
     // 重置当前数据，确保下次打开时是空白表单
     currentDataData.value = null
+    dataEditDialog.value = false
     loadDictData()
   } catch (error) {
     $q.notify({

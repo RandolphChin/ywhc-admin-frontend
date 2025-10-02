@@ -59,35 +59,13 @@
             </q-td>
           </template>
 
-          <!-- 自定义分页显示 - 完全复制你的样式 -->
-          <template v-slot:bottom="scope">
-            <div class="row items-center justify-start full-width" v-if="scope.pagination.rowsNumber > 0">
-              <div class="q-mr-md">
-                共 {{ scope.pagination.rowsNumber }} 条记录
-              </div>
-              <div class="row items-center">
-                <div class="row items-center q-gutter-sm">
-                  <span>每页显示</span>
-                  <q-select
-                    :model-value="scope.pagination.rowsPerPage"
-                    :options="[5, 10, 20, 50, 100]"
-                    dense
-                    outlined
-                    class="ultra-compact-select"
-                    @update:model-value="(value) => scope.setPagination({ rowsPerPage: value, page: 1 })"
-                  />
-                  <span>条</span>
-                </div>
-                <q-pagination
-                  :model-value="scope.pagination.page"
-                  :max="scope.pagesNumber"
-                  @update:model-value="(value) => scope.setPagination({ page: value })"
-                  direction-links
-                  boundary-links
-                  :max-pages="5"
-                />
-              </div>
-            </div>
+          <!-- 自定义分页显示 -->
+          <template v-slot:bottom>
+            <DataTablePagination
+              :pagination="pagination"
+              @rows-per-page-change="onRowsPerPageChange"
+              @page-change="onPageChange"
+            />
           </template>
         </q-table>
       </q-card-section>
@@ -103,7 +81,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { enterpriseApi } from 'src/api'
 import { useQuasar } from 'quasar'
-// import DataTablePagination from 'src/components/DataTablePagination.vue'
+import DataTablePagination from 'src/components/DataTablePagination.vue'
 import EnterpriseEditDialog from './EnterpriseEditDialog.vue'
 import { formatTime } from 'src/utils/index'
 import { createDictData } from 'src/utils/dict'
@@ -427,6 +405,18 @@ const getStatusDescription = (status) => {
   }
   const item = dictDataMap.enterprise_status.value.find(item => item.dictValue == status)
   return item ? item.dictLabel : status
+}
+
+
+const onRowsPerPageChange = (newRowsPerPage) => {
+  pagination.value.rowsPerPage = newRowsPerPage
+  pagination.value.page = 1 // Reset to first page when changing rows per page
+  loadEnterprises()
+}
+
+const onPageChange = (newPage) => {
+  pagination.value.page = newPage
+  onRequest({ pagination: pagination.value })
 }
 
 onMounted(() => {

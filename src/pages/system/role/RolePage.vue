@@ -59,7 +59,7 @@
               :columns="columns"
               row-key="id"
               :loading="loading"
-              :pagination="pagination"
+              v-model:pagination="pagination"
               @request="onRequest"
               binary-state-sort
               :selected="selectedRole ? [selectedRole] : []"
@@ -143,7 +143,7 @@
               />
             </div>
 
-            <div v-if="selectedRole && roles.length > 0" class="permission-tree-container">
+            <div v-if="selectedRole && roles.length > 0">
               <q-tree
                 :nodes="menuTree"
                 node-key="id"
@@ -152,7 +152,6 @@
                 tick-strategy="leaf-filtered"
                 :expanded="expandedNodes"
                 @update:expanded="expandedNodes = $event"
-                class="permission-tree"
               />
             </div>
             <div v-else class="text-center text-grey-6 q-pa-xl">
@@ -295,8 +294,8 @@ const loadRoles = async (props) => {
     const params = {
       page: page,
       size: rowsPerPage,
-      sortBy: sortBy,
-      sortOrder: descending ? 'desc' : 'asc',
+      orderBy: sortBy,
+      orderDirection: descending ? 'desc' : 'asc',
       ...queryForm.value
     }
 

@@ -3,7 +3,7 @@
     <div class="row" style="height: calc(100vh - 100px)">
       <!-- 左侧部门树 -->
       <div class="col-3">
-        <q-card class="full-height">
+        <q-card>
           <q-card-section>
             <div class="text-h6 q-mb-md">部门列表</div>
             <q-tree
@@ -14,7 +14,6 @@
               @update:selected="onDeptSelect"
               :expanded="expandedDepts"
               @update:expanded="onDeptExpand"
-              default-expand-all
             >
               <template v-slot:default-header="prop">
                 <div class="row items-center">
@@ -96,12 +95,11 @@
               :columns="columns"
               row-key="id"
               :loading="loading"
-              :pagination="pagination"
+              v-model:pagination="pagination"
               @request="onRequest"
               binary-state-sort
               selection="multiple"
-              :selected="selectedUsers"
-              @update:selected="onSelectionChange"
+              v-model:selected="selectedUsers"
             >
           <template v-slot:body-cell-avatar="props">
             <q-td :props="props">
@@ -302,8 +300,8 @@ const loadUsers = async (props) => {
     const params = {
       current: page,
       size: rowsPerPage,
-      sortBy: sortBy,
-      sortOrder: descending ? 'desc' : 'asc',
+      orderBy: sortBy,
+      orderDirection: descending ? 'desc' : 'asc',
       ...queryForm.value
     }
 
@@ -347,7 +345,7 @@ const loadDeptTree = async () => {
   try {
     const response = await deptApi.getDeptTree()
     const deptTree = response.data.data || []
-    
+    /* 后端已经修改为返回tree结构，无需转换
     // 转换为 QTree 需要的格式
     const convertToTreeNodes = (depts) => {
       return depts.map(dept => ({
@@ -361,7 +359,8 @@ const loadDeptTree = async () => {
     }
     
     deptTreeNodes.value = convertToTreeNodes(deptTree)
-    
+     */
+    deptTreeNodes.value = deptTree
     // 默认展开一级部门
     expandedDepts.value = deptTree.map(dept => dept.id)
     

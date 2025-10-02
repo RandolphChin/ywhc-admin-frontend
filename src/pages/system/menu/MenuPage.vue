@@ -251,10 +251,10 @@ const loadMenus = async () => {
     const response = await menuApi.getTree()
     menus.value = response.data.data
     
-    // 构建菜单显示结构
-    buildMenuDisplay(menus.value)
-    
-    // 构建父级菜单选项
+    // 构建菜单显示结构 后端已经是树形结构，不需要再构建
+    //buildMenuDisplay(menus.value)
+    flatMenus.value = response.data.data
+    // 构建父级菜单选项  新增或者修改时菜单下拉框，可以放在弹窗时再构建
     buildParentMenuOptions(menus.value)
   } catch (error) {
     console.error('加载菜单列表失败:', error)
