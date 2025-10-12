@@ -1,6 +1,5 @@
 <template>
   <div class="login-container">
-    <!-- 动态背景 -->
     <div class="background-animation">
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
@@ -8,86 +7,82 @@
       <div class="shape shape-4"></div>
     </div>
 
-    <!-- 主要内容 -->
     <div class="login-content">
-      <!-- 登录卡片 -->
       <q-card class="login-card glass-effect">
         <q-card-section class="login-header">
-          <div class="login-title">
-            YWHC 后台管理系统
-          </div>
-          <div class="login-subtitle">欢迎回来，请登录您的账户</div>
+          <div class="login-title">YWHC Admin System</div>
+          <div class="login-subtitle">{{ t('auth.subtitle') }}</div>
         </q-card-section>
 
         <q-card-section class="login-form-section">
           <q-form @submit="handleLogin" class="q-gutter-md">
             <div class="input-group">
-              <q-input v-model="loginForm.username" placeholder="用户名" :rules="[val => !!val || '请输入用户名']" outlined
-                class="modern-input">
-                <template v-slot:prepend>
+              <q-input
+                v-model="loginForm.username"
+                :placeholder="t('auth.username')"
+                :rules="[val => !!val || t('auth.username') + ' ' + t('error.required_field')]"
+                outlined
+                class="modern-input"
+              >
+                <template #prepend>
                   <q-icon name="person" class="input-icon" />
                 </template>
               </q-input>
             </div>
 
-            <div class="input-group" style="margin-bottom: 2px;">
-              <q-input v-model="loginForm.password" type="password" placeholder="密码" :rules="[val => !!val || '请输入密码']"
-                outlined class="modern-input">
-                <template v-slot:prepend>
+            <div class="input-group">
+              <q-input
+                v-model="loginForm.password"
+                type="password"
+                :placeholder="t('auth.password')"
+                :rules="[val => !!val || t('auth.password') + ' ' + t('error.required_field')]"
+                outlined
+                class="modern-input"
+              >
+                <template #prepend>
                   <q-icon name="lock" class="input-icon" />
                 </template>
               </q-input>
             </div>
 
-            <!-- 验证码按钮 -->
             <div class="input-group captcha-group">
-              <q-btn v-if="!captchaVerified" @click="showCaptchaDialog = true" class="captcha-btn full-width"
-                color="primary" label="点击按钮进行验证" icon="security" size="md" no-caps />
+              <q-btn
+                v-if="!captchaVerified"
+                @click="showCaptchaDialog = true"
+                class="captcha-btn full-width"
+                color="primary"
+                :label="t('auth.verifying')"
+                icon="security"
+                size="md"
+                no-caps
+              />
               <div v-else class="captcha-success">
                 <q-icon name="check_circle" color="positive" size="sm" />
-                <span>验证码验证成功</span>
+                <span>{{ t('auth.verified') }}</span>
               </div>
             </div>
 
-            <!-- 加密状态提示 -->
-            <!-- 
-            <div class="encryption-status" v-if="encryptionEnabled">
-              <q-icon 
-                :name="publicKeyLoaded ? 'lock' : 'lock_open'" 
-                :color="publicKeyLoaded ? 'positive' : 'warning'"
-                size="xs"
+            <div class="input-group">
+              <q-btn
+                type="submit"
+                class="login-btn full-width"
+                :label="t('auth.login')"
+                :loading="loading"
+                size="lg"
+                no-caps
               />
-              <span class="status-text">
-                {{ publicKeyLoaded ? '密码传输已加密' : '正在加载加密密钥...' }}
-              </span>
-            </div>
- -->
-            <!-- 
-            <div class="row items-center justify-between q-mt-md" >
-              <q-checkbox
-                v-model="loginForm.rememberMe"
-                label="记住我"
-                color="primary"
-                class="remember-me"
-              />
-            </div>
-             -->
-            <div class="input-group" style="margin-top: 0px;">
-              <q-btn type="submit" class="login-btn full-width" label="登录" :loading="loading" size="lg" no-caps />
             </div>
           </q-form>
         </q-card-section>
       </q-card>
     </div>
 
-    <!-- 滑块验证码弹窗 -->
     <q-dialog v-model="showCaptchaDialog" persistent>
       <q-card class="captcha-dialog">
         <q-card-section class="dialog-header">
-          <div class="text-h6">安全验证</div>
+          <div class="text-h6">{{ t('auth.captcha_title') }}</div>
           <q-btn flat round dense icon="close" @click="closeCaptchaDialog" />
         </q-card-section>
-
         <q-card-section class="dialog-content">
           <SlideCaptcha @success="onCaptchaSuccess" @error="onCaptchaError" @refresh="onCaptchaRefresh" />
         </q-card-section>
@@ -96,136 +91,85 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuthStore } from 'src/stores/auth'
 import { useQuasar } from 'quasar'
+import { useI18n } from 'vue-i18n'
+import { useAuthStore } from 'src/stores/auth'
 import { initDynamicRoutes } from 'src/router/dynamicRoutes'
 import SlideCaptcha from 'src/components/SlideCaptcha.vue'
 import { useEncryption } from 'src/api/useEncryption'
 
+const { t } = useI18n()
 const $q = useQuasar()
 const router = useRouter()
 const authStore = useAuthStore()
 
 const loading = ref(false)
-const loginForm = ref({
-  username: 'admin',
-  password: 'admin123',
-  rememberMe: false
-})
-
-// 验证码相关
 const captchaVerified = ref(false)
 const captchaToken = ref('')
 const showCaptchaDialog = ref(false)
 
-// 使用加密 composable
+const loginForm = ref({
+  username: '',
+  password: '',
+  rememberMe: false,
+})
+
 const { encryptionEnabled, publicKeyLoaded } = useEncryption()
 
 const handleLogin = async () => {
-  // 检查验证码是否通过
   if (!captchaVerified.value) {
-    $q.notify({
-      type: 'warning',
-      message: '请先完成滑块验证',
-      position: 'top-right'
-    })
+    $q.notify({ type: 'warning', message: t('auth.verify_first'), position: 'top-right' })
     return
   }
 
   loading.value = true
-
   try {
-    // 准备登录数据（加密逻辑已在 API 层处理）
-    const loginData = {
-      ...loginForm.value,
-      captchaToken: captchaToken.value
-    }
-
+    const loginData = { ...loginForm.value, captchaToken: captchaToken.value }
     await authStore.login(loginData)
+    $q.notify({ type: 'positive', message: t('auth.success'), position: 'top-right' })
 
-    $q.notify({
-      type: 'positive',
-      message: '登录成功',
-      position: 'top-right'
-    })
-
-    // 获取重定向URL，如果存在则跳转到原页面，否则跳转到首页
     const redirectUrl = authStore.getAndClearRedirectUrl()
-    console.log('🔄 登录成功，重定向URL:', redirectUrl)
-
     if (redirectUrl) {
-      console.log('🎯 准备跳转到重定向URL:', redirectUrl)
-      try {
-        // 手动初始化动态路由
-        console.log('🛣️ 手动初始化动态路由...')
-        const routeSuccess = await initDynamicRoutes(router, false)
-        if (routeSuccess) {
-          authStore.routesLoaded = true
-          console.log('✅ 动态路由初始化完成，准备跳转')
-          // 现在可以安全地跳转到目标路由
-          router.push(redirectUrl).catch(err => {
-            console.warn('重定向失败，跳转到首页:', err)
-            router.push('/')
-          })
-        } else {
-          router.push('/')
-        }
-      } catch (error) {
-        console.error('动态路由初始化出错:', error)
-        router.push('/')
-      }
-    } else {
-      router.push('/')
-    }
-  } catch (error) {
+      const routeSuccess = await initDynamicRoutes(router, false)
+      if (routeSuccess) router.push(redirectUrl)
+      else router.push('/')
+    } else router.push('/')
+  } catch (error: any) {
     $q.notify({
       type: 'negative',
-      message: error.response?.data?.message || '登录失败',
-      position: 'top-right'
+      message: error.response?.data?.message || t('auth.failed'),
+      position: 'top-right',
     })
   } finally {
     loading.value = false
   }
 }
 
-// 验证码成功回调
-const onCaptchaSuccess = (data) => {
+const onCaptchaSuccess = (data: any) => {
   captchaVerified.value = true
   captchaToken.value = data.token
-
-  // 延迟关闭弹窗，让用户看到成功状态
   setTimeout(() => {
     showCaptchaDialog.value = false
-    $q.notify({
-      type: 'positive',
-      message: '验证码验证成功',
-      position: 'top-right'
-    })
+    $q.notify({ type: 'positive', message: t('auth.verified'), position: 'top-right' })
   }, 1000)
 }
 
-// 验证码失败回调
-const onCaptchaError = (message) => {
+const onCaptchaError = () => {
   captchaVerified.value = false
   captchaToken.value = ''
-  console.warn('验证码验证失败:', message)
 }
 
-// 验证码刷新回调
 const onCaptchaRefresh = () => {
   captchaVerified.value = false
   captchaToken.value = ''
 }
 
-// 关闭验证码弹窗
 const closeCaptchaDialog = () => {
   showCaptchaDialog.value = false
 }
-
-
 </script>
 
 <style lang="scss" scoped>
@@ -239,7 +183,7 @@ const closeCaptchaDialog = () => {
   overflow: hidden;
 }
 
-// 动态背景动画
+/* 🔁 Animation d’arrière-plan dynamique */
 .background-animation {
   position: absolute;
   top: 0;
@@ -295,22 +239,18 @@ const closeCaptchaDialog = () => {
 }
 
 @keyframes float {
-
-  0%,
-  100% {
+  0%, 100% {
     transform: translateY(0px) rotate(0deg);
   }
-
   33% {
     transform: translateY(-30px) rotate(120deg);
   }
-
   66% {
     transform: translateY(30px) rotate(240deg);
   }
 }
 
-// 主要内容区域
+/* 📦 Zone principale de contenu */
 .login-content {
   position: relative;
   z-index: 2;
@@ -320,7 +260,7 @@ const closeCaptchaDialog = () => {
   padding: 20px;
 }
 
-// Logo区域
+/* 🔖 Zone du logo */
 .logo-section {
   margin-bottom: 40px;
   color: white;
@@ -352,7 +292,7 @@ const closeCaptchaDialog = () => {
   text-transform: uppercase;
 }
 
-// 登录卡片
+/* 🪪 Carte de connexion */
 .login-card {
   border-radius: 20px;
   overflow: hidden;
@@ -366,7 +306,7 @@ const closeCaptchaDialog = () => {
   -webkit-backdrop-filter: blur(20px);
 }
 
-// 登录头部
+/* 🧢 En-tête de connexion */
 .login-header {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -389,7 +329,7 @@ const closeCaptchaDialog = () => {
   font-weight: 300;
 }
 
-// 表单区域
+/* 📝 Zone du formulaire */
 .login-form-section {
   // padding: 40px 30px;
 }
@@ -406,7 +346,7 @@ const closeCaptchaDialog = () => {
   }
 }
 
-// 现代化输入框
+/* ✨ Champs de saisie modernes */
 .modern-input {
   :deep(.q-field__control) {
     border-radius: 12px;
@@ -445,7 +385,7 @@ const closeCaptchaDialog = () => {
   color: #667eea;
 }
 
-// 记住我和忘记密码
+/* ✅ « Se souvenir de moi » & « Mot de passe oublié » */
 .remember-me {
   :deep(.q-checkbox__label) {
     color: #64748b;
@@ -466,7 +406,7 @@ const closeCaptchaDialog = () => {
   }
 }
 
-// 登录按钮
+/* 🔘 Bouton de connexion */
 .login-btn {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border: none;
@@ -492,7 +432,7 @@ const closeCaptchaDialog = () => {
   }
 }
 
-// 加密状态提示
+/* 🔐 Indicateur d’état de chiffrement */
 .encryption-status {
   display: flex;
   align-items: center;
@@ -511,7 +451,7 @@ const closeCaptchaDialog = () => {
   }
 }
 
-// 验证码按钮
+/* 🧩 Bouton de vérification (CAPTCHA) */
 .captcha-btn {
   border-radius: 12px;
   font-weight: 500;
@@ -537,7 +477,7 @@ const closeCaptchaDialog = () => {
   font-weight: 500;
 }
 
-// 验证码弹窗
+/* 🪟 Fenêtre modale du CAPTCHA */
 .captcha-dialog {
   min-width: 350px;
   max-width: 400px;
@@ -559,7 +499,7 @@ const closeCaptchaDialog = () => {
   padding: 20px;
 }
 
-// 响应式设计
+/* 📱 Design responsive */
 @media (max-width: 600px) {
   .login-content {
     padding: 15px;

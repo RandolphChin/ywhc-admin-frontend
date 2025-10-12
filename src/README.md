@@ -1,14 +1,41 @@
-#### 安装
-nodejs 20+
-```
+# 🧩 Module Système — Documentation Technique (Formavue)
+
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Quasar](https://img.shields.io/badge/Quasar-v2.x-blue)
+![License](https://img.shields.io/badge/license-MIT-lightgrey)
+![Language](https://img.shields.io/badge/lang-French-blue)
+
+> Documentation du module **System** de l’application **Formavue Admin**,  
+> basée sur **Vue 3**, **Quasar 2**, et **TypeScript**.
+
+---
+
+## 🧭 Sommaire
+[[toc]]
+
+---
+
+## ⚙️ Installation
+
+### Prérequis
+- **Node.js ≥ 20**
+
+```bash
 npm i -g @quasar/cli
 ```
-#### 运行
-```
+
+---
+
+## 🚀 Démarrage du projet
+
+```bash
 npm run dev
 ```
 
-#### 目录结构
+---
+
+## 📁 Structure des répertoires
+
 ```
 src/pages/system/
 ├── user/
@@ -31,111 +58,132 @@ src/api/system/
 ├── menu/menu.js
 └── log/log.js
 ```
-#### 映射关系
-数据库中的 component 字段**（修复后）：
-- 用户管理: `system/user`
-- 角色管理: `system/role`
-- 菜单管理: `system/menu`
-- 日志管理: `system/log`
 
-**后端组件映射的 key**：
-- `system/user` ✅
-- `system/role` ✅
-- `system/menu` ✅
-- `system/log` ✅
+---
 
-**后端组件映射的 value**：
-- `system/user/UserPage.vue`
-- `system/role/RolePage.vue`
-- `system/menu/MenuPage.vue`
-- `system/log/LogPage.vue`
+## 🔗 Correspondances entre composants et routes
 
-**实际 Vue 文件路径**：
-- `pages/system/user/UserPage.vue`
-- `pages/system/role/RolePage.vue`
-- `pages/system/menu/MenuPage.vue`
-- `pages/system/log/LogPage.vue
+### Champ `component` (base de données)
 
+| Fonction | Valeur `component` |
+|-----------|--------------------|
+| Gestion des utilisateurs | `system/user` |
+| Gestion des rôles | `system/role` |
+| Gestion des menus | `system/menu` |
+| Gestion des journaux | `system/log` |
 
+### Mappage backend (clé → valeur)
 
-| 层级 | 路径格式 | 示例 |
-|------|----------|------|
-| 路由路径 | `/system/user` | 用户访问的URL |
-| 数据库component | `system/user` | 数据库存储的组件标识 |
-| 组件映射key | `system/user` | API返回的键 |
-| 组件映射value | `system/user` | API返回的值（简化） |
-| Vue文件路径 | `pages/system/user/UserPage.vue` | 实际文件位置 |
+| Type | Exemple |
+|------|----------|
+| **Key** | `system/user` |
+| **Value** | `system/user/UserPage.vue` |
 
-**前端路径构建逻辑**：
-1. 接收到 `system/user`
-2. 分割路径得到模块名 `user`
-3. 首字母大写得到 `User`
-4. 构建完整路径 `../pages/system/user/UserPage.vue
+### Chemins réels
 
+- `pages/system/user/UserPage.vue`  
+- `pages/system/role/RolePage.vue`  
+- `pages/system/menu/MenuPage.vue`  
+- `pages/system/log/LogPage.vue`
 
-菜单 | path | component | Vue文件路径 |
-|------|------|-----------|------------|
-| 用户管理 | `/system/user` | `system/user` | `pages/system/user/UserPage.vue` |
-| 角色管理 | `/system/role` | `system/role` | `pages/system/role/RolePage.vue` |
-| 菜单管理 | `/system/menu` | `system/menu` | `pages/system/menu/MenuPage.vue` |
-| 日志管理 | `/system/log` | `system/log` | `pages/system/log/LogPage.vue` |
+---
 
+## 🧠 Logique de construction du chemin (frontend)
 
-#### 创建权限指令系统
+1. Réception du champ `component` → `system/user`  
+2. Extraction du module (`user`)  
+3. Conversion en PascalCase → `User`  
+4. Construction du chemin complet :  
+   `../pages/system/user/UserPage.vue`
 
-创建了 `ywhc-admin\ywhc-admin-frontend\src\directives\permission.js` 权限指令，支持：
-- `v-permission` 指令用于控制按钮和元素的权限显示
-- `v-role` 指令用于控制基于角色的权限显示
-```
+---
+
+### Exemple global
+
+| Menu | path | component | Fichier Vue |
+|------|------|------------|--------------|
+| Gestion des utilisateurs | `/system/user` | `system/user` | `pages/system/user/UserPage.vue` |
+| Gestion des rôles | `/system/role` | `system/role` | `pages/system/role/RolePage.vue` |
+| Gestion des menus | `/system/menu` | `system/menu` | `pages/system/menu/MenuPage.vue` |
+| Gestion des journaux | `/system/log` | `system/log` | `pages/system/log/LogPage.vue` |
+
+---
+
+## 🛡️ Système de directives de permissions
+
+### 📂 Fichier de directives
+`src/directives/permission.js`
+
+### Fonctionnalités
+- `v-permission` → contrôle l’affichage selon les permissions.  
+- `v-role` → contrôle l’affichage selon les rôles utilisateurs.
+
+```vue
 <q-btn
-    flat
-    v-permission="'monitor:online:view'"
-    dense
-    color="primary"
-    icon="visibility"
-    @click="showUserDetail(props.row)"
-  >
-    <q-tooltip>查看详情</q-tooltip>
-  </q-btn>
+  flat
+  v-permission="'monitor:online:view'"
+  dense
+  color="primary"
+  icon="visibility"
+  @click="showUserDetail(props.row)"
+>
+  <q-tooltip>Voir les détails</q-tooltip>
+</q-btn>
 ```
-### 注册权限指令
 
-创建了 `ywhc-admin\ywhc-admin-frontend\src\boot\directives.js` 启动文件，并在 `quasar.config.js` 中注册。
-#### 详情和编辑表单通用样式
-
-创建了 `ywhc-admin\ywhc-admin-frontend\src\css\detail-edit-common.scss` 文件，用于统一管理详情和编辑表单的样式。
-
-详情页面样式 (Detail View Styles)
-* .detail-form - 详情表单容器
-* .detail-field-inline - 行内字段显示（标签和值同一行）
-* .detail-field-block - 块级字段显示（标签在上，值在下）
-* .code-block - 代码块样式（JSON、参数等）
-* .error-block - 错误信息块样式
-编辑表单样式 (Edit Form Styles)
-* .edit-form - 编辑表单容器
-* .form-section - 表单分组样式
-对话框通用样式 (Dialog Common Styles)
-* .dialog-card - 对话框卡片样式
-* .dialog-header - 对话框头部样式
-* .dialog-content - 对话框内容区域（含自定义滚动条）
-* .dialog-footer - 对话框底部样式
-特定对话框样式 (Specific Dialog Styles)
-* .detail-dialog - 详情对话框特定样式
-* .edit-dialog - 编辑对话框特定样式
-* .dialog-sticky-actions - 粘性操作栏样式
-工具类 (Utility Classes)
-* .copy-btn - 复制按钮样式
-* .status-badge - 状态徽章样式
-* .section-divider - 分组分隔线样式
-响应式设计 (Responsive Design)
-移动端适配样式（768px以下）
-动画效果 (Animations)
-* .fade-enter-active / .fade-leave-active - 淡入淡出动画
-* .slide-up-enter-active / .slide-up-leave-active - 滑入滑出动画
-
-#### 弹窗详情或编辑或新增
+### ⚙️ Enregistrement dans Quasar
+Créer `src/boot/directives.js`, puis ajouter dans `quasar.config.js` :
+```js
+boot: ['directives']
 ```
-<!-- 日志详情对话框 -->
+
+---
+
+## 🎨 Styles globaux — Détails & Formulaires d’édition
+
+Fichier commun :  
+`src/css/detail-edit-common.scss`
+
+### 🧾 Styles de page de détails
+- `.detail-form` — conteneur principal  
+- `.detail-field-inline` — étiquette + valeur sur la même ligne  
+- `.detail-field-block` — présentation verticale  
+- `.code-block` — formatage de blocs JSON ou code  
+- `.error-block` — bloc d’erreur
+
+### 🧰 Styles de formulaire d’édition
+- `.edit-form` — conteneur principal  
+- `.form-section` — regroupement logique  
+
+### 💬 Styles de dialogues
+- `.dialog-card` — carte principale  
+- `.dialog-header` — en-tête  
+- `.dialog-content` — zone de contenu (scroll custom)  
+- `.dialog-footer` — pied du dialogue  
+
+### 🎯 Styles spécifiques
+- `.detail-dialog` — pour les vues de détails  
+- `.edit-dialog` — pour les formulaires d’édition  
+- `.dialog-sticky-actions` — barre d’action fixe  
+
+### 🧱 Classes utilitaires
+- `.copy-btn` — bouton copier  
+- `.status-badge` — badge de statut  
+- `.section-divider` — séparateur visuel  
+
+### 📱 Responsive
+- Adaptations pour écrans < 768px  
+
+### 🎞️ Animations
+- `.fade-enter-active / .fade-leave-active` — fondu  
+- `.slide-up-enter-active / .slide-up-leave-active` — glissement vertical  
+
+---
+
+## 🪟 Exemple : Détails / Édition / Création d’un journal
+
+```vue
+<!-- Détails -->
 <LogEditDialog 
   v-model="logDetailDialog" 
   :log-data="currentLog" 
@@ -143,7 +191,7 @@ src/api/system/
   @refresh="handleRefresh"
 />
 
-<!-- 日志编辑对话框 -->
+<!-- Édition -->
 <LogEditDialog 
   v-model="logEditDialog" 
   :log-data="currentLog" 
@@ -152,7 +200,7 @@ src/api/system/
   @submit="handleSubmit"
 />
 
-<!-- 日志新增对话框 -->
+<!-- Création -->
 <LogEditDialog 
   v-model="logCreateDialog" 
   :is-edit="false"
@@ -160,59 +208,64 @@ src/api/system/
   @submit="handleSubmit"
 />
 ```
-### 1. 字典工具类使用
+
+---
+
+## 📚 Utilisation du système de dictionnaires
+
+### 1️⃣ Utilisation via utilitaire `useDictionary`
 
 ```javascript
 import { useDictionary } from 'src/utils/dict'
 
 const { getDictData, getDictLabel, getDictOptions } = useDictionary()
 
-// 获取字典数据
+// Données du dictionnaire
 const genderDict = await getDictData('sys_user_sex')
 
-// 获取字典标签
+// Étiquette d’une valeur
 const genderLabel = await getDictLabel('sys_user_sex', '1')
 
-// 获取字典选项（用于下拉框）
+// Options pour un <q-select>
 const genderOptions = await getDictOptions('sys_user_sex')
 ```
 
-### 2. 字典下拉选择组件
+---
+
+### 2️⃣ Composant de sélection (DictSelect)
 
 ```vue
 <template>
-<DictSelect
-  v-model="queryForm.status"
-  dict-type="response_status"
-  label="操作状态"
-  :include-all="false"
+  <DictSelect
+    v-model="queryForm.status"
+    dict-type="response_status"
+    label="Statut de l’opération"
+    :include-all="false"
     style="width: 140px;"
-/>
+  />
 </template>
 
 <script setup>
 import DictSelect from 'src/components/DictSelect.vue'
 import { ref } from 'vue'
-
-
 </script>
 ```
 
-### 3. 在页面中使用字典
+---
+
+### 3️⃣ Utilisation dans une page Vue
 
 ```vue
 <template>
   <div>
-    <!-- 使用字典下拉选择 -->
     <q-select
       v-model="queryForm.status"
       :options="statusOptions"
-      label="状态"
+      label="Statut"
       emit-value
       map-options
     />
-    
-    <!-- 在表格中显示字典标签 -->
+
     <q-table :columns="columns" :rows="rows">
       <template v-slot:body-cell-status="props">
         <q-td :props="props">
@@ -232,12 +285,12 @@ const { getDictOptions, getDictLabel } = useDictionary()
 const statusOptions = ref([])
 const queryForm = ref({ status: '' })
 
-// 获取状态字典选项
+// Charger les options
 const loadStatusOptions = async () => {
   statusOptions.value = await getDictOptions('sys_common_status')
 }
 
-// 获取状态标签
+// Obtenir le libellé
 const getStatusLabel = async (status) => {
   return await getDictLabel('sys_common_status', status)
 }
@@ -248,16 +301,36 @@ onMounted(() => {
 </script>
 ```
 
-### 4. 批量加载字典
+---
+
+### 4️⃣ Chargement multiple de dictionnaires
 
 ```javascript
 import { useDictionary, createDictData } from 'src/utils/dict'
 
-// 方法1：使用 useDictionary
+// Méthode 1 — Chargement manuel
 const { getBatchDictData } = useDictionary()
 const dictData = await getBatchDictData(['sys_user_sex', 'sys_common_status'])
 
-// 方法2：使用 createDictData（响应式）
+// Méthode 2 — Chargement réactif
 const dictDataMap = createDictData(['sys_user_sex', 'sys_common_status'])
-// dictDataMap.sys_user_sex 和 dictDataMap.sys_common_status 是响应式的
+// dictDataMap.sys_user_sex et dictDataMap.sys_common_status sont réactifs
 ```
+
+---
+
+## 🧾 Résumé
+
+- ✅ Structure modulaire `system/*` cohérente  
+- ✅ Routage dynamique basé sur `component`  
+- ✅ Directives de permissions (`v-permission`, `v-role`)  
+- ✅ Feuille de styles unifiée `detail-edit-common.scss`  
+- ✅ Intégration complète du système de dictionnaires  
+- ✅ Dialogues cohérents pour création, édition et consultation  
+
+---
+
+## 👤 Mainteneur
+**Carmelo Guarneri**  
+📧 [contact@formavue.com](mailto:contact@formavue.com)  
+🌐 [https://formavue.com](https://formavue.com)

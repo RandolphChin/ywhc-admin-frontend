@@ -1,145 +1,168 @@
 <template>
   <q-layout view="lHh Lpr lFf">
+    <!-- === HEADER / 头部 / Header === -->
     <q-header elevated class="modern-header">
       <q-toolbar class="modern-toolbar">
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" color="dark" />
 
-        <!-- 面包屑导航 icon="dashboard"  :icon="breadcrumb.icon"  -->
+        <!-- Fil d’Ariane / 面包屑导航 / Breadcrumbs -->
         <q-breadcrumbs class="q-ml-md modern-breadcrumbs">
-          <q-breadcrumbs-el label="Dashboard" class="breadcrumb-item" />
-          <q-breadcrumbs-el v-for="(breadcrumb, index) in breadcrumbs" :key="index" :label="breadcrumb.label"
-            class="breadcrumb-item" />
+          <q-breadcrumbs-el :label="t('menu.dashboard')" class="breadcrumb-item" />
+          <q-breadcrumbs-el
+            v-for="(breadcrumb, index) in breadcrumbs"
+            :key="index"
+            :label="breadcrumb.label"
+            class="breadcrumb-item"
+          />
         </q-breadcrumbs>
 
         <q-space />
-        <!-- 
-        <q-toolbar-title class="system-title-header">
-          <div class="title-content">
-            <span class="title-text">YWHC 后台管理系统</span>
-            <span class="title-version">v2.0</span>
-          </div>
-        </q-toolbar-title>
--->
-        <div class="q-gutter-sm row items-center no-wrap">
-          <!-- 全屏切换 -->
-          <q-btn flat dense round :icon="$q.fullscreen.isActive ? 'fullscreen_exit' : 'fullscreen'"
-            @click="$q.fullscreen.toggle()" color="dark" />
 
-          <!-- 用户菜单 -->
-          <q-btn-dropdown flat dense no-caps :label="userInfo?.username || '用户'" icon="account_circle" color="dark">
+        <!-- Actions utilisateur / 用户操作 / User actions -->
+        <div class="q-gutter-sm row items-center no-wrap">
+          <!-- Plein écran / 全屏 / Fullscreen -->
+          <q-btn
+            flat dense round
+            :icon="$q.fullscreen.isActive ? 'fullscreen_exit' : 'fullscreen'"
+            @click="$q.fullscreen.toggle()"
+            color="dark"
+          />
+
+          <!-- Menu utilisateur / 用户菜单 / User menu -->
+          <q-btn-dropdown
+            flat dense no-caps
+            :label="userInfo && userInfo.username ? userInfo.username : t('user.profile')"
+            icon="account_circle"
+            color="dark"
+          >
             <q-list>
               <q-item clickable v-close-popup @click="goToProfile">
-                <q-item-section avatar>
-                  <q-icon name="person" />
-                </q-item-section>
-                <q-item-section>个人中心</q-item-section>
+                <q-item-section avatar><q-icon name="person" /></q-item-section>
+                <q-item-section>{{ t('user.profile') }}</q-item-section>
               </q-item>
-<!-- 
-              <q-item clickable v-close-popup @click="changePassword">
-                <q-item-section avatar>
-                  <q-icon name="lock" />
-                </q-item-section>
-                <q-item-section>修改密码</q-item-section>
-              </q-item>
- -->
+
               <q-separator />
 
               <q-item clickable v-close-popup @click="logout">
-                <q-item-section avatar>
-                  <q-icon name="logout" />
-                </q-item-section>
-                <q-item-section>退出登录</q-item-section>
+                <q-item-section avatar><q-icon name="logout" /></q-item-section>
+                <q-item-section>{{ t('auth.logout') }}</q-item-section>
               </q-item>
             </q-list>
           </q-btn-dropdown>
         </div>
       </q-toolbar>
 
-      <!-- 标签页区域 -->
+      <!-- Onglets ouverts / 打开标签页 / Open tabs -->
       <div class="tabs-container">
-        <q-tabs v-model="activeTab" no-caps dense class="modern-tabs hide-arrows" active-color="primary"
-          indicator-color="primary" align="left">
-          <q-tab v-for="tab in openTabs" :key="tab.path" :name="tab.path" @click="switchTab(tab.path)"
-            @contextmenu.prevent="showContextMenu($event, tab)" class="modern-tab-item">
+        <q-tabs
+          v-model="activeTab"
+          no-caps dense class="modern-tabs hide-arrows"
+          active-color="primary" indicator-color="primary" align="left"
+        >
+          <q-tab
+            v-for="tab in openTabs"
+            :key="tab.path"
+            :name="tab.path"
+            @click="switchTab(tab.path)"
+            @contextmenu.prevent="showContextMenu($event, tab)"
+            class="modern-tab-item"
+          >
             <div class="tab-content">
-            <!--   <q-icon :name="tab.icon || 'description'" class="tab-icon" /> -->
               <span class="tab-label">{{ tab.title }}</span>
-              <q-btn v-if="tab.path !== '/dashboard'" flat dense round size="xs" icon="close" class="tab-close-btn"
-                @click.stop="closeTab(tab.path)" />
+              <q-btn
+                v-if="tab.path !== '/dashboard'"
+                flat dense round size="xs" icon="close"
+                class="tab-close-btn"
+                @click.stop="closeTab(tab.path)"
+              />
             </div>
           </q-tab>
         </q-tabs>
       </div>
     </q-header>
 
-    <!-- 右键菜单 -->
-    <q-menu v-model="contextMenuVisible" :target="contextMenuTarget" anchor="bottom left" self="top left"
-      :offset="[0, 5]" v-if="contextMenuTarget">
+    <!-- Menu contextuel (onglets) / 右键菜单（标签）/ Tab context menu -->
+    <q-menu
+      v-model="contextMenuVisible"
+      :target="contextMenuTarget"
+      anchor="bottom left"
+      self="top left"
+      :offset="[0, 5]"
+      v-if="contextMenuTarget"
+    >
       <q-list dense style="min-width: 80px">
         <q-item clickable v-close-popup @click="refreshTab">
-          <q-item-section>刷新</q-item-section>
+          <q-item-section>{{ t('action.refresh') }}</q-item-section>
         </q-item>
 
-        <q-item v-if="contextTab?.path !== '/dashboard'" clickable v-close-popup @click="closeTab(contextTab?.path)">
-          <q-item-section>关闭</q-item-section>
+        <q-item v-if="contextTab?.path !== '/dashboard'" clickable v-close-popup @click="closeTab(contextTab?.path || '')">
+          <q-item-section>{{ t('action.close') }}</q-item-section>
         </q-item>
 
         <q-item clickable v-close-popup @click="closeOtherTabs">
-          <q-item-section>关闭其他</q-item-section>
+          <q-item-section>{{ t('action.close_others') }}</q-item-section>
         </q-item>
 
         <q-item clickable v-close-popup @click="closeAllTabs">
-          <q-item-section>关闭全部</q-item-section>
+          <q-item-section>{{ t('action.close_all') }}</q-item-section>
         </q-item>
       </q-list>
     </q-menu>
 
+    <!-- === DRAWER LATÉRAL / 侧边抽屉 / Left drawer === -->
     <q-drawer v-model="leftDrawerOpen" show-if-above class="modern-drawer" style="background: #1a1d29 !important">
       <div class="drawer-header" style="background: #0f1419 !important">
         <div class="logo-container">
           <q-icon name="admin_panel_settings" class="logo-icon" />
           <div class="logo-text">
-            <div class="system-name">YWHC 后台管理系统</div>
-            <!-- 
-            <div class="system-desc">管理系统</div>
-             -->
+            <div class="system-name">YWHC {{ t('menu.system') }}</div>
           </div>
         </div>
       </div>
 
       <q-list class="navigation-menu" style="background: transparent !important">
-        <!-- 仪表盘 - 保留静态菜单 -->
-        <q-item clickable v-ripple :active="$route.path === '/dashboard'" @click="navigateTo('/dashboard')"
-          class="menu-item" :class="{ 'menu-item--active': $route.path === '/dashboard' }">
-          <q-item-section avatar>
-            <q-icon name="dashboard" class="menu-icon" />
-          </q-item-section>
+        <!-- Tableau de bord / 仪表盘 / Dashboard -->
+        <q-item
+          clickable v-ripple
+          :active="$route.path === '/dashboard'"
+          @click="navigateTo('/dashboard')"
+          class="menu-item"
+          :class="{ 'menu-item--active': $route.path === '/dashboard' }"
+        >
+          <q-item-section avatar><q-icon name="dashboard" class="menu-icon" /></q-item-section>
           <q-item-section class="menu-label">
-            <span>仪表盘</span>
+            <span>{{ t('menu.dashboard') }}</span>
             <div class="item-indicator"></div>
           </q-item-section>
         </q-item>
 
-        <!-- 动态菜单 -->
-        <template v-for="menu in menuList" :key="menu.id">
-          <q-expansion-item v-if="menu.children && menu.children.length > 0" :icon="menu.icon" :label="menu.menuName"
-            :model-value="isMenuExpanded(menu)" @update:model-value="(val) => onMenuToggle(menu, val)"
-            class="menu-group" header-class="menu-group-header" expand-icon="keyboard_arrow_down">
+        <!-- Menus dynamiques / 动态菜单 / Dynamic menus -->
+        <template v-for="menu in menuList as MenuItem[]" :key="menu.id">
+          <q-expansion-item
+            v-if="menu.children && menu.children.length > 0"
+            :icon="menu.icon"
+            :label="menu.menuName"
+            :model-value="isMenuExpanded(menu)"
+            @update:model-value="(val) => onMenuToggle(menu, val)"
+            class="menu-group"
+            header-class="menu-group-header"
+            expand-icon="keyboard_arrow_down"
+          >
             <template v-slot:header>
-              <q-item-section avatar>
-                <q-icon :name="menu.icon" class="menu-icon" />
-              </q-item-section>
-              <q-item-section class="menu-label">
-                <span>{{ menu.menuName }}</span>
-              </q-item-section>
+              <q-item-section avatar><q-icon :name="menu.icon" class="menu-icon" /></q-item-section>
+              <q-item-section class="menu-label"><span>{{ menu.menuName }}</span></q-item-section>
             </template>
 
-            <q-item v-for="child in menu.children" :key="child.id" clickable v-ripple
-              :active="$route.path === child.path" @click="navigateTo(child.path)" class="menu-item menu-item--sub"
-              :class="{ 'menu-item--active': $route.path === child.path }">
-              <q-item-section avatar>
-                <q-icon :name="child.icon" class="menu-icon" />
-              </q-item-section>
+            <q-item
+              v-for="child in menu.children"
+              :key="child.id"
+              clickable v-ripple
+              :active="$route.path === child.path"
+              @click="navigateTo(child.path)"
+              class="menu-item menu-item--sub"
+              :class="{ 'menu-item--active': $route.path === child.path }"
+            >
+              <q-item-section avatar><q-icon :name="child.icon" class="menu-icon" /></q-item-section>
               <q-item-section class="menu-label">
                 <span>{{ child.menuName }}</span>
                 <div class="item-indicator"></div>
@@ -147,11 +170,14 @@
             </q-item>
           </q-expansion-item>
 
-          <q-item v-else clickable v-ripple :active="$route.path === menu.path" @click="navigateTo(menu.path)"
-            class="menu-item" :class="{ 'menu-item--active': $route.path === menu.path }">
-            <q-item-section avatar>
-              <q-icon :name="menu.icon" class="menu-icon" />
-            </q-item-section>
+          <q-item
+            v-else clickable v-ripple
+            :active="$route.path === menu.path"
+            @click="navigateTo(menu.path)"
+            class="menu-item"
+            :class="{ 'menu-item--active': $route.path === menu.path }"
+          >
+            <q-item-section avatar><q-icon :name="menu.icon" class="menu-icon" /></q-item-section>
             <q-item-section class="menu-label">
               <span>{{ menu.menuName }}</span>
               <div class="item-indicator"></div>
@@ -161,6 +187,7 @@
       </q-list>
     </q-drawer>
 
+    <!-- === CONTENU PRINCIPAL / 主内容 / Main content === -->
     <q-page-container>
       <router-view v-slot="{ Component }">
         <keep-alive>
@@ -169,32 +196,19 @@
       </router-view>
     </q-page-container>
 
-    <!-- 修改密码对话框 -->
+    <!-- === DIALOGUE CHANGEMENT MOT DE PASSE / 修改密码对话框 / Change password dialog === -->
     <q-dialog v-model="passwordDialog" persistent>
       <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">修改密码</div>
-        </q-card-section>
-
+        <q-card-section><div class="text-h6">{{ t('user.change_password') }}</div></q-card-section>
         <q-card-section class="q-pt-none">
           <q-form @submit="submitPasswordChange" class="q-gutter-md">
-            <q-input v-model="passwordForm.oldPassword" type="password" label="原密码"
-              :rules="[(val) => !!val || '请输入原密码']" outlined dense />
-
-            <q-input v-model="passwordForm.newPassword" type="password" label="新密码" :rules="[
-              (val) => !!val || '请输入新密码',
-              (val) => val.length >= 6 || '密码长度至少6位',
-            ]" outlined dense />
-
-            <q-input v-model="passwordForm.confirmPassword" type="password" label="确认密码" :rules="[
-              (val) => !!val || '请确认密码',
-              (val) =>
-                val === passwordForm.newPassword || '两次密码输入不一致',
-            ]" outlined dense />
+            <q-input v-model="passwordForm.oldPassword" type="password" :label="t('auth.old_password')" outlined dense />
+            <q-input v-model="passwordForm.newPassword" type="password" :label="t('auth.new_password')" outlined dense />
+            <q-input v-model="passwordForm.confirmPassword" type="password" :label="t('auth.confirm_password')" outlined dense />
 
             <div class="row justify-end q-gutter-sm">
-              <q-btn flat label="取消" @click="passwordDialog = false" />
-              <q-btn type="submit" color="primary" label="确定" />
+              <q-btn flat :label="t('action.cancel')" @click="passwordDialog = false" />
+              <q-btn type="submit" color="primary" :label="t('action.confirm')" />
             </div>
           </q-form>
         </q-card-section>
@@ -203,13 +217,35 @@
   </q-layout>
 </template>
 
-<script setup>
+<script setup lang="ts">
+/**
+ * FR  : Mise en page principale de l’application (header, drawer, tabs, contenu).
+ * ZH  : 应用主布局（头部、侧边栏、标签页、内容）。
+ * EN  : Application main layout (header, drawer, tabs, content).
+ */
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "src/stores/auth";
 import { useQuasar } from "quasar";
 import { resetDynamicRoutes } from "src/router/dynamicRoutes";
+import { useI18n } from "vue-i18n";
 
+// ======================= Types =======================
+interface MenuItem {
+  id: number | string;
+  path: string;
+  icon?: string;
+  menuName: string;
+  children?: MenuItem[];
+}
+
+interface UserInfo {
+  username?: string;
+  [key: string]: any;
+}
+
+// =====================================================
+const { t } = useI18n(); // FR: i18n / ZH: 国际化 / EN: internationalization
 const $q = useQuasar();
 const router = useRouter();
 const route = useRoute();
@@ -224,39 +260,49 @@ const passwordForm = ref({
 });
 
 // 菜单展开状态管理
-const expandedMenus = ref(new Set());
+// FR: Gestion de l’état d’expansion des menus
+// EN: Manage menu expanded state
+const expandedMenus = ref<Set<number | string>>(new Set());
 
 // 标签页管理
-const openTabs = ref([
-  {
-    path: "/dashboard",
-    title: "Dashboard",
-    icon: "dashboard",
-  },
+// FR: Gestion des onglets ouverts
+// EN: Open tabs management
+const openTabs = ref<{ path: string; title: string; icon?: string }[]>([
+  { path: "/dashboard", title: t("menu.dashboard"), icon: "dashboard" },
 ]);
 const activeTab = ref("/dashboard");
 
 // 右键菜单
+// FR: Menu contextuel (clic droit sur onglet)
+// EN: Context menu (tab right-click)
 const contextMenuVisible = ref(false);
-const contextTab = ref(null);
-const contextMenuTarget = ref(null);
+const contextTab = ref<{ path: string } | null>(null);
+const contextMenuTarget = ref<HTMLElement | null>(null);
 
 // 面包屑导航
-const breadcrumbs = ref([]);
+// FR: Fil d’Ariane
+// EN: Breadcrumbs
+const breadcrumbs = ref<{ label: string; icon?: string; to?: any }[]>([]);
 
-// 计算属性
-const userInfo = computed(() => authStore.userInfo);
+// 计算属性 / FR: Propriétés calculées / EN: Computed
+const userInfo = computed<UserInfo | null>(() => {
+  const info = authStore.userInfo;
+  return (info && typeof info === 'object' && !Array.isArray(info)) ? info as UserInfo : null;
+});
 const menuList = computed(() => authStore.menus || []);
 
-// 初始化菜单展开状态
-const initExpandedMenus = (menus) => {
+/**
+ * 初始化菜单展开状态
+ * FR : Initialiser l’état d’expansion des menus à partir de la route active
+ * EN : Initialize expanded menus based on current route
+ */
+const initExpandedMenus = (menus: MenuItem[]) => {
   if (!menus || menus.length === 0) return;
 
   const currentPath = route.path;
   menus.forEach((menu) => {
     if (menu.children && menu.children.length > 0) {
-      // 检查当前路由是否在这个菜单的子菜单中
-      const hasActiveChild = menu.children.some((child) =>
+      const hasActiveChild = menu.children.some((child: any) =>
         currentPath.startsWith(child.path)
       );
       if (hasActiveChild) {
@@ -266,12 +312,16 @@ const initExpandedMenus = (menus) => {
   });
 };
 
-// 更新菜单展开状态
-const updateExpandedMenus = (currentPath) => {
+/**
+ * 更新菜单展开状态
+ * FR : Mettre à jour l’état d’expansion des menus selon la route
+ * EN : Update expanded menus according to the route
+ */
+const updateExpandedMenus = (currentPath: string) => {
   const menus = authStore.menus || [];
-  menus.forEach((menu) => {
+  menus.forEach((menu: MenuItem) => {
     if (menu.children && menu.children.length > 0) {
-      const hasActiveChild = menu.children.some((child) =>
+      const hasActiveChild = menu.children.some((child: any) =>
         currentPath.startsWith(child.path)
       );
       if (hasActiveChild) {
@@ -281,21 +331,33 @@ const updateExpandedMenus = (currentPath) => {
   });
 };
 
-// 检查菜单是否激活
-const isMenuActive = (menu) => {
+/**
+ * 检查菜单是否激活
+ * FR : Indique si un menu est actif
+ * EN : Check if menu is active
+ */
+const isMenuActive = (menu: any) => {
   if (menu.children && menu.children.length > 0) {
-    return menu.children.some((child) => route.path.startsWith(child.path));
+    return menu.children.some((child: any) => route.path.startsWith(child.path));
   }
   return route.path === menu.path;
 };
 
-// 检查菜单是否应该展开
-const isMenuExpanded = (menu) => {
+/**
+ * 检查菜单是否展开
+ * FR : Indique si un menu doit être affiché comme « déployé »
+ * EN : Check if a menu should be expanded
+ */
+const isMenuExpanded = (menu: MenuItem) => {
   return expandedMenus.value.has(menu.id);
 };
 
-// 处理菜单展开/折叠事件
-const onMenuToggle = (menu, expanded) => {
+/**
+ * 处理菜单展开/折叠事件
+ * FR : Gérer l’évènement d’expansion/réduction d’un menu
+ * EN : Handle menu expand/collapse event
+ */
+const onMenuToggle = (menu: MenuItem, expanded: boolean) => {
   if (expanded) {
     expandedMenus.value.add(menu.id);
   } else {
@@ -303,58 +365,57 @@ const onMenuToggle = (menu, expanded) => {
   }
 };
 
-// 更新面包屑导航
-const updateBreadcrumbs = (currentPath) => {
+/**
+ * 更新面包屑导航
+ * FR : Mettre à jour le fil d’Ariane selon la route courante
+ * EN : Update breadcrumbs based on current route
+ */
+const updateBreadcrumbs = (currentPath: string) => {
   breadcrumbs.value = [];
 
   if (currentPath === "/dashboard") return;
 
-  const findBreadcrumbPath = (menus, targetPath, path = []) => {
+  const findBreadcrumbPath = (menus: any[], targetPath: string, path: any[] = []) => {
     for (const menu of menus) {
-      const currentPath = [
+      const current = [
         ...path,
         { label: menu.menuName, icon: menu.icon, to: { path: menu.path } },
       ];
 
       if (menu.path === targetPath) {
-        return currentPath;
+        return current;
       }
 
       if (menu.children) {
-        const found = findBreadcrumbPath(
-          menu.children,
-          targetPath,
-          currentPath
-        );
+        const found = findBreadcrumbPath(menu.children, targetPath, current);
         if (found) return found;
       }
     }
     return null;
   };
 
-  const breadcrumbPath = findBreadcrumbPath(
-    authStore.menus || [],
-    currentPath
-  );
+  const breadcrumbPath = findBreadcrumbPath(authStore.menus || [], currentPath);
   if (breadcrumbPath) {
     breadcrumbs.value = breadcrumbPath;
   }
 };
 
-// 标签页管理方法
-const addTab = (path) => {
-  // 如果标签页已存在，直接切换
+/**
+ * 添加并切换标签页
+ * FR : Ajouter (si besoin) et basculer vers un onglet
+ * EN : Add (if needed) and switch to a tab
+ */
+const addTab = (path: string) => {
   const existingTab = openTabs.value.find((tab) => tab.path === path);
   if (existingTab) {
     activeTab.value = path;
     return;
   }
 
-  // 根据路径获取页面信息
   const pageInfo = getPageInfo(path);
   if (pageInfo) {
     openTabs.value.push({
-      path: path,
+      path,
       title: pageInfo.title,
       icon: pageInfo.icon,
     });
@@ -362,9 +423,13 @@ const addTab = (path) => {
   }
 };
 
-const getPageInfo = (path) => {
-  // 从菜单中查找页面信息
-  const findInMenus = (menus, targetPath) => {
+/**
+ * 根据路径获取页面信息
+ * FR : Obtenir les infos d’une page depuis son chemin
+ * EN : Get page info from path
+ */
+const getPageInfo = (path: string) => {
+  const findInMenus = (menus: any[], targetPath: string): { title: string; icon: string } | null => {
     for (const menu of menus) {
       if (menu.path === targetPath) {
         return { title: menu.menuName, icon: menu.icon };
@@ -380,24 +445,21 @@ const getPageInfo = (path) => {
   const menuInfo = findInMenus(authStore.menus || [], path);
   if (menuInfo) return menuInfo;
 
-  // 默认页面信息
-  const defaultPages = {
-    "/dashboard": { title: "Dashboard", icon: "dashboard" },
-    "/profile": { title: "个人中心", icon: "person" },
+  const defaultPages: Record<string, { title: string; icon: string }> = {
+    "/dashboard": { title: t("menu.dashboard"), icon: "dashboard" },
+    "/profile": { title: t("user.profile"), icon: "person" },
   };
 
-  return defaultPages[path] || { title: "未知页面", icon: "help" };
+  return defaultPages[path] || { title: t("common.unknownPage"), icon: "help" };
 };
 
 // 监听菜单数据变化
+// FR : Surveiller les changements du menu (et init. expansion)
+// EN : Watch menus changes (and init expansion)
 watch(
   () => authStore.menus,
   (newMenus) => {
-    console.log("📋 MainLayout - 菜单数据已更新:", newMenus);
-    console.log("📋 MainLayout - 菜单数组长度:", newMenus?.length || 0);
     if (newMenus?.length > 0) {
-      console.log("📋 MainLayout - 第一个菜单项:", newMenus[0]);
-      // 初始化展开状态，如果当前路由在某个菜单下，自动展开该菜单
       initExpandedMenus(newMenus);
     }
   },
@@ -405,17 +467,16 @@ watch(
 );
 
 // 监听路由变化，更新菜单展开状态、面包屑和标签页
+// FR : Surveiller la route et mettre à jour menus, breadcrumbs, onglets
+// EN : Watch route to update menus, breadcrumbs, tabs
 watch(
   () => route.path,
   (newPath) => {
-    console.log("🚦 路由变化:", newPath);
     updateExpandedMenus(newPath);
     updateBreadcrumbs(newPath);
 
-    // 更新活动标签页
     activeTab.value = newPath;
 
-    // 如果是通过直接访问URL进入的页面，确保标签页存在
     if (!openTabs.value.find((tab) => tab.path === newPath)) {
       addTab(newPath);
     }
@@ -423,48 +484,46 @@ watch(
   { immediate: true }
 );
 
-// 方法
+// 方法 / FR: Méthodes / EN: Methods
 const toggleLeftDrawer = () => {
   leftDrawerOpen.value = !leftDrawerOpen.value;
 };
 
-const navigateTo = (path) => {
+const navigateTo = (path: string) => {
   addTab(path);
   router.push(path);
 };
 
-const switchTab = (path) => {
+const switchTab = (path: string) => {
   activeTab.value = path;
   router.push(path);
 };
 
-const closeTab = (path) => {
-  if (path === "/dashboard") return; // Dashboard 不可关闭
+const closeTab = (path: string) => {
+  if (path === "/dashboard") return; // Dashboard 不可关闭 / FR: non fermable / EN: not closable
 
   const index = openTabs.value.findIndex((tab) => tab.path === path);
   if (index === -1) return;
 
   openTabs.value.splice(index, 1);
 
-  // 如果关闭的是当前活动标签页，切换到其他标签页
   if (activeTab.value === path) {
     const newActiveTab = openTabs.value[Math.max(0, index - 1)];
     switchTab(newActiveTab.path);
   }
 };
 
-const showContextMenu = (event, tab) => {
+const showContextMenu = (event: MouseEvent, tab: { path: string }) => {
   event.preventDefault();
   if (event.target) {
     contextTab.value = tab;
-    contextMenuTarget.value = event.target;
+    contextMenuTarget.value = event.target as HTMLElement;
     contextMenuVisible.value = true;
   }
 };
 
 const refreshTab = () => {
   if (contextTab.value) {
-    // 强制刷新当前页面
     const currentPath = contextTab.value.path;
     router.replace("/").then(() => {
       router.replace(currentPath);
@@ -480,18 +539,13 @@ const closeOtherTabs = () => {
     (tab) => tab.path === "/dashboard" || tab.path === keepTab.path
   );
 
-  if (
-    activeTab.value !== keepTab.path &&
-    activeTab.value !== "/dashboard"
-  ) {
+  if (activeTab.value !== keepTab.path && activeTab.value !== "/dashboard") {
     switchTab(keepTab.path);
   }
 };
 
 const closeAllTabs = () => {
-  openTabs.value = openTabs.value.filter(
-    (tab) => tab.path === "/dashboard"
-  );
+  openTabs.value = openTabs.value.filter((tab) => tab.path === "/dashboard");
   if (activeTab.value !== "/dashboard") {
     switchTab("/dashboard");
   }
@@ -519,87 +573,71 @@ const submitPasswordChange = async () => {
 
     $q.notify({
       type: "positive",
-      message: "密码修改成功",
+      message: t("user.password_success"),
     });
 
     passwordDialog.value = false;
-  } catch (error) {
+  } catch (error: any) {
     $q.notify({
       type: "negative",
-      message: error.message || "密码修改失败",
+      message: error?.message || t("user.password_failed"),
     });
   }
 };
 
+/**
+ * 退出登录对话框
+ * FR : Boîte de dialogue de déconnexion (confirmation)
+ * EN : Logout confirmation dialog
+ */
 const logout = async () => {
   $q.dialog({
-    title: "确认",
-    message: "确定要退出登录吗？",
+    title: t("action.confirm"),
+    message: t("auth.confirm_logout"),
     cancel: true,
     persistent: true,
   }).onOk(async () => {
     try {
       await authStore.logout();
-      // 清除动态路由
+      // 清除动态路由 / FR: Réinitialiser les routes dynamiques / EN: Reset dynamic routes
       resetDynamicRoutes(router);
       router.push("/login");
     } catch (error) {
-      console.error("退出登录失败:", error);
-      // 清除动态路由
+      // 同上：确保回到登录页 / FR: fallback / EN: fallback
       resetDynamicRoutes(router);
       router.push("/login");
     }
   });
 };
 
+/**
+ * 加载用户相关数据（用户信息、菜单等）
+ * FR : Charger les données utilisateur (profil, menus)
+ * EN : Load user-related data (profile, menus)
+ */
 const loadUserData = async () => {
   try {
-    console.log("🔄 MainLayout - 开始加载用户数据");
-    console.log("🔄 MainLayout - 当前token:", !!authStore.token);
-    console.log(
-      "🔄 MainLayout - 当前用户信息:", authStore.userInfo
-    );
-    console.log(
-      "🔄 MainLayout - 当前菜单数量:",
-      authStore.menus?.length || 0
-    );
-
     if (authStore.token) {
-      // 如果没有用户信息，先获取用户信息
       if (!authStore.userInfo) {
-        console.log("📝 MainLayout - 用户信息为空，开始获取用户信息");
         await authStore.getUserInfo();
-        console.log("📝 MainLayout - 获取用户信息完成，当前userInfo:", authStore.userInfo);
-      } else {
-        console.log("📝 MainLayout - 用户信息已存在，跳过获取");
       }
-
-      // 如果没有菜单数据，获取菜单
       if (!authStore.menus?.length) {
-        console.log("📋 MainLayout - 获取用户菜单");
         await authStore.getUserMenus();
       }
-
-      console.log("✅ MainLayout - 用户数据加载完成");
-      console.log("✅ MainLayout - 最终userInfo:", authStore.userInfo);
-    } else {
-      console.log("ℹ️ MainLayout - 跳过数据加载，无token");
     }
   } catch (error) {
-    console.error("❌ MainLayout - 加载用户数据失败:", error);
+    // 可按需记录日志 / FR: log si besoin / EN: optional logging
+    // console.error("Load user data failed:", error);
   }
 };
 
 onMounted(() => {
-  console.log("🚀 MainLayout - 组件已挂载");
-  console.log("🚀 MainLayout - 用户信息:", userInfo.value);
-  console.log("🚀 MainLayout - 菜单列表:", menuList.value);
   loadUserData();
 });
 </script>
 
 <style lang="scss" scoped>
-// ========== Header 样式 ==========
+/* ========== Header 样式 / FR: Styles header / EN: Header styles ========== */
 .modern-header {
   background: #ffffff;
   color: #333;
@@ -639,7 +677,7 @@ onMounted(() => {
   }
 }
 
-// ========== 面包屑导航样式 ==========
+/* ========== 面包屑导航样式 / FR: Styles breadcrumbs / EN: Breadcrumbs styles ========== */
 .modern-breadcrumbs {
   :deep(.q-breadcrumbs__el) {
     color: #666 !important;
@@ -658,7 +696,6 @@ onMounted(() => {
 
   :deep(.q-breadcrumbs__separator) {
     color: #999 !important;
-    /* margin: 0 8px; */
   }
 
   .breadcrumb-item:hover {
@@ -668,7 +705,7 @@ onMounted(() => {
   }
 }
 
-// ========== 标签页样式 ==========
+/* ========== 标签页样式 / FR: Tabs styles / EN: Tabs styles ========== */
 .tabs-container {
   background: linear-gradient(to right, #f8f9fa, #ffffff);
   border-bottom: 1px solid rgba(102, 126, 234, 0.1);
@@ -766,7 +803,7 @@ onMounted(() => {
   }
 }
 
-// ========== 左侧抽屉样式 ==========
+/* ========== 左侧抽屉样式 / FR: Drawer styles / EN: Drawer styles ========== */
 .modern-drawer {
   background: #1a1d29 !important;
   border: none;
@@ -774,7 +811,7 @@ onMounted(() => {
   box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 }
 
-// 全局强制覆盖
+/* 强制覆盖（全局）/ FR: Override (global) / EN: Force override (global) */
 :deep(.modern-drawer) {
   background: #1a1d29 !important;
   color: rgba(255, 255, 255, 0.9) !important;
@@ -974,7 +1011,7 @@ onMounted(() => {
   }
 }
 
-// ========== 响应式设计 ==========
+/* ========== 响应式设计 / FR: Responsive / EN: Responsive ========== */
 @media (max-width: 768px) {
   .modern-toolbar {
     padding: 0 16px;
@@ -1030,7 +1067,7 @@ onMounted(() => {
   }
 }
 
-// ========== 隐藏箭头 ==========
+/* ========== 隐藏箭头 / FR: Hide arrows / EN: Hide arrows ========== */
 .hide-arrows {
   :deep(.q-tabs__arrow) {
     display: none !important;
@@ -1042,7 +1079,7 @@ onMounted(() => {
   }
 }
 
-// ========== 深色主题适配 ==========
+/* ========== 深色主题适配 / FR: Dark theme / EN: Dark theme ========== */
 .body--dark {
   .modern-header {
     background: #1e1e1e;

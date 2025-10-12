@@ -1,17 +1,10 @@
-/* eslint-env node */
-
-/*
- * This file runs in a Node context (it's NOT transpiled by Babel), so use only
- * the ES6 features that are supported by your Node version. https://node.green/
- */
-
 // Configuration for your app
-// https://v2.quasar.dev/quasar-cli-vite/quasar-config-js
+// https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
-const { configure } = require('quasar/wrappers');
-const path = require('path');
+import { defineConfig } from '#q-app/wrappers';
+import path from 'node:path'
 
-module.exports = configure(function (ctx) {
+export default defineConfig(( ctx ) =>  {
   return {
     eslint: {
       // fix: true,
@@ -33,7 +26,8 @@ module.exports = configure(function (ctx) {
       'axios',
       'auth',
       'router',
-      'directives'
+      'directives',
+      'i18n',
     ],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#Property%3A-css
@@ -113,8 +107,12 @@ module.exports = configure(function (ctx) {
       },
 
       // iconSet: 'material-icons', // Quasar icon set
-      // lang: 'en-US', // Quasar language pack
-      lang: 'zh-CN',
+      // Quasar language pack
+      // lang: 'en-US', //englais US
+      // lang: 'zh-CN', //chinois
+      // lang: 'fr', // Français
+      lang: 'src/lang/quasar/fr-FR-fixed.js', // le pack fr cotient qtree.noDatas a la place de qtree.noNodes
+
       // For special cases outside of where the auto-import strategy can have an impact
       // (like functional components as one of the examples),
       // you can manually specify Quasar components/directives to be available everywhere:

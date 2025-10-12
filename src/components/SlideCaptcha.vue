@@ -1,16 +1,17 @@
 <template>
   <div class="slide-captcha-container">
     <div class="captcha-wrapper">
-      <!-- 背景图片容器 -->
+      <!-- 🖼️ Conteneur de l’image d’arrière-plan -->
       <div class="captcha-bg" ref="captchaBg">
         <img 
           v-if="backgroundImage" 
           :src="backgroundImage" 
-          alt="验证码背景"
+          :alt="t('captcha.title')"
           @load="onImageLoad"
           class="bg-image"
         />
-        <!-- 滑块拼图 -->
+
+        <!-- 🧩 Pièce de puzzle -->
         <div 
           class="puzzle-piece" 
           ref="puzzlePiece"
@@ -20,21 +21,21 @@
           <img 
             v-if="puzzleImage" 
             :src="puzzleImage" 
-            alt="拼图块"
+            alt="Pièce du puzzle"
             class="puzzle-image"
           />
         </div>
       </div>
       
-      <!-- 滑动轨道 -->
+      <!-- 🎚️ Piste de glissement -->
       <div class="slide-track" ref="slideTrack">
         <div class="slide-track-bg">
           <span class="slide-text" :class="{ success: isSuccess, error: isError }">
             {{ slideText }}
           </span>
         </div>
-        
-        <!-- 滑块按钮 -->
+
+        <!-- 🔘 Bouton de glissement -->
         <div 
           class="slide-button" 
           ref="slideButton"
@@ -49,37 +50,35 @@
         >
           <q-icon 
             :name="getButtonIcon" 
-            :class="{ 
-              'rotate-icon': isDragging && !isSuccess && !isError 
-            }"
+            :class="{ 'rotate-icon': isDragging && !isSuccess && !isError }"
           />
         </div>
       </div>
-      
-      <!-- 刷新按钮 -->
-      <div class="refresh-btn" @click="refreshCaptcha">
+
+      <!-- 🔄 Bouton de rafraîchissement -->
+      <div class="refresh-btn" @click="refreshCaptcha" :title="t('captcha.refresh')">
         <q-icon name="refresh" />
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { api } from 'src/boot/axios'
+import { useI18n } from 'vue-i18n'
 
-// 定义 emits
+const { t } = useI18n()
 const emit = defineEmits(['success', 'error', 'refresh'])
 
-// 坐标系统修正常量 - 基于实际测试数据的系统性偏移
-const VISUAL_ALIGNMENT_OFFSET = 3 // 根据测试数据调整：143 + 40 = 183，所以偏移量应该是 +40，但考虑到视觉对齐，设为 +3
+// ⚙️ Correction du système de coordonnées
+const VISUAL_ALIGNMENT_OFFSET = 3
 
-// 响应式数据
-const captchaBg = ref(null)
-const puzzlePiece = ref(null)
-const slideTrack = ref(null)
-const slideButton = ref(null)
-
+// Données réactives
+const captchaBg = ref<HTMLElement | null>(null)
+const puzzlePiece = ref<HTMLElement | null>(null)
+const slideTrack = ref<HTMLElement | null>(null)
+const slideButton = ref<HTMLElement | null>(null)
 
 const backgroundImage = ref('')
 const puzzleImage = ref('')
@@ -93,17 +92,17 @@ const captchaId = ref('')
 const trackWidth = ref(300)
 const buttonWidth = ref(40)
 
-// 拖拽相关
+// Données de glissement
 const startX = ref(0)
 const startButtonLeft = ref(0)
-const dragTrack = ref([]) // 拖拽轨迹
+const dragTrack = ref<{x:number, y:number, time:number}[]>([])
 const startTime = ref(0)
 
-// 计算属性
+// Texte dynamique i18n
 const slideText = computed(() => {
-  if (isSuccess.value) return '验证成功'
-  if (isError.value) return '验证失败，请重试'
-  return '向右滑动完成验证'
+  if (isSuccess.value) return t('captcha.success')
+  if (isError.value) return t('captcha.failed')
+  return t('captcha.slide')
 })
 
 const getButtonIcon = computed(() => {
@@ -112,7 +111,7 @@ const getButtonIcon = computed(() => {
   return 'arrow_forward_ios'
 })
 
-// 获取验证码
+// Récupération du captcha
 const getCaptcha = async () => {
   try {
     const response = await api.get('/captcha/slide/generate')
@@ -124,15 +123,14 @@ const getCaptcha = async () => {
     puzzleTop.value = data.puzzleY
     captchaId.value = data.captchaId
     
-    // 重置状态
     resetState()
   } catch (error) {
-    console.error('获取验证码失败:', error)
-    emit('error', '获取验证码失败')
+    console.error('Erreur lors du chargement du captcha:', error)
+    emit('error', t('captcha.load_error'))
   }
 }
 
-// 重置状态
+// Réinitialisation
 const resetState = () => {
   buttonLeft.value = 0
   isDragging.value = false
@@ -141,7 +139,7 @@ const resetState = () => {
   dragTrack.value = []
 }
 
-// 图片加载完成
+// Image chargée
 const onImageLoad = async () => {
   await nextTick()
   if (slideTrack.value) {
@@ -150,122 +148,91 @@ const onImageLoad = async () => {
   }
 }
 
-// 开始拖拽
-const startDrag = (event) => {
+// Début du drag
+const startDrag = (event: MouseEvent | TouchEvent) => {
   if (isSuccess.value || isError.value) return
   
   event.preventDefault()
   isDragging.value = true
   startTime.value = Date.now()
   
-  const clientX = event.type === 'touchstart' ? event.touches[0].clientX : event.clientX
+  const clientX = event.type === 'touchstart'
+    ? (event as TouchEvent).touches[0].clientX
+    : (event as MouseEvent).clientX
+  
   startX.value = clientX
   startButtonLeft.value = buttonLeft.value
+  dragTrack.value = [{ x: 0, y: 0, time: 0 }]
   
-  // 清空轨迹
-  dragTrack.value = []
-  dragTrack.value.push({
-    x: 0,
-    y: 0,
-    time: 0
-  })
-  
-  // 添加事件监听
   document.addEventListener('mousemove', onDrag)
   document.addEventListener('mouseup', stopDrag)
   document.addEventListener('touchmove', onDrag)
   document.addEventListener('touchend', stopDrag)
 }
 
-// 拖拽中
-const onDrag = (event) => {
+// Drag en cours
+const onDrag = (event: MouseEvent | TouchEvent) => {
   if (!isDragging.value) return
-  
   event.preventDefault()
-  const clientX = event.type === 'touchmove' ? event.touches[0].clientX : event.clientX
+  
+  const clientX = event.type === 'touchmove'
+    ? (event as TouchEvent).touches[0].clientX
+    : (event as MouseEvent).clientX
+  
   const deltaX = clientX - startX.value
   const newLeft = Math.max(0, Math.min(startButtonLeft.value + deltaX, trackWidth.value - buttonWidth.value))
-  
   buttonLeft.value = newLeft
   
-  // 记录轨迹
-  dragTrack.value.push({
-    x: newLeft,
-    y: 0,
-    time: Date.now() - startTime.value
-  })
+  dragTrack.value.push({ x: newLeft, y: 0, time: Date.now() - startTime.value })
 }
 
-// 停止拖拽
+// Fin du drag
 const stopDrag = async () => {
   if (!isDragging.value) return
-  
   isDragging.value = false
-  
-  // 移除事件监听
   document.removeEventListener('mousemove', onDrag)
   document.removeEventListener('mouseup', stopDrag)
   document.removeEventListener('touchmove', onDrag)
   document.removeEventListener('touchend', stopDrag)
-  
-  // 验证滑块位置
   await verifyCaptcha()
 }
 
-
-
-// 验证验证码
+// Vérification du captcha
 const verifyCaptcha = async () => {
   try {
-    // 应用坐标系统修正 - 解决视觉对齐与数学验证的偏移问题
-    const visualButtonPosition = buttonLeft.value
-    const correctedSlideX = visualButtonPosition + VISUAL_ALIGNMENT_OFFSET
-    
-    
+    const correctedSlideX = buttonLeft.value + VISUAL_ALIGNMENT_OFFSET
     const response = await api.post('/captcha/slide/verify', {
       captchaId: captchaId.value,
-      slideX: correctedSlideX, // 发送修正后的坐标
+      slideX: correctedSlideX,
       track: dragTrack.value
     })
     
-    // 检查验证结果
     const verifyResult = response.data.data
-    if (verifyResult && verifyResult.success) {
+    if (verifyResult?.success) {
       isSuccess.value = true
-      emit('success', {
-        captchaId: captchaId.value,
-        token: verifyResult.token
-      })
+      emit('success', { captchaId: captchaId.value, token: verifyResult.token })
     } else {
       isError.value = true
-      setTimeout(() => {
-        refreshCaptcha()
-      }, 1000)
-      emit('error', verifyResult?.message || '验证失败')
+      setTimeout(refreshCaptcha, 1000)
+      emit('error', verifyResult?.message || t('captcha.failed'))
     }
   } catch (error) {
-    console.error('验证失败:', error)
+    console.error('Erreur de vérification:', error)
     isError.value = true
-    setTimeout(() => {
-      refreshCaptcha()
-    }, 1000)
-    emit('error', '验证失败')
+    setTimeout(refreshCaptcha, 1000)
+    emit('error', t('captcha.verify_error'))
   }
 }
 
-// 刷新验证码
+// Rafraîchir le captcha
 const refreshCaptcha = () => {
   resetState()
   getCaptcha()
   emit('refresh')
 }
 
-// 组件挂载时自动获取验证码
-onMounted(() => {
-  getCaptcha()
-})
-
-// 组件卸载
+// Lifecycle
+onMounted(() => getCaptcha())
 onUnmounted(() => {
   document.removeEventListener('mousemove', onDrag)
   document.removeEventListener('mouseup', stopDrag)
@@ -289,6 +256,7 @@ onUnmounted(() => {
   border: 1px solid #e9ecef;
 }
 
+/* 🖼️ Zone d’image du captcha */
 .captcha-bg {
   position: relative;
   width: 100%;
@@ -304,6 +272,7 @@ onUnmounted(() => {
   }
 }
 
+/* 🧩 Pièce du puzzle */
 .puzzle-piece {
   position: absolute;
   z-index: 2;
@@ -318,6 +287,7 @@ onUnmounted(() => {
   }
 }
 
+/* 🎚️ Piste de glissement */
 .slide-track {
   position: relative;
   height: 40px;
@@ -337,6 +307,7 @@ onUnmounted(() => {
   background: linear-gradient(to right, #e9ecef 0%, #f8f9fa 100%);
 }
 
+/* 📝 Texte de la piste */
 .slide-text {
   font-size: 14px;
   color: #6c757d;
@@ -352,6 +323,7 @@ onUnmounted(() => {
   }
 }
 
+/* 🔘 Bouton de glissement */
 .slide-button {
   position: absolute;
   top: 0;
@@ -401,6 +373,7 @@ onUnmounted(() => {
   }
 }
 
+/* 🔄 Bouton de rafraîchissement */
 .refresh-btn {
   position: absolute;
   top: 8px;
@@ -422,19 +395,13 @@ onUnmounted(() => {
   }
 }
 
-
+/* 🔁 Animation de rotation */
 @keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-
-
-// 响应式设计
+/* 📱 Responsive */
 @media (max-width: 480px) {
   .slide-captcha-container {
     max-width: 280px;
@@ -452,7 +419,5 @@ onUnmounted(() => {
     width: 36px;
     height: 36px;
   }
-  
-
 }
 </style>

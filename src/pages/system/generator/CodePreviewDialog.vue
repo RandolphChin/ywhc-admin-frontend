@@ -1,16 +1,16 @@
 <template>
   <q-dialog v-model="visible" maximized class="preview-dialog">
     <q-card class="dialog-card">
-      <!-- Header -->
+      <!-- 🧩 Header -->
       <q-card-section class="dialog-header">
         <div class="flex items-center justify-between">
           <div class="flex items-center">
-            <div class="text-h6">代码预览</div>
+            <div class="text-h6">{{ t('system.generator.code_preview') }}</div>
             <q-chip 
               v-if="generatedCode" 
               color="primary" 
               text-color="white" 
-              :label="`共 ${Object.keys(generatedCode.files || {}).length} 个文件`"
+              :label="t('system.generator.total_files', { count: Object.keys(generatedCode.files || {}).length })"
               class="q-ml-md"
             />
           </div>
@@ -18,7 +18,7 @@
             <q-btn 
               color="primary" 
               icon="download" 
-              label="下载代码"
+              :label="t('action.download_code')"
               @click="handleDownload"
             />
             <q-btn 
@@ -28,7 +28,7 @@
               color="grey-7"
               @click="handleClose"
             >
-              <q-tooltip>关闭</q-tooltip>
+              <q-tooltip>{{ t('action.close') }}</q-tooltip>
             </q-btn>
           </div>
         </div>
@@ -36,11 +36,13 @@
 
       <q-separator />
 
+      <!-- 🧾 Content -->
       <q-card-section class="dialog-content q-pa-none">
         <div class="row no-wrap" style="height: calc(100vh - 120px);">
-          <!-- 文件树 -->
+          
+          <!-- 📂 File Tree -->
           <div class="col-3 bg-grey-1 q-pa-md" style="border-right: 1px solid #e0e0e0;">
-            <div class="text-subtitle2 q-mb-md">文件列表</div>
+            <div class="text-subtitle2 q-mb-md">{{ t('system.generator.file_list') }}</div>
             <q-tree
               :nodes="fileTree"
               node-key="path"
@@ -49,9 +51,9 @@
               @update:selected="onFileSelect"
             />
             
-            <!-- SQL脚本 -->
+            <!-- 🧱 SQL Scripts -->
             <div v-if="generatedCode?.menuSql || generatedCode?.permissionSql" class="q-mt-md">
-              <div class="text-subtitle2 q-mb-sm">SQL脚本</div>
+              <div class="text-subtitle2 q-mb-sm">{{ t('system.generator.sql_scripts') }}</div>
               <q-list dense>
                 <q-item 
                   v-if="generatedCode.menuSql"
@@ -63,7 +65,7 @@
                     <q-icon name="description" />
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label>菜单SQL</q-item-label>
+                    <q-item-label>{{ t('system.generator.menu_sql') }}</q-item-label>
                   </q-item-section>
                 </q-item>
                 
@@ -77,14 +79,14 @@
                     <q-icon name="description" />
                   </q-item-section>
                   <q-item-section>
-                    <q-item-label>权限SQL</q-item-label>
+                    <q-item-label>{{ t('system.generator.permission_sql') }}</q-item-label>
                   </q-item-section>
                 </q-item>
               </q-list>
             </div>
           </div>
           
-          <!-- 代码内容 -->
+          <!-- 💻 File Content -->
           <div class="col-9">
             <div v-if="currentFileContent" class="full-height">
               <div class="bg-grey-2 q-pa-sm text-caption border-bottom">
@@ -95,10 +97,11 @@
             <div v-else class="flex flex-center full-height text-grey-6">
               <div class="text-center">
                 <q-icon name="code" size="4rem" class="q-mb-md" />
-                <div>请选择文件查看内容</div>
+                <div>{{ t('system.generator.select_file_prompt') }}</div>
               </div>
             </div>
           </div>
+
         </div>
       </q-card-section>
     </q-card>
@@ -107,47 +110,40 @@
 
 <script setup>
 import { computed, watch, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    default: false
-  },
-  generatedCode: {
-    type: Object,
-    default: () => ({})
-  }
+  modelValue: Boolean,
+  generatedCode: { type: Object, default: () => ({}) }
 })
 
 const emit = defineEmits(['update:modelValue', 'download'])
 
 const visible = computed({
   get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value)
+  set: (v) => emit('update:modelValue', v)
 })
 
 const selectedFile = ref('')
 const currentFileContent = ref('')
 
+// --- 构建文件树 / Build file tree ---
 const fileTree = computed(() => {
   if (!props.generatedCode?.files) return []
-  
   const tree = []
   const files = props.generatedCode.files
-  
-  // 构建文件树结构
-  const pathMap = new Map()
-  
+
   Object.keys(files).forEach(filePath => {
     const parts = filePath.split('/')
     let currentLevel = tree
     let currentPath = ''
-    
+
     parts.forEach((part, index) => {
       currentPath = currentPath ? `${currentPath}/${part}` : part
-      
+
       if (index === parts.length - 1) {
-        // 文件
         currentLevel.push({
           label: part,
           path: filePath,
@@ -155,8 +151,7 @@ const fileTree = computed(() => {
           selectable: true
         })
       } else {
-        // 目录
-        let existingDir = currentLevel.find(item => item.label === part && item.children)
+        let existingDir = currentLevel.find(i => i.label === part && i.children)
         if (!existingDir) {
           existingDir = {
             label: part,
@@ -172,25 +167,18 @@ const fileTree = computed(() => {
       }
     })
   })
-  
   return tree
 })
 
 const getFileIcon = (fileName) => {
   const ext = fileName.split('.').pop()?.toLowerCase()
   switch (ext) {
-    case 'java':
-      return 'code'
-    case 'vue':
-      return 'web'
-    case 'js':
-      return 'javascript'
-    case 'xml':
-      return 'description'
-    case 'sql':
-      return 'storage'
-    default:
-      return 'insert_drive_file'
+    case 'java': return 'code'
+    case 'vue': return 'web'
+    case 'js': return 'javascript'
+    case 'xml': return 'description'
+    case 'sql': return 'storage'
+    default: return 'insert_drive_file'
   }
 }
 
@@ -205,17 +193,11 @@ const showSqlContent = (type, content) => {
   currentFileContent.value = content
 }
 
-const handleDownload = () => {
-  emit('download')
-}
-
-const handleClose = () => {
-  visible.value = false
-}
+const handleDownload = () => emit('download')
+const handleClose = () => { visible.value = false }
 
 watch(() => props.generatedCode, (newData) => {
   if (newData?.files) {
-    // 默认选择第一个文件
     const firstFile = Object.keys(newData.files)[0]
     if (firstFile) {
       selectedFile.value = firstFile

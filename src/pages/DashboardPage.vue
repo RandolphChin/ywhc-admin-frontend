@@ -1,67 +1,19 @@
 <template>
   <q-page class="q-pa-md">
-    <div class="text-h4 q-mb-md">仪表盘</div>
+    <div class="text-h4 q-mb-md">{{ t('dashboard.title') }}</div>
     
-    <!-- 统计卡片 -->
+    <!-- Cartes de statistiques -->
     <div class="row q-gutter-md q-mb-xl">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="bg-blue-5 text-white">
+      <div class="col-12 col-sm-6 col-md-3" v-for="card in statCards" :key="card.key">
+        <q-card :class="card.color + ' text-white'">
           <q-card-section>
             <div class="row items-center no-wrap">
               <div class="col">
-                <div class="text-h6">用户总数</div>
-                <div class="text-h4">{{ stats.userCount }}</div>
+                <div class="text-h6">{{ t(card.label) }}</div>
+                <div class="text-h4">{{ stats[card.key] }}</div>
               </div>
               <div class="col-auto">
-                <q-icon name="people" size="48px" />
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="bg-green-5 text-white">
-          <q-card-section>
-            <div class="row items-center no-wrap">
-              <div class="col">
-                <div class="text-h6">角色总数</div>
-                <div class="text-h4">{{ stats.roleCount }}</div>
-              </div>
-              <div class="col-auto">
-                <q-icon name="assignment_ind" size="48px" />
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="bg-orange-5 text-white">
-          <q-card-section>
-            <div class="row items-center no-wrap">
-              <div class="col">
-                <div class="text-h6">菜单总数</div>
-                <div class="text-h4">{{ stats.menuCount }}</div>
-              </div>
-              <div class="col-auto">
-                <q-icon name="menu" size="48px" />
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="bg-purple-5 text-white">
-          <q-card-section>
-            <div class="row items-center no-wrap">
-              <div class="col">
-                <div class="text-h6">今日访问</div>
-                <div class="text-h4">{{ stats.todayVisit }}</div>
-              </div>
-              <div class="col-auto">
-                <q-icon name="visibility" size="48px" />
+                <q-icon :name="card.icon" size="48px" />
               </div>
             </div>
           </q-card-section>
@@ -69,37 +21,17 @@
       </div>
     </div>
 
-    <!-- 快捷操作 -->
+    <!-- Actions rapides -->
     <div class="row q-gutter-md q-mb-xl">
       <div class="col-12 col-md-6">
         <q-card>
           <q-card-section>
-            <div class="text-h6 q-mb-md">快捷操作</div>
+            <div class="text-h6 q-mb-md">{{ t('dashboard.shortcuts') }}</div>
             <div class="row q-gutter-sm">
-              <q-btn
-                color="primary"
-                icon="person_add"
-                label="添加用户"
-                @click="$router.push('/system/user')"
-              />
-              <q-btn
-                color="secondary"
-                icon="add_circle"
-                label="添加角色"
-                @click="$router.push('/system/role')"
-              />
-              <q-btn
-                color="accent"
-                icon="menu_book"
-                label="菜单管理"
-                @click="$router.push('/system/menu')"
-              />
-              <q-btn
-                color="info"
-                icon="description"
-                label="查看日志"
-                @click="$router.push('/system/log')"
-              />
+              <q-btn color="primary" icon="person_add" :label="t('dashboard.add_user')" @click="$router.push('/system/user')" />
+              <q-btn color="secondary" icon="add_circle" :label="t('dashboard.add_role')" @click="$router.push('/system/role')" />
+              <q-btn color="accent" icon="menu_book" :label="t('dashboard.menu_management')" @click="$router.push('/system/menu')" />
+              <q-btn color="info" icon="description" :label="t('dashboard.view_logs')" @click="$router.push('/system/log')" />
             </div>
           </q-card-section>
         </q-card>
@@ -108,29 +40,29 @@
       <div class="col-12 col-md-6">
         <q-card>
           <q-card-section>
-            <div class="text-h6 q-mb-md">系统信息</div>
+            <div class="text-h6 q-mb-md">{{ t('dashboard.system_info') }}</div>
             <q-list dense>
               <q-item>
                 <q-item-section>
-                  <q-item-label>系统版本</q-item-label>
+                  <q-item-label>{{ t('dashboard.version') }}</q-item-label>
                   <q-item-label caption>YWHC Admin v1.0.0</q-item-label>
                 </q-item-section>
               </q-item>
               <q-item>
                 <q-item-section>
-                  <q-item-label>后端框架</q-item-label>
+                  <q-item-label>{{ t('dashboard.backend') }}</q-item-label>
                   <q-item-label caption>Spring Boot 3.x</q-item-label>
                 </q-item-section>
               </q-item>
               <q-item>
                 <q-item-section>
-                  <q-item-label>前端框架</q-item-label>
+                  <q-item-label>{{ t('dashboard.frontend') }}</q-item-label>
                   <q-item-label caption>Quasar Framework v2</q-item-label>
                 </q-item-section>
               </q-item>
               <q-item>
                 <q-item-section>
-                  <q-item-label>数据库</q-item-label>
+                  <q-item-label>{{ t('dashboard.database') }}</q-item-label>
                   <q-item-label caption>MySQL 8.0</q-item-label>
                 </q-item-section>
               </q-item>
@@ -140,10 +72,10 @@
       </div>
     </div>
 
-    <!-- 最近操作日志 -->
+    <!-- Dernières opérations -->
     <q-card>
       <q-card-section>
-        <div class="text-h6 q-mb-md">最近操作日志</div>
+        <div class="text-h6 q-mb-md">{{ t('dashboard.recent_logs') }}</div>
         <q-table
           :rows="recentLogs"
           :columns="logColumns"
@@ -157,115 +89,50 @@
   </q-page>
 </template>
 
-<script>
-import { defineComponent, ref, onMounted } from 'vue'
-import { api } from 'src/boot/axios'
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 
-export default defineComponent({
-  name: 'DashboardPage',
+const { t } = useI18n();
 
-  setup() {
-    const stats = ref({
-      userCount: 0,
-      roleCount: 0,
-      menuCount: 0,
-      todayVisit: 0
-    })
+const stats = ref({
+  userCount: 0,
+  roleCount: 0,
+  menuCount: 0,
+  todayVisit: 0
+});
 
-    const recentLogs = ref([])
+const recentLogs = ref([]);
 
-    const logColumns = [
-      {
-        name: 'username',
-        label: '操作用户',
-        field: 'username',
-        align: 'left'
-      },
-      {
-        name: 'operation',
-        label: '操作类型',
-        field: 'operation',
-        align: 'left'
-      },
-      {
-        name: 'method',
-        label: '请求方法',
-        field: 'method',
-        align: 'center'
-      },
-      {
-        name: 'uri',
-        label: '请求URI',
-        field: 'uri',
-        align: 'left'
-      },
-      {
-        name: 'createTime',
-        label: '操作时间',
-        field: 'createTime',
-        align: 'center',
-        format: (val) => new Date(val).toLocaleString()
-      }
-    ]
+const statCards = [
+  { key: 'userCount', label: 'dashboard.total_users', color: 'bg-blue-5', icon: 'people' },
+  { key: 'roleCount', label: 'dashboard.total_roles', color: 'bg-green-5', icon: 'assignment_ind' },
+  { key: 'menuCount', label: 'dashboard.total_menus', color: 'bg-orange-5', icon: 'menu' },
+  { key: 'todayVisit', label: 'dashboard.today_visits', color: 'bg-purple-5', icon: 'visibility' }
+];
 
-    const loadStats = async () => {
-      try {
-        // 模拟数据，实际应该从后端API获取
-        stats.value = {
-          userCount: 156,
-          roleCount: 8,
-          menuCount: 24,
-          todayVisit: 1024
-        }
-      } catch (error) {
-        console.error('加载统计数据失败:', error)
-      }
-    }
+const logColumns = [
+  { name: 'username', label: t('dashboard.user'), field: 'username', align: 'left' },
+  { name: 'operation', label: t('dashboard.operation'), field: 'operation', align: 'left' },
+  { name: 'method', label: t('dashboard.method'), field: 'method', align: 'center' },
+  { name: 'uri', label: t('dashboard.uri'), field: 'uri', align: 'left' },
+  { name: 'createTime', label: t('dashboard.time'), field: 'createTime', align: 'center', format: (val: string) => new Date(val).toLocaleString() }
+];
 
-    const loadRecentLogs = async () => {
-      try {
-        // 模拟数据，实际应该从后端API获取
-        recentLogs.value = [
-          {
-            id: 1,
-            username: 'admin',
-            operation: '用户登录',
-            method: 'POST',
-            uri: '/auth/login',
-            createTime: new Date()
-          },
-          {
-            id: 2,
-            username: 'admin',
-            operation: '查看用户列表',
-            method: 'GET',
-            uri: '/system/user/list',
-            createTime: new Date(Date.now() - 300000)
-          },
-          {
-            id: 3,
-            username: 'admin',
-            operation: '添加用户',
-            method: 'POST',
-            uri: '/system/user',
-            createTime: new Date(Date.now() - 600000)
-          }
-        ]
-      } catch (error) {
-        console.error('加载操作日志失败:', error)
-      }
-    }
+const loadStats = async () => {
+  stats.value = { userCount: 156, roleCount: 8, menuCount: 24, todayVisit: 1024 };
+};
 
-    onMounted(() => {
-      loadStats()
-      loadRecentLogs()
-    })
+const loadRecentLogs = async () => {
+  recentLogs.value = [
+    { id: 1, username: 'admin', operation: t('dashboard.login'), method: 'POST', uri: '/auth/login', createTime: new Date() },
+    { id: 2, username: 'admin', operation: t('dashboard.view_users'), method: 'GET', uri: '/system/user/list', createTime: new Date(Date.now() - 300000) },
+    { id: 3, username: 'admin', operation: t('dashboard.add_user'), method: 'POST', uri: '/system/user', createTime: new Date(Date.now() - 600000) }
+  ];
+};
 
-    return {
-      stats,
-      recentLogs,
-      logColumns
-    }
-  }
-})
+onMounted(() => {
+  loadStats();
+  loadRecentLogs();
+});
 </script>

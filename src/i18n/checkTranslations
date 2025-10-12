@@ -1,0 +1,51 @@
+/**
+ * ---------------------------------------------------------------
+ * 🧩 Fichier : src/i18n/checkTranslations.js
+ * 📋 Objectif : Vérifie les différences de clés entre deux langues
+ * ---------------------------------------------------------------
+ *
+ * Utilisation :
+ *   node src/i18n/checkTranslations.js
+ *
+ * (peut aussi être ajouté à un script npm : "check:i18n")
+ */
+
+import fr from "./fr-FR";
+import en from "./en-US";
+
+/**
+ * Compare les clés entre deux objets de langues
+ */
+function compareKeys(objA, objB, prefix = "") {
+  const missing = [];
+
+  for (const key in objA) {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+
+    if (typeof objA[key] === "object" && objA[key] !== null) {
+      missing.push(...compareKeys(objA[key], objB[key] || {}, fullKey));
+    } else if (!(key in objB)) {
+      missing.push(fullKey);
+    }
+  }
+
+  return missing;
+}
+
+// 🔍 Clés présentes en FR mais manquantes en EN
+const missingInEN = compareKeys(fr, en);
+if (missingInEN.length > 0) {
+  console.log("⚠️ Clés manquantes dans en-US :");
+  missingInEN.forEach((key) => console.log("  -", key));
+} else {
+  console.log("✅ en-US est complet par rapport à fr-FR");
+}
+
+// 🔍 Clés présentes en EN mais manquantes en FR
+const missingInFR = compareKeys(en, fr);
+if (missingInFR.length > 0) {
+  console.log("⚠️ Clés manquantes dans fr-FR :");
+  missingInFR.forEach((key) => console.log("  -", key));
+} else {
+  console.log("✅ fr-FR est complet par rapport à en-US");
+}

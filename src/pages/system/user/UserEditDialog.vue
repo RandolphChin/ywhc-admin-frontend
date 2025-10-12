@@ -1,10 +1,17 @@
 <template>
+  <!-- 🧩 Dialogue d’édition ou d’ajout d’un utilisateur -->
+  <!-- 用户编辑或添加对话框 -->
   <q-dialog v-model="visible" persistent class="edit-dialog">
     <q-card class="dialog-card" style="min-width: 500px; max-width: 1200px; max-height: 90vh">
+
+      <!-- 🧱 En-tête du dialogue -->
+      <!-- 对话框头部 -->
       <q-card-section class="dialog-header">
         <div class="flex items-center justify-between">
-        <div class="text-h6">{{ isEdit ? '编辑用户' : '添加用户' }}</div>
-        <div class="flex items-center q-gutter-sm">
+          <div class="text-h6">
+            {{ isEdit ? t('user.editUser') : t('user.addUser') }}
+          </div>
+          <div class="flex items-center q-gutter-sm">
             <q-btn 
               flat 
               round 
@@ -12,7 +19,8 @@
               color="grey-7"
               @click="handleClose"
             >
-              <q-tooltip>关闭</q-tooltip>
+              <q-tooltip>{{ t('action.close') }}</q-tooltip>
+              <!-- 关闭 -->
             </q-btn>
           </div>
         </div>
@@ -20,152 +28,167 @@
 
       <q-separator />
 
+      <!-- 📋 Formulaire d’édition -->
+      <!-- 编辑表单 -->
       <q-card-section class="dialog-content">
         <div class="edit-form">
-        <q-form ref="formRef" @submit="handleSubmit" class="q-gutter-md">
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label required">用户名：</span>     
-                <q-input
-                  v-model="formData.username"
-                  label="用户名"
-                  :rules="[rules.required('用户名')]"
-                  outlined
-                  dense
-                  :readonly="isEdit"
-                  style="width: 100%;"
-                  class="field-input readonly-field"
-                />
-              </div>
-            </div>
+          <q-form ref="formRef" @submit="handleSubmit" class="q-gutter-md">
+            <div class="row q-col-gutter-md">
 
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">昵称：</span>
-                <q-input
-                  v-model="formData.nickname"
-                  label="昵称"
-                  :rules="[rules.required('昵称')]"
-                  outlined
-                  dense
-                  style="width: 100%;"
-                />
+              <!-- 🧑 Nom d’utilisateur -->
+              <!-- 用户名 -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label required">{{ t('common.username') }}：</span>
+                  <q-input
+                    v-model="formData.username"
+                    :label="t('common.username')"
+                    :rules="[rules.required(t('common.username'))]"
+                    outlined
+                    dense
+                    :readonly="isEdit"
+                    class="field-input readonly-field"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">邮箱：</span>
-                <q-input
-                  v-model="formData.email"
-                  label="邮箱"
-                  type="email"
-                  outlined
-                  dense
-                  style="width: 100%;"
-                />
+              <!-- 🪪 Surnom -->
+              <!-- 昵称 -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('common.nickname') }}：</span>
+                  <q-input
+                    v-model="formData.nickname"
+                    :label="t('common.nickname')"
+                    :rules="[rules.required(t('common.nickname'))]"
+                    outlined
+                    dense
+                  />
+                </div>
               </div>
-            </div>
 
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">手机号：</span>
-                <q-input
-                  v-model="formData.mobile"
-                  label="手机号"
-                  outlined
-                  dense
-                  style="width: 100%;"
-                />
+              <!-- ✉️ Adresse e-mail -->
+              <!-- 邮箱 -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('common.email') }}：</span>
+                  <q-input
+                    v-model="formData.email"
+                    :label="t('common.email')"
+                    type="email"
+                    outlined
+                    dense
+                  />
+                </div>
               </div>
-            </div>
 
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">性别：</span>
-                <q-select
-                  v-model="formData.gender"
-                  :options="genderOptions"
-                  label="性别"
-                  outlined
-                  dense
-                  emit-value
-                  map-options
-                  style="width: 100%;"
-                />
+              <!-- 📱 Téléphone -->
+              <!-- 手机号 -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('common.mobile') }}：</span>
+                  <q-input
+                    v-model="formData.mobile"
+                    :label="t('common.mobile')"
+                    outlined
+                    dense
+                  />
+                </div>
               </div>
-            </div>
 
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">状态：</span>
-                <q-select
-                  v-model="formData.status"
-                  :options="statusOptions"
-                  label="状态"
-                  outlined
-                  dense
-                  emit-value
-                  map-options
-                  style="width: 100%;"
-                />
+              <!-- ⚧ Sexe -->
+              <!-- 性别 -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('common.gender') }}：</span>
+                  <q-select
+                    v-model="formData.gender"
+                    :options="genderOptions"
+                    :label="t('common.gender')"
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                  />
+                </div>
               </div>
-            </div>
 
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label require">角色：</span>
-                <q-select
-                  v-model="formData.roleIds"
-                  :options="roleOptions"
-                  label="角色"
-                  outlined
-                  dense
-                  multiple
-                  emit-value
-                  map-options
-                  use-chips
-                  :rules="[rules.required('角色')]"
-                  style="width: 100%;"
-                />
+              <!-- 🔘 Statut -->
+              <!-- 状态 -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('common.status') }}：</span>
+                  <q-select
+                    v-model="formData.status"
+                    :options="statusOptions"
+                    :label="t('common.status')"
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                  />
+                </div>
               </div>
-            </div>
-            <div class="col-12">
-              <div class="edit-field-block">
-                <span class="field-label">备注：</span>
-                <q-input
-                  v-model="formData.remark"
-                  label="备注"
-                  type="textarea"
-                  outlined
-                  dense
-                  rows="3"
-                />
-              </div>
-            </div>
 
-          </div>
-        </q-form>
-      </div>
+              <!-- 🧩 Rôles associés -->
+              <!-- 角色 -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label required">{{ t('common.roles') }}：</span>
+                  <q-select
+                    v-model="formData.roleIds"
+                    :options="roleOptions"
+                    :label="t('common.roles')"
+                    outlined
+                    dense
+                    multiple
+                    emit-value
+                    map-options
+                    use-chips
+                    :rules="[rules.required(t('common.roles'))]"
+                  />
+                </div>
+              </div>
+
+              <!-- 📝 Remarques -->
+              <!-- 备注 -->
+              <div class="col-12">
+                <div class="edit-field-block">
+                  <span class="field-label">{{ t('common.remark') }}：</span>
+                  <q-input
+                    v-model="formData.remark"
+                    :label="t('common.remark')"
+                    type="textarea"
+                    outlined
+                    dense
+                    rows="3"
+                  />
+                </div>
+              </div>
+
+            </div>
+          </q-form>
+        </div>
       </q-card-section>
+
       <q-separator />
-          <!-- Footer Actions -->
+
+      <!-- 🧭 Pied du dialogue -->
+      <!-- 对话框底部操作按钮 -->
       <q-card-actions class="dialog-footer q-pa-md bg-grey-1">
         <div class="flex items-center justify-end full-width">
           <div class="q-gutter-sm">
             <q-btn 
               flat 
-              label="取消" 
+              :label="t('action.cancel')" 
               color="grey-7"
               @click="handleClose" 
               :disable="submitting"
               class="q-px-lg"
             />
             <q-btn 
-              v-if="isEdit"
               color="primary" 
-              label="保存" 
+              :label="t('action.save')" 
               @click="handleSubmit"
               :loading="submitting"
               :disable="submitting"
@@ -180,35 +203,35 @@
 </template>
 
 <script setup>
+// ------------------------------------------------------------
+// 🎯 Dialogue d’édition / création d’utilisateur (i18n intégré)
+// 用户编辑 / 新建对话框（集成国际化）
+// ------------------------------------------------------------
 import { computed, watch, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
+// 🌐 Initialisation de la traduction
+const { t } = useI18n()
+
+// 🧩 Propriétés
 const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    default: false
-  },
-  userData: {
-    type: Object,
-    default: () => ({})
-  },
-  isEdit: {
-    type: Boolean,
-    default: false
-  },
-  roleOptions: {
-    type: Array,
-    default: () => []
-  }
+  modelValue: { type: Boolean, default: false },
+  userData: { type: Object, default: () => ({}) },
+  isEdit: { type: Boolean, default: false },
+  roleOptions: { type: Array, default: () => [] }
 })
 
+// 📡 Événements
 const emit = defineEmits(['update:modelValue', 'submit'])
 const submitting = ref(false)
 
+// 🎛️ Contrôle du dialogue
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
 
+// 🧱 Données du formulaire
 const formData = ref({
   id: null,
   username: '',
@@ -221,37 +244,43 @@ const formData = ref({
   remark: ''
 })
 
+// ✅ Règles de validation
 const rules = {
-  required: (fieldName) => (val) => !!val || `${fieldName}不能为空`,
-};
+  required: (fieldName) => (val) => !!val || t('validation.requiredField', { field: fieldName })
+}
 
+// 🟢 Statuts possibles
 const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '禁用', value: 0 }
+  { label: t('common.enabled'), value: 1 },
+  { label: t('common.disabled'), value: 0 }
 ]
 
+// ⚧ Genres possibles
 const genderOptions = [
-  { label: '男', value: 1 },
-  { label: '女', value: 2 },
-  { label: '未知', value: 0 }
+  { label: t('user.gender_male'), value: 1 },
+  { label: t('user.gender_female'), value: 2 },
+  { label: t('user.gender_unknown'), value: 0 }
 ]
 
-watch(() => props.userData, (newData) => {
-  if (newData) {
-    formData.value = { ...newData }
-  }
-}, { deep: true, immediate: true })
+// 🔁 Synchronisation des données du parent
+watch(
+  () => props.userData,
+  (newData) => {
+    if (newData) formData.value = { ...newData }
+  },
+  { deep: true, immediate: true }
+)
 
 const formRef = ref(null)
 
+// 💾 Soumission du formulaire
 const handleSubmit = () => {
   formRef.value.validate().then((success) => {
-    if (success) {
-      emit('submit', formData.value)
-    }
+    if (success) emit('submit', formData.value)
   })
 }
 
+// ❌ Fermeture du dialogue
 const handleClose = () => {
   visible.value = false
 }

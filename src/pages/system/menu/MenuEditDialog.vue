@@ -1,21 +1,21 @@
 <template>
   <q-dialog v-model="visible" persistent class="edit-dialog">
     <q-card class="dialog-card" style="min-width: 800px; max-width: 1200px; max-height: 90vh">
-      <!-- Header -->
+      <!-- 🧩 En-tête -->
       <q-card-section class="dialog-header">
         <div class="flex items-center justify-between">
-          <div class="flex items-center">
-            <div class="text-h6">{{ isEdit ? '编辑菜单' : '添加菜单' }}</div>
+          <div class="text-h6">
+            {{ isEdit ? t('system.menu.editMenu') : t('system.menu.addMenu') }}
           </div>
           <div class="flex items-center q-gutter-sm">
-            <q-btn 
-              flat 
-              round 
-              icon="close" 
+            <q-btn
+              flat
+              round
+              icon="close"
               color="grey-7"
               @click="handleClose"
             >
-              <q-tooltip>关闭</q-tooltip>
+              <q-tooltip>{{ t('action.close') }}</q-tooltip>
             </q-btn>
           </div>
         </div>
@@ -23,188 +23,209 @@
 
       <q-separator />
 
+      <!-- 🧾 Formulaire -->
       <q-card-section class="dialog-content">
         <div class="edit-form">
-        <q-form ref="formRef" @submit="handleSubmit" class="q-gutter-md">
-          <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label required">父级菜单：</span>
-                <q-select
-                  v-model="formData.parentId"
-                  :options="parentMenuOptions"
-                  placeholder="父级菜单"
-                  outlined
-                  dense
-                  emit-value
-                  map-options
-                  :rules="[rules.required('父级菜单')]"
-                  clearable
-                  class="field-input"
-                />
+          <q-form ref="formRef" @submit="handleSubmit" class="q-gutter-md">
+            <div class="row q-col-gutter-md">
+
+              <!-- Menu parent -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label required">{{ t('system.menu.parentMenu') }} :</span>
+                  <q-select
+                    v-model="formData.parentId"
+                    :options="parentMenuOptions"
+                    :placeholder="t('system.menu.parentMenu')"
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                    :rules="[rules.required(t('system.menu.parentMenu'))]"
+                    clearable
+                    class="field-input"
+                  />
+                </div>
               </div>
+
+              <!-- Type -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('system.menu.type') }} :</span>
+                  <q-select
+                    v-model="formData.menuType"
+                    :options="typeOptions"
+                    :placeholder="t('system.menu.type')"
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                    @update:model-value="onTypeChange"
+                    class="field-input"
+                  />
+                </div>
+              </div>
+
+              <!-- Nom -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label required">{{ t('system.menu.name') }} :</span>
+                  <q-input
+                    v-model="formData.menuName"
+                    :placeholder="t('system.menu.name')"
+                    :rules="[rules.required(t('system.menu.name'))]"
+                    outlined
+                    dense
+                    class="field-input"
+                  />
+                </div>
+              </div>
+
+              <!-- Chemin -->
+              <div v-if="formData.menuType !== 2" class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label required">{{ t('common.path') }} :</span>
+                  <q-input
+                    v-model="formData.path"
+                    :placeholder="t('common.path')"
+                    :rules="[rules.required(t('common.path'))]"
+                    outlined
+                    dense
+                    class="field-input"
+                    :hint="t('system.menu.pathHint')"
+                  />
+                </div>
+              </div>
+
+              <!-- Composant -->
+              <div v-if="formData.menuType === 1" class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label required">{{ t('common.component') }} :</span>
+                  <q-input
+                    v-model="formData.component"
+                    :placeholder="t('common.component')"
+                    :rules="[rules.required(t('common.component'))]"
+                    outlined
+                    dense
+                    class="field-input"
+                    :hint="t('system.menu.componentHint')"
+                  />
+                </div>
+              </div>
+
+              <!-- Permission -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label required">{{ t('common.permission') }} :</span>
+                  <q-input
+                    v-model="formData.permission"
+                    :placeholder="t('common.permission')"
+                    :rules="[rules.required(t('common.permission'))]"
+                    outlined
+                    dense
+                    class="field-input"
+                    :hint="t('system.menu.permissionHint')"
+                  />
+                </div>
+              </div>
+
+              <!-- Icône -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('common.icon') }} :</span>
+                  <IconSelector v-model="formData.icon" class="field-input" />
+                </div>
+              </div>
+
+              <!-- Ordre -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label required">{{ t('common.sortOrder') }} :</span>
+                  <q-input
+                    v-model.number="formData.sortOrder"
+                    :placeholder="t('common.sortOrder')"
+                    type="number"
+                    :rules="[rules.required(t('common.sortOrder')), rules.sortOrder]"
+                    outlined
+                    dense
+                    class="field-input"
+                  />
+                </div>
+              </div>
+
+              <!-- Statut -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('common.status') }} :</span>
+                  <q-select
+                    v-model="formData.status"
+                    :options="statusOptions"
+                    :placeholder="t('common.status')"
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                    class="field-input"
+                  />
+                </div>
+              </div>
+
+              <!-- Visibilité -->
+              <div class="col-12 col-md-6">
+                <div class="edit-field-inline">
+                  <span class="field-label">{{ t('common.visibility') }} :</span>
+                  <q-select
+                    v-model="formData.isVisible"
+                    :options="visibleOptions"
+                    :placeholder="t('common.visibility')"
+                    outlined
+                    dense
+                    emit-value
+                    map-options
+                    class="field-input"
+                  />
+                </div>
+              </div>
+
+              <!-- Remarques -->
+              <div class="col-12">
+                <div class="edit-field-block">
+                  <div class="field-label q-mb-xs">{{ t('common.remark') }} :</div>
+                  <q-input
+                    v-model="formData.remark"
+                    :placeholder="t('common.remark')"
+                    type="textarea"
+                    outlined
+                    dense
+                    rows="3"
+                    class="field-input"
+                  />
+                </div>
+              </div>
+
             </div>
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">菜单类型：</span>
-                <q-select
-                  v-model="formData.menuType"
-                  :options="typeOptions"
-                  placeholder="菜单类型"
-                  outlined
-                  dense
-                  emit-value
-                  map-options
-                  @update:model-value="onTypeChange"
-                  class="field-input"
-                />
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label required">菜单标题：</span>
-                <q-input
-                  v-model="formData.menuName"
-                  placeholder="菜单标题"
-                  :rules="[rules.required('菜单标题')]"
-                  outlined
-                  dense
-                  class="field-input"
-                />
-              </div>
-            </div>
-            <div v-if="formData.menuType !== 2" class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label required">路由路径：</span>
-                <q-input
-                  v-model="formData.path"
-                  placeholder="路由路径"
-                  :rules="[rules.required('路由路径')]"
-                  outlined
-                  dense
-                  class="field-input"
-                  hint="以/开头 + 父级菜单路由路径 + 模块名称 ，如: /system/menu"
-                />
-              </div>
-            </div>
-            <div v-if="formData.menuType === 1" class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label required">组件路径：</span>
-                <q-input
-                  v-model="formData.component"
-                  placeholder="组件路径"
-                  :rules="[rules.required('组件路径')]"
-                  outlined
-                  dense
-                  class="field-input"
-                  hint="相对于pages路径，没有/开头，如: system/menu 或者 system/menu/MenuPage.vue"
-                />
-              </div>
-            </div>  
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label required">权限标识：</span>
-                <q-input
-                  v-model="formData.permission"
-                  placeholder="权限标识"
-                  :rules="[rules.required('权限标识')]"
-                  outlined
-                  dense
-                  class="field-input"
-                  hint="父级模块+:子模块:操作，如: system:menu:list 和 system:menu:add"
-                />
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">菜单图标：</span>
-                <IconSelector
-                  v-model="formData.icon"
-                  class="field-input"
-                />
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label required">排序：</span>
-                <q-input
-                  v-model.number="formData.sortOrder"
-                  placeholder="排序"
-                  type="number"
-                  :rules="[rules.required('排序'), rules.sortOrder]"
-                  outlined
-                  dense
-                  class="field-input"
-                />
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">状态：</span>
-                <q-select
-                  v-model="formData.status"
-                  :options="statusOptions"
-                  placeholder="状态"
-                  outlined
-                  dense
-                  emit-value
-                  map-options
-                  class="field-input"
-                />
-              </div>
-            </div>
-            <div class="col-12 col-md-6">
-              <div class="edit-field-inline">
-                <span class="field-label">显示状态：</span>
-                <q-select
-                  v-model="formData.isVisible"
-                  :options="visibleOptions"
-                  placeholder="显示状态"
-                  outlined
-                  dense
-                  emit-value
-                  map-options
-                  class="field-input"
-                />
-              </div>
-            </div>
-            <div class="col-12">
-              <div class="edit-field-block">
-                <div class="field-label q-mb-xs">备注：</div>
-                <q-input
-                  v-model="formData.remark"
-                  placeholder="备注"
-                  type="textarea"
-                  outlined
-                  dense
-                  rows="3"
-                  class="field-input"
-                />
-              </div>
-            </div>
-    
-          </div>
-        </q-form>
-      </div>
-    </q-card-section>
+          </q-form>
+        </div>
+      </q-card-section>
 
       <q-separator />
-          <!-- Footer Actions -->
+
+      <!-- 🧭 Pied de dialogue -->
       <q-card-actions class="dialog-footer q-pa-md bg-grey-1">
         <div class="flex items-center justify-end full-width">
           <div class="q-gutter-sm">
-            <q-btn 
-              flat 
-              label="取消" 
+            <q-btn
+              flat
+              :label="t('action.cancel')"
               color="grey-7"
-              @click="handleClose" 
+              @click="handleClose"
               :disable="submitting"
               class="q-px-lg"
             />
-            <q-btn 
+            <q-btn
               v-if="!isReadonly"
-              color="primary" 
-              label="保存" 
+              color="primary"
+              :label="t('action.save')"
               @click="handleSubmit"
               :loading="submitting"
               :disable="submitting"
@@ -213,36 +234,23 @@
           </div>
         </div>
       </q-card-actions>
-
     </q-card>
   </q-dialog>
 </template>
 
 <script setup>
 import { computed, watch, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import IconSelector from '@/components/IconSelector.vue'
 
+const { t } = useI18n()
+
 const props = defineProps({
-  modelValue: {
-    type: Boolean,
-    default: false
-  },
-  menuData: {
-    type: Object,
-    default: () => ({})
-  },
-  isEdit: {
-    type: Boolean,
-    default: false
-  },
-  parentMenuOptions: {
-    type: Array,
-    default: () => []
-  },
-  isReadonly: {
-    type: Boolean,
-    default: false
-  }
+  modelValue: Boolean,
+  menuData: { type: Object, default: () => ({}) },
+  isEdit: Boolean,
+  parentMenuOptions: { type: Array, default: () => [] },
+  isReadonly: Boolean
 })
 
 const emit = defineEmits(['update:modelValue', 'submit'])
@@ -270,36 +278,32 @@ const formData = ref({
 })
 
 const rules = {
-  required: (fieldName) => (val) => !!val || `${fieldName}不能为空`,
-  sortOrder: (val) =>
-    /^(0|[1-9]\d*)$/.test(val) || '排序不能小于0',
-};
+  required: (fieldName) => (val) => !!val || t('validation.required', { field: fieldName }),
+  sortOrder: (val) => /^(0|[1-9]\\d*)$/.test(val) || t('validation.sortOrder')
+}
 
 const typeOptions = [
-  { label: '目录', value: 0 },
-  { label: '菜单', value: 1 },
-  { label: '按钮', value: 2 }
+  { label: t('system.menu.dir'), value: 0 },
+  { label: t('system.menu.menu'), value: 1 },
+  { label: t('system.menu.button'), value: 2 }
 ]
 
 const statusOptions = [
-  { label: '正常', value: 1 },
-  { label: '禁用', value: 0 }
+  { label: t('common.enabled'), value: 1 },
+  { label: t('common.disabled'), value: 0 }
 ]
 
 const visibleOptions = [
-  { label: '显示', value: 1 },
-  { label: '隐藏', value: 0 }
+  { label: t('common.visible'), value: 1 },
+  { label: t('common.hidden'), value: 0 }
 ]
 
 watch(() => props.menuData, (newData) => {
-  if (newData) {
-    formData.value = { ...newData }
-  }
+  if (newData) formData.value = { ...newData }
 }, { deep: true, immediate: true })
 
 const onTypeChange = (menuType) => {
-  // 根据类型清空相关字段
-  if (menuType === 2) { // 按钮
+  if (menuType === 2) {
     formData.value.path = ''
     formData.value.component = ''
     formData.value.isVisible = 1
@@ -312,9 +316,7 @@ const formRef = ref(null)
 
 const handleSubmit = () => {
   formRef.value.validate().then((success) => {
-    if (success) {
-      emit('submit', formData.value)
-    }
+    if (success) emit('submit', formData.value)
   })
 }
 

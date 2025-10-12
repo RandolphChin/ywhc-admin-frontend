@@ -1,0 +1,41 @@
+// eslint.config.js – ESLint 9 Flat Config pour Quasar + Vue 3 + Prettier
+
+import js from "@eslint/js";
+import vue from "eslint-plugin-vue";
+import prettier from "eslint-config-prettier";
+import globals from "globals";
+
+export default [
+  {
+    files: ["**/*.{js,vue}"],
+
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+
+    plugins: {
+      vue,
+    },
+
+    extends: [
+      js.configs.recommended,        // règles JS de base
+      ...vue.configs["flat/recommended"], // règles Vue 3
+      prettier,                      // désactive les règles en conflit avec Prettier
+    ],
+
+    rules: {
+      // --- Personnalisation basique ---
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "vue/multi-word-component-names": "off",
+      "vue/no-multiple-template-root": "off",
+      "vue/no-mutating-props": "off",
+
+      // Tu peux ajouter ici tes règles spécifiques Quasar/Vue
+    },
+  },
+];

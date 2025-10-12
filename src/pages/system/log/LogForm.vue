@@ -1,12 +1,13 @@
 <template>
   <div class="edit-form">
-    <!-- 基本信息 -->
+    <!-- 🧩 Informations de base -->
     <q-card class="q-mb-md">
       <q-card-section>
         <div class="row q-col-gutter-md">
+          <!-- Utilisateur -->
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
-              <span class="field-label">操作用户：</span>
+              <span class="field-label">{{ t('common.username') }}：</span>
               <q-input
                 v-model="formData.username"
                 outlined
@@ -14,6 +15,7 @@
                 :readonly="isReadonly"
                 class="field-input"
               >
+                <!-- Copier si lecture seule -->
                 <template v-if="isReadonly && formData.username" #append>
                   <q-btn 
                     flat 
@@ -28,9 +30,10 @@
             </div>
           </div>
           
+          <!-- Description de l’opération -->
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
-              <span class="field-label">操作描述：</span>
+              <span class="field-label">{{ t('system.log.operationDesc') }}：</span>
               <q-input
                 v-model="formData.operationDesc"
                 outlined
@@ -41,9 +44,10 @@
             </div>
           </div>
           
+          <!-- Adresse IP -->
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
-              <span class="field-label">IP地址：</span>
+              <span class="field-label">{{ t('common.ipAddress') }}：</span>
               <q-input
                 v-model="formData.ipAddress"
                 outlined
@@ -54,9 +58,10 @@
             </div>
           </div>
           
+          <!-- Date d’opération -->
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
-              <span class="field-label">操作时间：</span>
+              <span class="field-label">{{ t('common.createTime') }}：</span>
               <q-input
                 v-model="formData.createTime"
                 outlined
@@ -67,9 +72,10 @@
             </div>
           </div>
 
+          <!-- Méthode HTTP -->
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
-              <span class="field-label">请求方法：</span>
+              <span class="field-label">{{ t('common.requestMethod') }}：</span>
               <q-input
                 v-model="formData.requestMethod"
                 outlined
@@ -80,12 +86,13 @@
             </div>
           </div>
 
+          <!-- Statut -->
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
-              <span class="field-label">响应状态：</span>
+              <span class="field-label">{{ t('common.status') }}：</span>
               <q-select
                 v-model="formData.status"
-                :options="statusOptions"
+                :options="statusOptions.length ? statusOptions : defaultStatusOptions"
                 outlined
                 dense
                 :readonly="isReadonly"
@@ -97,9 +104,10 @@
             </div>
           </div>
           
+          <!-- URL de la requête -->
           <div class="col-12">
             <div class="edit-field-inline">
-              <span class="field-label">请求URL：</span>
+              <span class="field-label">{{ t('common.requestUrl') }}：</span>
               <q-input
                 v-model="formData.requestUrl"
                 outlined
@@ -121,9 +129,10 @@
             </div>
           </div>
           
+          <!-- Durée d’exécution -->
           <div class="col-12 col-md-6">
             <div class="edit-field-inline">
-              <span class="field-label">执行时间：</span>
+              <span class="field-label">{{ t('common.executionTime') }}：</span>
               <q-input
                 v-model="formData.executionTime"
                 suffix="ms"
@@ -135,9 +144,10 @@
             </div>
           </div>
           
+          <!-- Agent utilisateur -->
           <div class="col-12">
             <div class="edit-field-block">
-              <div class="field-label q-mb-xs">用户代理：</div>
+              <div class="field-label q-mb-xs">{{ t('common.userAgent') }}：</div>
               <q-input
                 v-model="formData.userAgent"
                 type="textarea"
@@ -150,9 +160,10 @@
             </div>
           </div>
 
+          <!-- Paramètres de la requête -->
           <div v-if="formData.requestParams || !isReadonly" class="col-12">
             <div class="edit-field-block">
-              <div class="field-label q-mb-xs">请求参数：</div>
+              <div class="field-label q-mb-xs">{{ t('common.requestParams') }}：</div>
               <q-input
                 v-model="formattedParams"
                 type="textarea"
@@ -165,9 +176,10 @@
             </div>
           </div>
 
+          <!-- Résultat de la réponse -->
           <div v-if="formData.responseResult || !isReadonly" class="col-12">
             <div class="edit-field-block">
-              <div class="field-label q-mb-xs">响应结果：</div>
+              <div class="field-label q-mb-xs">{{ t('common.responseResult') }}：</div>
               <q-input
                 v-model="formattedResult"
                 type="textarea"
@@ -180,9 +192,10 @@
             </div>
           </div>
           
+          <!-- Message d’erreur -->
           <div v-if="formData.errorMsg || !isReadonly" class="col-12">
             <div class="edit-field-block">
-              <div class="field-label q-mb-xs">错误信息：</div>
+              <div class="field-label q-mb-xs">{{ t('common.errorMsg') }}：</div>
               <q-input
                 v-model="formData.errorMsg"
                 type="textarea"
@@ -204,26 +217,24 @@
 
 <script setup>
 import { computed, watch, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useQuasar, copyToClipboard } from 'quasar'
-import { formatTime, formatJson } from 'src/utils/index'
+import { formatJson } from 'src/utils/index'
 
+const { t } = useI18n()
 const $q = useQuasar()
 
+const defaultStatusOptions = [
+  { label: t('common.success'), value: 1 },
+  { label: t('common.fail'), value: 0 }
+]
+
 const props = defineProps({
-  modelValue: {
-    type: Object,
-    default: () => ({})
-  },
-  isReadonly: {
-    type: Boolean,
-    default: true
-  },
+  modelValue: { type: Object, default: () => ({}) },
+  isReadonly: { type: Boolean, default: true },
   statusOptions: {
     type: Array,
-    default: () => [
-      { label: '成功', value: 1 },
-      { label: '失败', value: 0 }
-    ]
+    default: () => [ ]
   }
 })
 
@@ -231,13 +242,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const formData = ref({
   id: null,
-  userId: null,
   username: '',
-  createBy: null,
-  deptId: null,
-  deptName: '',
-  module: '',
-  operationType: null,
   operationDesc: '',
   requestMethod: '',
   requestUrl: '',
@@ -248,77 +253,40 @@ const formData = ref({
   errorMsg: '',
   ipAddress: '',
   userAgent: '',
-  location: '',
   createTime: ''
 })
 
-
+// JSON formaté
 const formattedParams = computed({
   get: () => formatJson(formData.value.requestParams),
-  set: (value) => {
-    formData.value.requestParams = value
-  }
+  set: (v) => (formData.value.requestParams = v)
 })
 
 const formattedResult = computed({
   get: () => formatJson(formData.value.responseResult),
-  set: (value) => {
-    formData.value.responseResult = value
-  }
+  set: (v) => (formData.value.responseResult = v)
 })
 
-/**
- *  为什么不直接使用 v-model="modelValue.username" 
- * 1）Props的单向数据流原则：Vue遵循单向数据流原则，
- *  当用户在输入框中输入时，会直接修改父组件的数据，这违反了Vue的设计原则
- * 
- * 2）避免直接修改Props警告：如果直接修改props，Vue会在开发环境中发出警告
- */
-// 监听数据变化
+// Synchronisation avec v-model
 watch(() => props.modelValue, (newData) => {
-  if (newData) {
-    Object.assign(formData.value, newData)
-    // 设置默认激活的标签页
-  }
+  if (newData) Object.assign(formData.value, newData)
 }, { deep: true, immediate: true })
 
-// 使用防抖来避免频繁更新
-/**
- *  Vue 3中 v-model 的标准工作机制：
-    1) 子组件接收 modelValue prop
-    2) 子组件通过 emit('update:modelValue', newValue) 通知父组件更新数据
-    3) 父组件接收到事件后更新绑定的数据
- */
 let updateTimeout = null
 watch(formData, (newData) => {
-  if (updateTimeout) {
-    clearTimeout(updateTimeout)
-  }
-  updateTimeout = setTimeout(() => {
-    emit('update:modelValue', { ...newData })
-  }, 0)
+  clearTimeout(updateTimeout)
+  updateTimeout = setTimeout(() => emit('update:modelValue', { ...newData }), 0)
 }, { deep: true })
 
-// 复制到剪贴板
+// Copier dans le presse-papiers
 const handleCopy = async (text) => {
   try {
     await copyToClipboard(text)
-    $q.notify({
-      message: '已复制到剪贴板',
-      color: 'positive',
-      position: 'top'
-    })
-  } catch (error) {
-    $q.notify({
-      message: '复制失败',
-      color: 'negative',
-      position: 'top'
-    })
+    $q.notify({ message: t('common.copySuccess'), color: 'positive', position: 'top' })
+  } catch {
+    $q.notify({ message: t('common.copyFail'), color: 'negative', position: 'top' })
   }
 }
-
-
-
 </script>
 
-<!-- 样式已移至全局 CSS: src/css/detail-edit-common.scss -->
+<!-- 💅 Styles globaux : src/css/detail-edit-common.scss -->
