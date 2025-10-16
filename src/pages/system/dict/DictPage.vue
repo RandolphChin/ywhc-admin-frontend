@@ -448,9 +448,13 @@ const showTypeCreate = () => {
   isTypeEdit.value = false
   typeEditDialog.value = true
 }
-
+/**
+ *  引用传递 vs 值传递
+ * 深拷贝方式，创建新对象 JSON.parse(JSON.stringify(obj)) 
+ *  在父组件传递数据时进行深拷贝，这样子组件的修改就不会影响到原始数据
+ */
 const showTypeEdit = (dictType) => {
-  currentTypeData.value = dictType
+  currentTypeData.value = JSON.parse(JSON.stringify(dictType))
   isTypeEdit.value = true
   typeEditDialog.value = true
 }

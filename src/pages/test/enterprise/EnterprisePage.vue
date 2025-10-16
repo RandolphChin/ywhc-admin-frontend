@@ -252,9 +252,13 @@ const showEnterpriseDetail = (enterprise) => {
   dialogMode.value = 'view'
   enterpriseDialog.value = true
 }
-
+/**
+ *  引用传递 vs 值传递
+ * 深拷贝方式，创建新对象 JSON.parse(JSON.stringify(enterprise)) 
+ *  在父组件传递数据时进行深拷贝，这样子组件的修改就不会影响到原始数据
+ */
 const showEnterpriseEdit = (enterprise) => {
-  currentEnterprise.value = enterprise
+  currentEnterprise.value = JSON.parse(JSON.stringify(enterprise))
   dialogMode.value = 'edit'
   enterpriseDialog.value = true
 }
