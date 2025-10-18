@@ -450,7 +450,7 @@ const showTypeCreate = () => {
 }
 /**
  *  引用传递 vs 值传递
- * 深拷贝方式，创建新对象 JSON.parse(JSON.stringify(obj)) 
+ * 深拷贝方式，创建新对象 JSON.parse(JSON.stringify(OBJ)) 
  *  在父组件传递数据时进行深拷贝，这样子组件的修改就不会影响到原始数据
  */
 const showTypeEdit = (dictType) => {

@@ -23,7 +23,7 @@ const t = i18n.global.t
 // ⚠️ Attention : éviter la pollution de requêtes croisées en SSR.
 // ⚠️ Be careful: avoid cross-request state pollution in SSR.
 const api = axios.create({
-  baseURL: process.env.API_BASE_URL || 'http://localhost:8080/api',
+  baseURL: process.env.API_BASE_URL || 'http://localhost:8008/api',
   timeout: 30000
 })
 
@@ -177,10 +177,10 @@ api.interceptors.response.use(
       // 业务错误 / Erreur métier / Business logic error
       Notify.create({
         type: 'negative',
-        message: message || t('core.error.operationFail'),
+        message: message || t('core.operationFail'),
         position: 'top-right'
       })
-      return Promise.reject(new Error(message || t('core.error.operationFail')))
+      return Promise.reject(new Error(message || t('core.operationFail')))
     }
   },
 
@@ -219,7 +219,7 @@ api.interceptors.response.use(
               // 显示认证失败提示 / Afficher erreur auth / Auth failed
               Notify.create({
                 type: 'negative',
-                message: t('core.error.tokenExpired'),
+                message: t('core.tokenExpired'),
                 position: 'top-right'
               })
 
@@ -263,7 +263,7 @@ api.interceptors.response.use(
             // Pas de refreshToken → redirect login
             Notify.create({
               type: 'negative',
-              message: t('core.error.unauthorized'),
+              message: t('core.unauthorized'),
               position: 'top-right'
             })
             if (authStore) authStore.clearAuth()
@@ -282,7 +282,7 @@ api.interceptors.response.use(
         case 403:
           Notify.create({
             type: 'negative',
-            message: t('core.error.permissionDenied'),
+            message: t('core.permissionDenied'),
             position: 'top-right'
           })
           break
@@ -297,7 +297,7 @@ api.interceptors.response.use(
         case 404:
           Notify.create({
             type: 'negative',
-            message: t('core.error.notFound'),
+            message: t('core.notFound'),
             position: 'top-right'
           })
           break
@@ -312,7 +312,7 @@ api.interceptors.response.use(
         case 500:
           Notify.create({
             type: 'negative',
-            message: t('core.error.serverError'),
+            message: t('core.serverError'),
             position: 'top-right'
           })
           break
@@ -327,7 +327,7 @@ api.interceptors.response.use(
         default:
           Notify.create({
             type: 'negative',
-            message: data?.message || `${t('core.error.operationFail')} (${status})`,
+            message: data?.message || `${t('core.operationFail')} (${status})`,
             position: 'top-right'
           })
       }
@@ -341,7 +341,7 @@ api.interceptors.response.use(
        */
       Notify.create({
         type: 'negative',
-        message: t('core.error.networkError'),
+        message: t('core.networkError'),
         position: 'top-right'
       })
     }

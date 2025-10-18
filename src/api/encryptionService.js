@@ -1,10 +1,18 @@
 import { api } from 'src/boot/axios'
 import cryptoUtil from 'src/utils/crypto'
 import { Notify } from 'quasar'
+import { i18n } from 'boot/i18n'
+
+const t = i18n.global.t // ✅ raccourci pour alléger le code
 
 /**
- * 加密服务
- * 统一管理RSA公钥获取和数据加密
+ * ---------------------------------------------------------------
+ * 🔐 Service de chiffrement RSA / Encryption Service
+ * ---------------------------------------------------------------
+ * 🇨🇳 加密服务
+ * 🇫🇷 Gestion unifiée de la récupération et du chiffrement RSA
+ * 🇬🇧 Unified management of RSA public key retrieval and encryption
+ * ---------------------------------------------------------------
  */
 class EncryptionService {
   constructor() {
@@ -13,24 +21,10 @@ class EncryptionService {
     this.loadingPromise = null
   }
 
-  /**
-   * 获取RSA公钥
-   * @returns {Promise<boolean>} 是否成功加载公钥
-   */
   async loadPublicKey() {
-    if (!this.encryptionEnabled) {
-      return false
-    }
-
-    // 如果正在加载，返回现有的Promise
-    if (this.loadingPromise) {
-      return this.loadingPromise
-    }
-
-    // 如果已经加载过，直接返回
-    if (this.publicKeyLoaded && cryptoUtil.hasPublicKey()) {
-      return true
-    }
+    if (!this.encryptionEnabled) return false
+    if (this.loadingPromise) return this.loadingPromise
+    if (this.publicKeyLoaded && cryptoUtil.hasPublicKey()) return true
 
     this.loadingPromise = this._doLoadPublicKey()
     const result = await this.loadingPromise
@@ -38,86 +32,63 @@ class EncryptionService {
     return result
   }
 
-  /**
-   * 实际执行公钥加载
-   * @private
-   */
   async _doLoadPublicKey() {
     try {
-      console.log('🔑 正在获取RSA公钥...')
-      // 直接使用 api 实例，避免循环依赖
+      console.log('🔑', t('encryptionService.fetchingPublicKey'))
+
       const response = await api.get('/crypto/public-key')
-      
       if (response.data.data && response.data.data.publicKey) {
         const publicKeyPem = cryptoUtil.formatPublicKey(response.data.data.publicKey)
         cryptoUtil.setPublicKey(publicKeyPem)
         this.publicKeyLoaded = true
-        console.log('✅ RSA公钥加载成功')
+        console.log('✅', t('encryptionService.publicKeyLoaded'))
         return true
       } else {
-        throw new Error('公钥数据格式错误')
+        throw new Error(t('encryptionService.publicKeyFormatError'))
       }
     } catch (error) {
-      console.error('❌ 获取RSA公钥失败:', error)
+      console.error('❌', t('encryptionService.publicKeyFailed'), error)
       this.publicKeyLoaded = false
       this.encryptionEnabled = false
-      
+
       Notify.create({
         type: 'warning',
-        message: '获取加密公钥失败，将使用明文传输',
+        message: t('encryptionService.publicKeyWarning'),
         position: 'top-right'
       })
       return false
     }
   }
 
-  /**
-   * 加密数据
-   * @param {Object} data - 需要加密的数据对象
-   * @param {Array<string>} encryptFields - 需要加密的字段名数组
-   * @returns {Promise<Object>} 加密后的数据对象
-   */
   async encryptData(data, encryptFields = ['password']) {
-    // 确保公钥已加载
     const keyLoaded = await this.loadPublicKey()
-    
-    if (!keyLoaded || !this.encryptionEnabled) {
-      // 如果加密不可用，返回原始数据，标记为未加密
-      return { ...data, encrypted: false }
-    }
+    if (!keyLoaded || !this.encryptionEnabled) return { ...data, encrypted: false }
 
     const encryptedData = { ...data }
     let hasEncryptedFields = false
-    
+
     for (const field of encryptFields) {
       if (data[field]) {
         try {
           encryptedData[field] = cryptoUtil.encryptPassword(data[field])
           hasEncryptedFields = true
-          console.log(`🔐 字段 ${field} 加密成功`)
+          console.log(`🔐 ${field} →`, t('encryptionService.fieldEncryptSuccess'))
         } catch (error) {
-          console.error(`❌ 加密字段 ${field} 失败:`, error)
-          // 加密失败时返回原始数据，标记为未加密
+          console.error(`❌ ${field} →`, t('encryptionService.fieldEncryptFailed'), error)
           return { ...data, encrypted: false }
         }
       }
     }
 
-    // 添加加密标识
     encryptedData.encrypted = hasEncryptedFields
-    
-    if (hasEncryptedFields) {
-      console.log('✅ 数据加密完成，encrypted: true')
-    } else {
-      console.log('ℹ️ 没有需要加密的字段，encrypted: false')
-    }
-
+    console.log(
+      hasEncryptedFields
+        ? '✅ ' + t('encryptionService.dataEncryptSuccess')
+        : 'ℹ️ ' + t('encryptionService.noFieldsToEncrypt')
+    )
     return encryptedData
   }
 
-  /**
-   * 重置加密状态
-   */
   reset() {
     this.publicKeyLoaded = false
     this.encryptionEnabled = true
@@ -125,22 +96,14 @@ class EncryptionService {
     cryptoUtil.clearPublicKey()
   }
 
-  /**
-   * 检查是否启用加密
-   */
   isEncryptionEnabled() {
     return this.encryptionEnabled
   }
 
-  /**
-   * 检查公钥是否已加载
-   */
   isPublicKeyLoaded() {
     return this.publicKeyLoaded
   }
 }
 
-// 创建单例实例
 const encryptionService = new EncryptionService()
-
 export default encryptionService

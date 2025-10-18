@@ -69,6 +69,8 @@ import userUi from "./user.ui";
 import actionUi from "./action.ui";
 import validationUi from "./validation.ui";
 
+import encryptionService from './encryptionService.ui'
+
 // === Fusion des messages ===
 const messages = {
   core: { ...coreUi, ...coreError },
@@ -82,6 +84,8 @@ const messages = {
   user: { ...userUi },
   action: { ...actionUi },
   validation: { ...validationUi },
+  encryptionService: { ...encryptionService },
+
 };
 
 // === Export ===

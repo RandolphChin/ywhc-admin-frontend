@@ -1,5 +1,6 @@
 <template>
   <div class="login-container">
+    <!-- 🌈 Arrière-plan animé -->
     <div class="background-animation">
       <div class="shape shape-1"></div>
       <div class="shape shape-2"></div>
@@ -7,20 +8,22 @@
       <div class="shape shape-4"></div>
     </div>
 
+    <!-- 🪪 Carte principale de connexion -->
     <div class="login-content">
       <q-card class="login-card glass-effect">
         <q-card-section class="login-header">
           <div class="login-title">YWHC Admin System</div>
-          <div class="login-subtitle">{{ t('auth.subtitle') }}</div>
+          <div class="login-subtitle">{{ t('auth.title') }}</div>
         </q-card-section>
 
         <q-card-section class="login-form-section">
           <q-form @submit="handleLogin" class="q-gutter-md">
+            <!-- 🧩 Champ utilisateur -->
             <div class="input-group">
               <q-input
                 v-model="loginForm.username"
-                :placeholder="t('auth.username')"
-                :rules="[val => !!val || t('auth.username') + ' ' + t('error.required_field')]"
+                :placeholder="t('common.username')"
+                :rules="[val => !!val || t('common.username') + ' ' + t('core.error.required_field')]"
                 outlined
                 class="modern-input"
               >
@@ -30,12 +33,13 @@
               </q-input>
             </div>
 
+            <!-- 🧩 Champ mot de passe -->
             <div class="input-group">
               <q-input
                 v-model="loginForm.password"
                 type="password"
-                :placeholder="t('auth.password')"
-                :rules="[val => !!val || t('auth.password') + ' ' + t('error.required_field')]"
+                :placeholder="t('common.password')"
+                :rules="[val => !!val || t('common.password') + ' ' + t('core.error.required_field')]"
                 outlined
                 class="modern-input"
               >
@@ -45,23 +49,25 @@
               </q-input>
             </div>
 
+            <!-- 🔒 CAPTCHA -->
             <div class="input-group captcha-group">
               <q-btn
                 v-if="!captchaVerified"
                 @click="showCaptchaDialog = true"
                 class="captcha-btn full-width"
                 color="primary"
-                :label="t('auth.verifying')"
+                :label="t('captcha.verifying')"
                 icon="security"
                 size="md"
                 no-caps
               />
               <div v-else class="captcha-success">
                 <q-icon name="check_circle" color="positive" size="sm" />
-                <span>{{ t('auth.verified') }}</span>
+                <span>{{ t('captcha.verified') }}</span>
               </div>
             </div>
 
+            <!-- 🔘 Bouton connexion -->
             <div class="input-group">
               <q-btn
                 type="submit"
@@ -77,6 +83,7 @@
       </q-card>
     </div>
 
+    <!-- 🪟 Dialogue CAPTCHA -->
     <q-dialog v-model="showCaptchaDialog" persistent>
       <q-card class="captcha-dialog">
         <q-card-section class="dialog-header">
@@ -84,7 +91,11 @@
           <q-btn flat round dense icon="close" @click="closeCaptchaDialog" />
         </q-card-section>
         <q-card-section class="dialog-content">
-          <SlideCaptcha @success="onCaptchaSuccess" @error="onCaptchaError" @refresh="onCaptchaRefresh" />
+          <SlideCaptcha
+            @success="onCaptchaSuccess"
+            @error="onCaptchaError"
+            @refresh="onCaptchaRefresh"
+          />
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -121,7 +132,7 @@ const { encryptionEnabled, publicKeyLoaded } = useEncryption()
 
 const handleLogin = async () => {
   if (!captchaVerified.value) {
-    $q.notify({ type: 'warning', message: t('auth.verify_first'), position: 'top-right' })
+    $q.notify({ type: 'warning', message: t('captcha.verify_first'), position: 'top-right' })
     return
   }
 
@@ -134,8 +145,7 @@ const handleLogin = async () => {
     const redirectUrl = authStore.getAndClearRedirectUrl()
     if (redirectUrl) {
       const routeSuccess = await initDynamicRoutes(router, false)
-      if (routeSuccess) router.push(redirectUrl)
-      else router.push('/')
+      router.push(routeSuccess ? redirectUrl : '/')
     } else router.push('/')
   } catch (error: any) {
     $q.notify({
@@ -153,7 +163,7 @@ const onCaptchaSuccess = (data: any) => {
   captchaToken.value = data.token
   setTimeout(() => {
     showCaptchaDialog.value = false
-    $q.notify({ type: 'positive', message: t('auth.verified'), position: 'top-right' })
+    $q.notify({ type: 'positive', message: t('captcha.success'), position: 'top-right' })
   }, 1000)
 }
 

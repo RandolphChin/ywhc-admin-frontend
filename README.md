@@ -196,5 +196,11 @@ ywhc-admin-frontend/
 - [Quasar Framework](https://quasar.dev/) - Vue.js 组件库
 
 ---
+## ❤️Contributors
+
+感谢以下所有为本项目做出贡献的杰出人士：
+
+- [@catodique](https://github.com/catodique)
+
 
 ⭐ 如果这个项目对你有帮助，请给我一个 Star！
