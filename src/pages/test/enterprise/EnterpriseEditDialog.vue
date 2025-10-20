@@ -235,25 +235,27 @@ const formattedUpdateTime = computed(() => {
   return formData.value.updateTime ? formatTime(formData.value.updateTime, 'YYYY-MM-DD HH:mm:ss') : ''
 })
 
-watch(() => props.enterpriseData, (newData) => {
-  if (newData) {
-    formData.value = { ...newData }
-  } else {
-    // 重置表单
-    formData.value = {
-      id: null,
-      enterpriseName: '',
-      enterpriseAddress: '',
-      deptId: null,
-      status: null,
-      deleted: null,
-      createTime: null,
-      updateTime: null,
-      createBy: null,
-      updateBy: null,
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen) {
+    if(props.enterpriseData){
+      formData.value = { ...props.enterpriseData }
+    }else {
+      formData.value = {
+        id: null,
+        enterpriseName: '',
+        enterpriseAddress: '',
+        deptId: null,
+        status: null,
+        deleted: null,
+        createTime: null,
+        updateTime: null,
+        createBy: null,
+        updateBy: null,
+      }
     }
   }
-}, { deep: true, immediate: true })
+})
+
 
 const formRef = ref(null)
 

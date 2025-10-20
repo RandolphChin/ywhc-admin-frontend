@@ -97,23 +97,20 @@ const rules = {
 };
 
 // 监听数据变化，初始化表单
-watch(() => props.dictTypeData, (newData) => {
-  if (newData) {
-    formData.value = {
-      id: newData.id,
-      dictName: newData.dictName,
-      dictType: newData.dictType,
-      remark: newData.remark || ''
-    }
-  } else {
-    formData.value = {
-      id: null,
-      dictName: '',
-      dictType: '',
-      remark: ''
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen) {
+    if(props.dictTypeData){
+      formData.value = { ...props.dictTypeData }
+    }else {
+      formData.value = {
+        id: null,
+        dictName: '',
+        dictType: '',
+        remark: ''
+      }
     }
   }
-}, { immediate: true })
+})
 
 const onSubmit = () => {
   // 验证表单
