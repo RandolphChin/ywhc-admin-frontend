@@ -234,26 +234,28 @@ const formattedCreateTime = computed(() => {
 const formattedUpdateTime = computed(() => {
   return formData.value.updateTime ? formatTime(formData.value.updateTime, 'YYYY-MM-DD HH:mm:ss') : ''
 })
-
-watch(() => props.enterpriseData, (newData) => {
-  if (newData) {
-    formData.value = { ...newData }
-  } else {
-    // 重置表单
-    formData.value = {
-      id: null,
-      enterpriseName: '',
-      enterpriseAddress: '',
-      deptId: null,
-      status: null,
-      deleted: null,
-      createTime: null,
-      updateTime: null,
-      createBy: null,
-      updateBy: null,
+// 修复问题：连续新增时，第二次点击新增后弹窗中的form表单内容还是第一次提交的数据
+// 修复问题：编辑一行数据后，不点击保存，同一行数据再次点击编辑弹窗中form表单内容还是上一次修改后的内容
+watch(() => props.modelValue, (isOpen) => {
+  if (isOpen) {
+    if(props.enterpriseData){
+      formData.value = { ...props.enterpriseData }
+    }else {
+      formData.value = {
+        id: null,
+        enterpriseName: '',
+        enterpriseAddress: '',
+        deptId: null,
+        status: null,
+        deleted: null,
+        createTime: null,
+        updateTime: null,
+        createBy: null,
+        updateBy: null,
+      }
     }
   }
-}, { deep: true, immediate: true })
+})
 
 const formRef = ref(null)
 
