@@ -8,6 +8,7 @@
  *  - d’enregistrement ou récupération de mot de passe
  *  - de session expirée ou connexion sécurisée
  * ---------------------------------------------------------------
+ * clés : auth.xxx
  */
 export default {
   // 🧩 Formulaire d’authentification

@@ -61,6 +61,7 @@ import menuUi from "./menu.ui";
 
 // 4️⃣ Modules système et applicatifs
 import systemUi from "./system.ui";
+import systemDiagnostics from "./system.diagnostics"
 import dashboardUi from "./dashboard.ui";
 import userUi from "./user.ui";
 // import userProfileUi from "./user.profile.ui"; // (désactivé pour l’instant)
@@ -79,7 +80,7 @@ const messages = {
   captcha: { ...captchaUi },
   router: { ...routerError },
   menu: { ...menuUi },
-  system: { ...systemUi },
+  system: { ...systemUi, ...systemDiagnostics }, // ⚙️ Fusion UI + diagnostic
   dashboard: { ...dashboardUi },
   user: { ...userUi },
   action: { ...actionUi },
