@@ -191,4 +191,11 @@ Thanks to the following open source projects:
 
 ---
 
+## ❤️Contributors
+
+Thanks to the following who have made contributions to this project:
+
+- [@catodique](https://github.com/catodique)
+
+
 ⭐ If this project helps you, please give me a Star!
