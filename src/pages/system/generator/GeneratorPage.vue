@@ -82,8 +82,8 @@ const queryForm = ref({
 })
 
 const pagination = ref({
-  sortBy: 'tableName',
-  descending: false,
+  sortBy: 'createTime',
+  descending: true,
   page: 1,
   rowsPerPage: 10,
   rowsNumber: 0
@@ -131,23 +131,38 @@ const loadTables = async (props) => {
   loading.value = true
 
   try {
-    const response = await generatorApi.getTableList()
-    let tableList = response.data.data || []
+    // 确保正确获取分页和排序参数
+    const currentPagination = props?.pagination || pagination.value
+    const { page, rowsPerPage, sortBy, descending } = currentPagination
 
-    // 前端过滤
+    // 构建查询参数
+    const params = {
+      current: page,
+      size: rowsPerPage,
+      orderBy: sortBy || 'createTime',
+      orderDirection: descending ? 'desc' : 'asc'
+    }
+
+    // 添加筛选条件
     if (queryForm.value.tableName) {
-      tableList = tableList.filter(table =>
-        table.tableName.toLowerCase().includes(queryForm.value.tableName.toLowerCase())
-      )
+      params.tableName = queryForm.value.tableName
     }
     if (queryForm.value.tableComment) {
-      tableList = tableList.filter(table =>
-        table.tableComment && table.tableComment.toLowerCase().includes(queryForm.value.tableComment.toLowerCase())
-      )
+      params.tableComment = queryForm.value.tableComment
     }
 
-    tables.value = tableList
-    pagination.value.rowsNumber = tableList.length
+    // 后端筛选和分页
+    const response = await generatorApi.getTableList(params)
+    const pageData = response.data.data
+    const records = pageData.records || []
+    const total = pageData.total || 0
+
+    tables.value = records
+    pagination.value.rowsNumber = total
+    pagination.value.page = page
+    pagination.value.rowsPerPage = rowsPerPage
+    pagination.value.sortBy = sortBy
+    pagination.value.descending = descending
   } catch (error) {
     console.error('加载数据库表列表失败:', error)
     $q.notify({
