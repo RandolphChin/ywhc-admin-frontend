@@ -234,8 +234,6 @@ const formattedCreateTime = computed(() => {
 const formattedUpdateTime = computed(() => {
   return formData.value.updateTime ? formatTime(formData.value.updateTime, 'YYYY-MM-DD HH:mm:ss') : ''
 })
-// 修复问题：连续新增时，第二次点击新增后弹窗中的form表单内容还是第一次提交的数据
-// 修复问题：编辑一行数据后，不点击保存，同一行数据再次点击编辑弹窗中form表单内容还是上一次修改后的内容
 watch(() => props.modelValue, (isOpen) => {
   if (isOpen) {
     if(props.enterpriseData){

@@ -6,9 +6,10 @@ import { api } from "src/boot/axios";
 export const generatorApi = {
   /**
    * 获取数据库表列表
+   * @param {Object} params 查询参数 { tableName, tableComment }
    */
-  getTableList() {
-    return api.get("/generator/tables");
+  getTableList(params) {
+    return api.get("/generator/tables", { params });
   },
 
   /**
