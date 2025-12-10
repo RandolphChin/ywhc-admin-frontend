@@ -5,11 +5,27 @@
  * the ES6 features that are supported by your Node version. https://node.green/
  */
 
+// 加载环境变量(默认不加载* `.env` 文件中的环境变量到 `process.env`)
+
+const dotenv = require('dotenv');
+const path = require('path');
+
+// 根据 NODE_ENV 加载对应的 .env 文件
+const envFile = process.env.NODE_ENV === 'production'
+  ? '.env.production'
+  : '.env.development';
+
+dotenv.config({ path: path.resolve(__dirname, envFile) });
+
+// 调试：输出环境变量（开发时使用）
+console.log('🔍 环境变量加载情况:');
+console.log('  NODE_ENV:', process.env.NODE_ENV);
+console.log('  API_BASE_URL:', process.env.API_BASE_URL);
+
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js
 
 const { configure } = require('quasar/wrappers');
-const path = require('path');
 
 module.exports = configure(function (ctx) {
   return {
